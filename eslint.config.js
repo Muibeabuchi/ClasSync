@@ -25,6 +25,7 @@ export default [
       'coverage/',
       '*.min.js',
       'package.json',
+      '.prettierrc.json'
       // Add any other specific files or folders to ignore
     ],
   },
