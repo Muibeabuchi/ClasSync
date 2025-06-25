@@ -10,10 +10,9 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
 import importPlugin from 'eslint-plugin-import';
 import tanstackQueryPlugin from '@tanstack/eslint-plugin-query';
-import prettierPlugin from 'eslint-plugin-prettier'; // The plugin that makes Prettier an ESLint rule
+import prettierPlugin from 'eslint-plugin-prettier';
 
-// Import the 'eslint-config-prettier' object itself.
-// This is NOT iterable, but its properties contain the rules to disable conflicts.
+// Import config objects for extending.
 import configPrettier from 'eslint-config-prettier';
 
 export default [
@@ -25,6 +24,7 @@ export default [
       'node_modules/',
       'coverage/',
       '*.min.js',
+      'package.json',
       // Add any other specific files or folders to ignore
     ],
   },
@@ -34,7 +34,7 @@ export default [
 
   // --- TypeScript Configuration ---
   // This includes @typescript-eslint/parser and recommended rules
-  ...tsEslint.configs.recommended, // Spreads an array of config objects
+  ...tsEslint.configs.recommended,
 
   // --- Common Configuration for JS/JSX and TS/TSX files ---
   {
@@ -57,6 +57,9 @@ export default [
     settings: {
       react: {
         version: 'detect', // Auto-detect React version
+        // These settings tell eslint-plugin-react that you're using the automatic JSX runtime
+        pragma: 'React',
+        fragment: 'Fragment',
       },
       'import/resolver': {
         node: {
@@ -78,15 +81,14 @@ export default [
     },
     rules: {
       // --- React Specific Rules (Overrides) ---
-      'react/react-in-jsx-scope': 'off', // Not needed for React 17+ (new JSX transform)
-      'react/prop-types': 'off', // Disable if using TypeScript for prop types
+      'react/react-in-jsx-scope': 'off', // Keep this off for New JSX Transform
+      'react/prop-types': 'off', // <--- ENSURE THIS IS OFF HERE
 
       // --- TypeScript Specific Rules (Overrides) ---
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
 
       // Add other custom rules or overrides here as needed
-      // 'no-unused-vars': 'warn', // Example: warn for unused variables
     },
   },
 
@@ -100,6 +102,9 @@ export default [
     files: ['**/*.{js,jsx,ts,tsx}'],
     rules: {
       ...reactPlugin.configs.recommended.rules, // Spread only the rules from recommended config
+      // --- IMPORTANT: Override it again here to ensure it's OFF ---
+      'react/prop-types': 'off', // <--- MAKE SURE IT'S OFF HERE TOO
+      'react/react-in-jsx-scope': 'off', // Ensure this is also off here for good measure
     },
     plugins: {
       react: reactPlugin, // Ensure plugin is loaded for its rules
@@ -138,14 +143,10 @@ export default [
 
   // --- Prettier Configuration (MUST BE LAST to override other style rules) ---
   {
-    // Apply this config to all relevant files
-    files: ['**/*.{js,jsx,ts,tsx,json,css,md}'],
-    // The rules from `eslint-config-prettier` disable conflicting rules.
-    // They are available directly as `configPrettier.rules`.
-    // Note: The `eslint-config-prettier` package exports an object directly.
+    files: ['**/*.{js,jsx,ts,tsx,json,css,md}'], // Apply this config to all relevant files
     rules: {
-      ...configPrettier.rules, // THIS IS THE KEY CHANGE for eslint-config-prettier
-      'prettier/prettier': 'error', // Enforces Prettier formatting as an ESLint error
+      ...configPrettier.rules, // Disable ESLint rules that conflict with Prettier
+      'prettier/prettier': 'error', // Enforce Prettier formatting as an ESLint error
     },
     plugins: {
       prettier: prettierPlugin, // The plugin that integrates Prettier into ESLint
