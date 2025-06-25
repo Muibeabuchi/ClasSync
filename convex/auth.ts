@@ -65,10 +65,11 @@ export const createAuth = (ctx: GenericCtx) =>
     baseURL: "http://localhost:3000",
     database: convexAdapter(ctx, betterAuthComponent),
 
-    // Simple non-verified email/password to get started
-    emailAndPassword: {
-      enabled: true,
-      requireEmailVerification: false,
+    socialProviders: {
+      google: {
+        clientId: process.env.GITHUB_CLIENT_ID!,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+      },
     },
     plugins: [
       // The Convex plugin is required

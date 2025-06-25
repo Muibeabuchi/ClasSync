@@ -1,10 +1,19 @@
 import { Id } from "../_generated/dataModel";
-import { query } from "../_generated/server";
+import { query, QueryCtx } from "../_generated/server";
 import { betterAuthComponent } from "../auth";
 
 // Example function for getting the current user
 // Feel free to edit, omit, etc.
 
+export async function getUserProfileId(ctx: QueryCtx) {
+  const userId = await betterAuthComponent.getAuthUserId(ctx);
+  if (!userId) {
+    return null;
+  }
+  return userId;
+}
+
+// TODO:RELOCATE TO ACTUAL API ENDPOINT
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
