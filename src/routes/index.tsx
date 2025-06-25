@@ -1,16 +1,16 @@
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { Link, createFileRoute } from '@tanstack/react-router'
-import { convexQuery } from '@convex-dev/react-query'
-import { api } from 'convex/_generated/api'
-import { Loader } from '~/components/Loader'
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { convexQuery } from "@convex-dev/react-query";
+import { api } from "convex/_generated/api";
+import { Loader } from "@/components/Loader";
 
-export const Route = createFileRoute('/')({
+export const Route = createFileRoute("/")({
   component: Home,
   pendingComponent: () => <Loader />,
-})
+});
 
 function Home() {
-  const boardsQuery = useSuspenseQuery(convexQuery(api.board.getBoards, {}))
+  const boardsQuery = useSuspenseQuery(convexQuery(api.board.getBoards, {}));
 
   return (
     <div className="p-8 space-y-2">
@@ -31,5 +31,5 @@ function Home() {
         ))}
       </ul>
     </div>
-  )
+  );
 }
