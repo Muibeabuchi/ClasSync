@@ -1,298 +1,298 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
+// import { v } from "convex/values";
+// import { mutation, query } from "./_generated/server";
+// import { getAuthUserId } from "@convex-dev/auth/server";
 
-// Enhanced join request with student linking
-export const createJoinRequest = mutation({
-  args: {
-    courseId: v.id("courses"),
-    joinCode: v.string(),
-    message: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+// // Enhanced join request with student linking
+// export const createJoinRequest = mutation({
+//   args: {
+//     courseId: v.id("courses"),
+//     joinCode: v.string(),
+//     message: v.optional(v.string()),
+//   },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
 
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-    
-    if (!profile || profile.role !== "student") {
-      throw new Error("Only students can request to join courses");
-    }
+//     const profile = await ctx.db
+//       .query("userProfiles")
+//       .withIndex("by_user_id", (q) => q.eq("userId", userId))
+//       .unique();
 
-    // Find course by join code
-    const course = await ctx.db
-      .query("courses")
-      .withIndex("by_join_code", (q) => q.eq("joinCode", args.joinCode))
-      .first();
+//     if (!profile || profile.role !== "student") {
+//       throw new Error("Only students can request to join courses");
+//     }
 
-    if (!course) {
-      throw new Error("Invalid join code");
-    }
+//     // Find course by join code
+//     const course = await ctx.db
+//       .query("courses")
+//       .withIndex("by_join_code", (q) => q.eq("joinCode", args.joinCode))
+//       .first();
 
-    if (course._id !== args.courseId) {
-      throw new Error("Course ID mismatch");
-    }
+//     if (!course) {
+//       throw new Error("Invalid join code");
+//     }
 
-    // Check if already requested
-    const existingRequest = await ctx.db
-      .query("joinRequests")
-      .withIndex("by_student", (q) => q.eq("studentId", userId))
-      .filter((q) => q.eq(q.field("courseId"), args.courseId))
-      .first();
+//     if (course._id !== args.courseId) {
+//       throw new Error("Course ID mismatch");
+//     }
 
-    if (existingRequest) {
-      throw new Error("Join request already exists");
-    }
+//     // Check if already requested
+//     const existingRequest = await ctx.db
+//       .query("joinRequests")
+//       .withIndex("by_student", (q) => q.eq("studentId", userId))
+//       .filter((q) => q.eq(q.field("courseId"), args.courseId))
+//       .first();
 
-    // Check if already linked
-    const isAlreadyLinked = course.attendanceList.some(
-      student => student.linkedUserId === userId
-    );
+//     if (existingRequest) {
+//       throw new Error("Join request already exists");
+//     }
 
-    if (isAlreadyLinked) {
-      throw new Error("You are already enrolled in this course");
-    }
+//     // Check if already linked
+//     const isAlreadyLinked = course.attendanceList.some(
+//       student => student.linkedUserId === userId
+//     );
 
-    const requestId = await ctx.db.insert("joinRequests", {
-      studentId: userId,
-      courseId: args.courseId,
-      status: "pending",
-      requestedAt: Date.now(),
-      message: args.message,
-    });
+//     if (isAlreadyLinked) {
+//       throw new Error("You are already enrolled in this course");
+//     }
 
-    return { requestId, courseName: course.courseName };
-  },
-});
+//     const requestId = await ctx.db.insert("joinRequests", {
+//       studentId: userId,
+//       courseId: args.courseId,
+//       status: "pending",
+//       requestedAt: Date.now(),
+//       message: args.message,
+//     });
 
-// Link student to attendance list entry
-export const linkStudentToAttendanceEntry = mutation({
-  args: {
-    requestId: v.id("joinRequests"),
-    registrationNumber: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+//     return { requestId, courseName: course.courseName };
+//   },
+// });
 
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-    
-    if (!profile || profile.role !== "lecturer") {
-      throw new Error("Only lecturers can link students");
-    }
+// // Link student to attendance list entry
+// export const linkStudentToAttendanceEntry = mutation({
+//   args: {
+//     requestId: v.id("joinRequests"),
+//     registrationNumber: v.string(),
+//   },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
 
-    const request = await ctx.db.get(args.requestId);
-    if (!request) {
-      throw new Error("Join request not found");
-    }
+//     const profile = await ctx.db
+//       .query("userProfiles")
+//       .withIndex("by_user_id", (q) => q.eq("userId", userId))
+//       .unique();
 
-    const course = await ctx.db.get(request.courseId);
-    if (!course) {
-      throw new Error("Course not found");
-    }
+//     if (!profile || profile.role !== "lecturer") {
+//       throw new Error("Only lecturers can link students");
+//     }
 
-    if (course.lecturerId !== userId) {
-      throw new Error("Access denied");
-    }
+//     const request = await ctx.db.get(args.requestId);
+//     if (!request) {
+//       throw new Error("Join request not found");
+//     }
 
-    // Find the attendance entry
-    const attendanceEntryIndex = course.attendanceList.findIndex(
-      student => student.registrationNumber === args.registrationNumber && !student.isLinked
-    );
+//     const course = await ctx.db.get(request.courseId);
+//     if (!course) {
+//       throw new Error("Course not found");
+//     }
 
-    if (attendanceEntryIndex === -1) {
-      throw new Error("Attendance entry not found or already linked");
-    }
+//     if (course.lecturerId !== userId) {
+//       throw new Error("Access denied");
+//     }
 
-    // Update attendance list
-    const updatedAttendanceList = [...course.attendanceList];
-    updatedAttendanceList[attendanceEntryIndex] = {
-      ...updatedAttendanceList[attendanceEntryIndex],
-      isLinked: true,
-      linkedUserId: request.studentId,
-    };
+//     // Find the attendance entry
+//     const attendanceEntryIndex = course.attendanceList.findIndex(
+//       student => student.registrationNumber === args.registrationNumber && !student.isLinked
+//     );
 
-    await ctx.db.patch(request.courseId, {
-      attendanceList: updatedAttendanceList,
-      updatedAt: Date.now(),
-    });
+//     if (attendanceEntryIndex === -1) {
+//       throw new Error("Attendance entry not found or already linked");
+//     }
 
-    // Update join request
-    await ctx.db.patch(args.requestId, {
-      status: "approved",
-      linkedTo: args.registrationNumber,
-      processedAt: Date.now(),
-      processedBy: userId,
-    });
+//     // Update attendance list
+//     const updatedAttendanceList = [...course.attendanceList];
+//     updatedAttendanceList[attendanceEntryIndex] = {
+//       ...updatedAttendanceList[attendanceEntryIndex],
+//       isLinked: true,
+//       linkedUserId: request.studentId,
+//     };
 
-    // Send notification to student
-    await ctx.db.insert("notifications", {
-      userId: request.studentId,
-      type: "join_approved",
-      title: "Join Request Approved",
-      message: `Your request to join ${course.courseName} has been approved. You are now enrolled in the course.`,
-      data: { courseId: request.courseId, requestId: args.requestId },
-      isRead: false,
-      createdAt: Date.now(),
-    });
+//     await ctx.db.patch(request.courseId, {
+//       attendanceList: updatedAttendanceList,
+//       updatedAt: Date.now(),
+//     });
 
-    return { success: true };
-  },
-});
+//     // Update join request
+//     await ctx.db.patch(args.requestId, {
+//       status: "approved",
+//       linkedTo: args.registrationNumber,
+//       processedAt: Date.now(),
+//       processedBy: userId,
+//     });
 
-// Reject join request
-export const rejectJoinRequest = mutation({
-  args: {
-    requestId: v.id("joinRequests"),
-    reason: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+//     // Send notification to student
+//     await ctx.db.insert("notifications", {
+//       userId: request.studentId,
+//       type: "join_approved",
+//       title: "Join Request Approved",
+//       message: `Your request to join ${course.courseName} has been approved. You are now enrolled in the course.`,
+//       data: { courseId: request.courseId, requestId: args.requestId },
+//       isRead: false,
+//       createdAt: Date.now(),
+//     });
 
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-    
-    if (!profile || profile.role !== "lecturer") {
-      throw new Error("Only lecturers can reject requests");
-    }
+//     return { success: true };
+//   },
+// });
 
-    const request = await ctx.db.get(args.requestId);
-    if (!request) {
-      throw new Error("Join request not found");
-    }
+// // Reject join request
+// export const rejectJoinRequest = mutation({
+//   args: {
+//     requestId: v.id("joinRequests"),
+//     reason: v.optional(v.string()),
+//   },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
 
-    const course = await ctx.db.get(request.courseId);
-    if (!course) {
-      throw new Error("Course not found");
-    }
+//     const profile = await ctx.db
+//       .query("userProfiles")
+//       .withIndex("by_user_id", (q) => q.eq("userId", userId))
+//       .unique();
 
-    if (course.lecturerId !== userId) {
-      throw new Error("Access denied");
-    }
+//     if (!profile || profile.role !== "lecturer") {
+//       throw new Error("Only lecturers can reject requests");
+//     }
 
-    // Update join request
-    await ctx.db.patch(args.requestId, {
-      status: "rejected",
-      processedAt: Date.now(),
-      processedBy: userId,
-      message: args.reason,
-    });
+//     const request = await ctx.db.get(args.requestId);
+//     if (!request) {
+//       throw new Error("Join request not found");
+//     }
 
-    // Send notification to student
-    await ctx.db.insert("notifications", {
-      userId: request.studentId,
-      type: "join_rejected",
-      title: "Join Request Rejected",
-      message: `Your request to join ${course.courseName} has been rejected.${args.reason ? ` Reason: ${args.reason}` : ''}`,
-      data: { courseId: request.courseId, requestId: args.requestId },
-      isRead: false,
-      createdAt: Date.now(),
-    });
+//     const course = await ctx.db.get(request.courseId);
+//     if (!course) {
+//       throw new Error("Course not found");
+//     }
 
-    return { success: true };
-  },
-});
+//     if (course.lecturerId !== userId) {
+//       throw new Error("Access denied");
+//     }
 
-// Get join requests for a course
-export const getCourseJoinRequests = query({
-  args: { courseId: v.id("courses") },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+//     // Update join request
+//     await ctx.db.patch(args.requestId, {
+//       status: "rejected",
+//       processedAt: Date.now(),
+//       processedBy: userId,
+//       message: args.reason,
+//     });
 
-    const course = await ctx.db.get(args.courseId);
-    if (!course) {
-      throw new Error("Course not found");
-    }
+//     // Send notification to student
+//     await ctx.db.insert("notifications", {
+//       userId: request.studentId,
+//       type: "join_rejected",
+//       title: "Join Request Rejected",
+//       message: `Your request to join ${course.courseName} has been rejected.${args.reason ? ` Reason: ${args.reason}` : ''}`,
+//       data: { courseId: request.courseId, requestId: args.requestId },
+//       isRead: false,
+//       createdAt: Date.now(),
+//     });
 
-    if (course.lecturerId !== userId) {
-      throw new Error("Access denied");
-    }
+//     return { success: true };
+//   },
+// });
 
-    const requests = await ctx.db
-      .query("joinRequests")
-      .withIndex("by_course", (q) => q.eq("courseId", args.courseId))
-      .collect();
+// // Get join requests for a course
+// export const getCourseJoinRequests = query({
+//   args: { courseId: v.id("courses") },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
 
-    // Get student profiles
-    const requestsWithProfiles = await Promise.all(
-      requests.map(async (request) => {
-        const student = await ctx.db.get(request.studentId);
-        return {
-          ...request,
-          studentProfile: student,
-        };
-      })
-    );
+//     const course = await ctx.db.get(args.courseId);
+//     if (!course) {
+//       throw new Error("Course not found");
+//     }
 
-    return requestsWithProfiles;
-  },
-});
+//     if (course.lecturerId !== userId) {
+//       throw new Error("Access denied");
+//     }
 
-// Get unlinked attendance entries for a course
-export const getUnlinkedAttendanceEntries = query({
-  args: { courseId: v.id("courses") },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+//     const requests = await ctx.db
+//       .query("joinRequests")
+//       .withIndex("by_course", (q) => q.eq("courseId", args.courseId))
+//       .collect();
 
-    const course = await ctx.db.get(args.courseId);
-    if (!course) {
-      throw new Error("Course not found");
-    }
+//     // Get student profiles
+//     const requestsWithProfiles = await Promise.all(
+//       requests.map(async (request) => {
+//         const student = await ctx.db.get(request.studentId);
+//         return {
+//           ...request,
+//           studentProfile: student,
+//         };
+//       })
+//     );
 
-    if (course.lecturerId !== userId) {
-      throw new Error("Access denied");
-    }
+//     return requestsWithProfiles;
+//   },
+// });
 
-    return course.attendanceList.filter(student => !student.isLinked);
-  },
-});
+// // Get unlinked attendance entries for a course
+// export const getUnlinkedAttendanceEntries = query({
+//   args: { courseId: v.id("courses") },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
 
-// Get student's join requests
-export const getMyJoinRequests = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+//     const course = await ctx.db.get(args.courseId);
+//     if (!course) {
+//       throw new Error("Course not found");
+//     }
 
-    const requests = await ctx.db
-      .query("joinRequests")
-      .withIndex("by_student", (q) => q.eq("studentId", userId))
-      .collect();
+//     if (course.lecturerId !== userId) {
+//       throw new Error("Access denied");
+//     }
 
-    // Get course details
-    const requestsWithCourses = await Promise.all(
-      requests.map(async (request) => {
-        const course = await ctx.db.get(request.courseId);
-        return {
-          ...request,
-          course,
-        };
-      })
-    );
+//     return course.attendanceList.filter(student => !student.isLinked);
+//   },
+// });
 
-    return requestsWithCourses;
-  },
-});
+// // Get student's join requests
+// export const getMyJoinRequests = query({
+//   args: {},
+//   handler: async (ctx) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
+
+//     const requests = await ctx.db
+//       .query("joinRequests")
+//       .withIndex("by_student", (q) => q.eq("studentId", userId))
+//       .collect();
+
+//     // Get course details
+//     const requestsWithCourses = await Promise.all(
+//       requests.map(async (request) => {
+//         const course = await ctx.db.get(request.courseId);
+//         return {
+//           ...request,
+//           course,
+//         };
+//       })
+//     );
+
+//     return requestsWithCourses;
+//   },
+// });

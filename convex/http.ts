@@ -1,8 +1,22 @@
-import { auth } from "./auth";
 import router from "./router";
+import { Hono } from "hono";
+import { httpRouter } from "convex/server";
+import { HonoWithConvex, HttpRouterWithHono } from "convex-helpers/server/hono";
+import { betterAuthComponent, createAuth } from "./auth";
+import { ActionCtx } from "./_generated/server";
 
-const http = router;
+const app: HonoWithConvex<ActionCtx> = new Hono();
 
-auth.addHttpRoutes(http);
+// Redirect root well-known to api well-known
+app.get("/.well-known/openid-configuration", async (c) => {
+  return c.redirect("/api/auth/convex/.well-known/openid-configuration");
+});
+
+app.on(["POST", "GET"], "/api/auth/*", async (c) => {
+  const auth = createAuth(c.env);
+  return auth.handler(c.req.raw);
+});
+
+const http = new HttpRouterWithHono(app);
 
 export default http;
