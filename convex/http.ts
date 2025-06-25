@@ -1,8 +1,6 @@
-import router from "./router";
 import { Hono } from "hono";
-import { httpRouter } from "convex/server";
 import { HonoWithConvex, HttpRouterWithHono } from "convex-helpers/server/hono";
-import { betterAuthComponent, createAuth } from "./auth";
+import { createAuth } from "./auth";
 import { ActionCtx } from "./_generated/server";
 
 const app: HonoWithConvex<ActionCtx> = new Hono();
