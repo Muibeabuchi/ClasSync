@@ -8,11 +8,14 @@ import {
 import { Button } from '@/components/ui/button';
 // import { ThemeToggle } from '@/components/theme-toggle';
 import { GraduationCap, Shield, Clock, Users } from 'lucide-react';
+import { useGoogleSignIn } from '../hooks/use-google-auth';
 
-const LoginPage: React.FC = () => {
-  const handleGoogleLogin = () => {
+const LoginPage = () => {
+  const loginWithGoogle = useGoogleSignIn();
+  const handleGoogleLogin = async () => {
     console.log('Google login initiated');
-    // Stub function for Google authentication
+    const response = await loginWithGoogle();
+    console.log(response);
   };
 
   return (

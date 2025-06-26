@@ -1,6 +1,8 @@
 import { defineSchema, defineTable } from 'convex/server';
-import { v } from 'convex/values';
+import { Infer, v } from 'convex/values';
 // import { authTables } from "@convex-dev/auth/server";
+
+const userRole = v.union(v.literal('lecturer'), v.literal('student'));
 
 const applicationTables = {
   // User profiles table
@@ -239,3 +241,5 @@ export default defineSchema({
   // ...authTables,
   ...applicationTables,
 });
+
+export type BackendUserRoleType = Infer<typeof userRole>;

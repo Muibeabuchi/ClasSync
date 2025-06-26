@@ -147,7 +147,7 @@ export default [
     files: ['**/*.{js,jsx,ts,tsx,json,css,md}'], // Apply this config to all relevant files
     rules: {
       ...configPrettier.rules, // Disable ESLint rules that conflict with Prettier
-      'prettier/prettier': 'error',
+      // 'prettier/prettier': 'error',
       // "prettier/prettier": "error", // Report Prettier conflicts as errors
       indent: 'off', // Let Prettier handle indentation
       '@typescript-eslint/indent': 'off',
