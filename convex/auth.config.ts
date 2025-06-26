@@ -6,7 +6,7 @@ export default {
       domain: process.env.CONVEX_SITE_URL,
 
       // Application ID has to be "convex"
-      applicationID: "convex",
+      applicationID: 'convex',
     },
   ],
 };

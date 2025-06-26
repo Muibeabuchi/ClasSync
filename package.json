@@ -11,7 +11,8 @@
     "start": "vite start",
     "lint": "eslint \"src/**/*.{js,jsx,ts,tsx}\"",
     "lint:fix": "eslint \"src/**/*.{js,jsx,ts,tsx}\" --fix",
-    "format": "prettier --write \"src/**/*.{js,jsx,ts,tsx,json,css,md}\""
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@convex-dev/better-auth": "^0.6.1",
@@ -82,13 +83,14 @@
     "@types/node": "^24.0.4",
     "@types/react": "^19.0.8",
     "@types/react-dom": "^19.0.3",
+    "babel-plugin-react-compiler": "19.1.0-rc.2",
     "eslint": "^9.29.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-jsx-a11y": "^6.10.2",
     "eslint-plugin-prettier": "^5.5.1",
     "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^5.2.0",
+    "eslint-plugin-react-hooks": "6.0.0-rc1",
     "globals": "^16.2.0",
     "postcss": "^8.5.6",
     "prettier": "^3.6.1",

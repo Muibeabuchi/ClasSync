@@ -41,14 +41,14 @@ import {
   BetterAuth,
   convexAdapter,
   type AuthFunctions,
-} from "@convex-dev/better-auth";
-import { convex } from "@convex-dev/better-auth/plugins";
-import { betterAuth } from "better-auth";
-import { components, internal } from "./_generated/api";
-import { query, type GenericCtx } from "./_generated/server";
-import type { Id, DataModel } from "./_generated/dataModel";
+} from '@convex-dev/better-auth';
+import { convex } from '@convex-dev/better-auth/plugins';
+import { betterAuth } from 'better-auth';
+import { components, internal } from './_generated/api';
+import { query, type GenericCtx } from './_generated/server';
+import type { Id, DataModel } from './_generated/dataModel';
 
-import * as AuthModel from "./models/authModel";
+import * as AuthModel from './models/authModel';
 
 // Typesafe way to pass Convex functions defined in this file
 const authFunctions: AuthFunctions = internal.auth;
@@ -62,7 +62,7 @@ export const createAuth = (ctx: GenericCtx) =>
   // Configure your Better Auth instance here
   betterAuth({
     // All auth requests will be proxied through your TanStack Start server
-    baseURL: "http://localhost:3000",
+    baseURL: 'http://localhost:3000',
     database: convexAdapter(ctx, betterAuthComponent),
 
     socialProviders: {

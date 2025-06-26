@@ -25,7 +25,7 @@ export default [
       'coverage/',
       '*.min.js',
       'package.json',
-      '.prettierrc.json'
+      '.prettierrc.json',
       // Add any other specific files or folders to ignore
     ],
   },
@@ -147,7 +147,11 @@ export default [
     files: ['**/*.{js,jsx,ts,tsx,json,css,md}'], // Apply this config to all relevant files
     rules: {
       ...configPrettier.rules, // Disable ESLint rules that conflict with Prettier
-      'prettier/prettier': 'error', // Enforce Prettier formatting as an ESLint error
+      'prettier/prettier': 'error',
+      // "prettier/prettier": "error", // Report Prettier conflicts as errors
+      indent: 'off', // Let Prettier handle indentation
+      '@typescript-eslint/indent': 'off',
+      // Enforce Prettier formatting as an ESLint error
     },
     plugins: {
       prettier: prettierPlugin, // The plugin that integrates Prettier into ESLint
