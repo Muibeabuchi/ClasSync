@@ -1,4 +1,4 @@
-import { useAuthRedirect } from '@/feature/onboarding/hooks/use-login-redirect';
+import { useLoginRedirect } from '@/feature/onboarding/hooks/use-login-redirect';
 import { getUserOnboardStatusAction } from '@/server/userprofile';
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router';
 
@@ -30,7 +30,7 @@ export const Route = createFileRoute('/_auth')({
 });
 
 function RouteComponent() {
-  useAuthRedirect();
+  useLoginRedirect();
   return (
     <main>
       <Outlet />

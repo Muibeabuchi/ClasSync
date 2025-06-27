@@ -8,11 +8,8 @@ import { api } from 'convex/_generated/api';
  * A custom hook that handles user authentication status and redirects
  * the user to the appropriate page based on their onboarding status,
  * using Tanstack Query for data fetching.
- *
- * @param {Function} getUserOnboardStatusAction - An async function that
- * returns the user's onboarding status (true, false, or null for unauthenticated).
  */
-export function useLoginRedirect() {
+export function useDashboardRedirect() {
   const navigate = useNavigate();
 
   // Use useQuery to fetch the onboard status
@@ -37,13 +34,16 @@ export function useLoginRedirect() {
 
       if (onboardStatus === null) {
         console.log('User is not authenticated');
-        // You might navigate to a login page here if that's the desired behavior
-      } else if (onboardStatus === true) {
-        console.log('User is authenticated and has onboarded');
-        navigate({ to: '/dashboard' });
-      } else if (onboardStatus === false) {
-        console.log('User is authenticated and has not onboarded');
-        navigate({ to: '/onboard' });
+        navigate({
+          to: '/login',
+        });
+      } else if (onboardStatus !== null) {
+        if (onboardStatus === false) {
+          console.log('User is authenticated but has not onboarded');
+          navigate({
+            to: '/onboard',
+          });
+        }
       }
     }
 
