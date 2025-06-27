@@ -8,17 +8,17 @@
  * @module
  */
 
-import type * as auth from '../auth.js';
-import type * as http from '../http.js';
-import type * as models_authModel from '../models/authModel.js';
-import type * as models_userprofileModel from '../models/userprofileModel.js';
-import type * as router from '../router.js';
+import type * as auth from "../auth.js";
+import type * as http from "../http.js";
+import type * as models_authModel from "../models/authModel.js";
+import type * as models_userprofileModel from "../models/userprofileModel.js";
+import type * as router from "../router.js";
 
 import type {
   ApiFromModules,
   FilterApi,
   FunctionReference,
-} from 'convex/server';
+} from "convex/server";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -31,27 +31,27 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   http: typeof http;
-  'models/authModel': typeof models_authModel;
-  'models/userprofileModel': typeof models_userprofileModel;
+  "models/authModel": typeof models_authModel;
+  "models/userprofileModel": typeof models_userprofileModel;
   router: typeof router;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
 export declare const api: FilterApi<
   typeof fullApiWithMounts,
-  FunctionReference<any, 'public'>
+  FunctionReference<any, "public">
 >;
 export declare const internal: FilterApi<
   typeof fullApiWithMounts,
-  FunctionReference<any, 'internal'>
+  FunctionReference<any, "internal">
 >;
 
 export declare const components: {
   betterAuth: {
     lib: {
       create: FunctionReference<
-        'mutation',
-        'internal',
+        "mutation",
+        "internal",
         {
           input:
             | {
@@ -115,14 +115,14 @@ export declare const components: {
         any
       >;
       deleteAllForUser: FunctionReference<
-        'action',
-        'internal',
+        "action",
+        "internal",
         { table: string; userId: string },
         any
       >;
       deleteAllForUserPage: FunctionReference<
-        'mutation',
-        'internal',
+        "mutation",
+        "internal",
         {
           paginationOpts?: {
             cursor: string | null;
@@ -138,8 +138,8 @@ export declare const components: {
         any
       >;
       deleteBy: FunctionReference<
-        'mutation',
-        'internal',
+        "mutation",
+        "internal",
         {
           field: string;
           table: string;
@@ -155,14 +155,14 @@ export declare const components: {
         any
       >;
       deleteOldVerifications: FunctionReference<
-        'action',
-        'internal',
+        "action",
+        "internal",
         { currentTimestamp: number },
         any
       >;
       deleteOldVerificationsPage: FunctionReference<
-        'mutation',
-        'internal',
+        "mutation",
+        "internal",
         {
           currentTimestamp: number;
           paginationOpts?: {
@@ -177,20 +177,20 @@ export declare const components: {
         any
       >;
       getAccountByAccountIdAndProviderId: FunctionReference<
-        'query',
-        'internal',
+        "query",
+        "internal",
         { accountId: string; providerId: string },
         any
       >;
       getAccountsByUserId: FunctionReference<
-        'query',
-        'internal',
+        "query",
+        "internal",
         { limit?: number; userId: string },
         any
       >;
       getBy: FunctionReference<
-        'query',
-        'internal',
+        "query",
+        "internal",
         {
           field: string;
           table: string;
@@ -206,8 +206,8 @@ export declare const components: {
         any
       >;
       getByQuery: FunctionReference<
-        'query',
-        'internal',
+        "query",
+        "internal",
         {
           field: string;
           table: string;
@@ -222,25 +222,25 @@ export declare const components: {
         },
         any
       >;
-      getCurrentSession: FunctionReference<'query', 'internal', {}, any>;
-      getJwks: FunctionReference<'query', 'internal', { limit?: number }, any>;
+      getCurrentSession: FunctionReference<"query", "internal", {}, any>;
+      getJwks: FunctionReference<"query", "internal", { limit?: number }, any>;
       listVerificationsByIdentifier: FunctionReference<
-        'query',
-        'internal',
+        "query",
+        "internal",
         {
           identifier: string;
           limit?: number;
-          sortBy?: { direction: 'asc' | 'desc'; field: string };
+          sortBy?: { direction: "asc" | "desc"; field: string };
         },
         any
       >;
       update: FunctionReference<
-        'mutation',
-        'internal',
+        "mutation",
+        "internal",
         {
           input:
             | {
-                table: 'account';
+                table: "account";
                 value: Record<string, any>;
                 where: {
                   field: string;
@@ -254,7 +254,7 @@ export declare const components: {
                 };
               }
             | {
-                table: 'session';
+                table: "session";
                 value: Record<string, any>;
                 where: {
                   field: string;
@@ -268,7 +268,7 @@ export declare const components: {
                 };
               }
             | {
-                table: 'verification';
+                table: "verification";
                 value: Record<string, any>;
                 where: {
                   field: string;
@@ -282,7 +282,7 @@ export declare const components: {
                 };
               }
             | {
-                table: 'user';
+                table: "user";
                 value: Record<string, any>;
                 where: {
                   field: string;
@@ -299,8 +299,8 @@ export declare const components: {
         any
       >;
       updateTwoFactor: FunctionReference<
-        'mutation',
-        'internal',
+        "mutation",
+        "internal",
         {
           update: { backupCodes?: string; secret?: string; userId?: string };
           userId: string;
@@ -308,8 +308,8 @@ export declare const components: {
         any
       >;
       updateUserProviderAccounts: FunctionReference<
-        'mutation',
-        'internal',
+        "mutation",
+        "internal",
         {
           providerId: string;
           update: {
