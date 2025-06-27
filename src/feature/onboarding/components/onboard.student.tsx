@@ -1,4 +1,3 @@
-import { createFileRoute } from '@tanstack/react-router';
 import { useState, useEffect } from 'react';
 import {
   Card,
@@ -23,13 +22,8 @@ import {
   getFaculties,
   getDepartmentsByFaculty,
 } from '@/constants/faculty-department';
-// import { mockSubmitStudentOnboarding } from '@/lib/form-utils';
 
-export const Route = createFileRoute('/_auth/onboard/student')({
-  component: StudentOnboardingPage,
-});
-
-export default function StudentOnboardingPage() {
+export default function StudentOnboardingSection() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState<string[]>([]);
@@ -75,14 +69,14 @@ export default function StudentOnboardingPage() {
 
     setIsSubmitting(true);
     try {
-      const data = {
-        fullName,
-        registrationNumber,
-        gender,
-        yearLevel,
-        faculty,
-        department,
-      };
+      // const data = {
+      //   fullName,
+      //   registrationNumber,
+      //   gender,
+      //   yearLevel,
+      //   faculty,
+      //   department,
+      // };
       // await mockSubmitStudentOnboarding(data);
       window.location.href = '/dashboard';
     } catch (error) {

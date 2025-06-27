@@ -1,32 +1,47 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { Infer, v } from 'convex/values';
-// import { authTables } from "@convex-dev/auth/server";
+import {
+  userRoleConstant,
+  lecturerTitleConstant,
+  studentYearLevelConstants,
+} from '../src/constants/constants';
 
-const userRole = v.union(v.literal('lecturer'), v.literal('student'));
+export const userRoleSchema = v.union(
+  v.literal(userRoleConstant.student),
+  v.literal(userRoleConstant.lecturer),
+);
+
+const lecturerTitleSchema = v.union(
+  v.literal(lecturerTitleConstant.Dr),
+  v.literal(lecturerTitleConstant.prof),
+  v.literal(lecturerTitleConstant.Eng),
+  v.literal(lecturerTitleConstant.Mr),
+  v.literal(lecturerTitleConstant.Mrs),
+);
+
+const studentYearLevelSchema = v.union(
+  v.literal(studentYearLevelConstants[100]),
+  v.literal(studentYearLevelConstants[200]),
+  v.literal(studentYearLevelConstants[300]),
+  v.literal(studentYearLevelConstants[400]),
+  v.literal(studentYearLevelConstants[500]),
+  v.literal(studentYearLevelConstants[600]),
+);
 
 const applicationTables = {
   // User profiles table
   userProfiles: defineTable({
-    // userId: v.id("users"),
-    role: v.optional(v.union(v.literal('lecturer'), v.literal('student'))),
-    isOnboarded: v.boolean(),
+    email: v.string(),
     fullName: v.string(),
+    isOnboarded: v.boolean(),
+    role: v.optional(userRoleSchema),
+    title: v.optional(lecturerTitleSchema),
     faculty: v.optional(v.string()),
     department: v.optional(v.string()),
-    title: v.optional(
-      v.union(
-        v.literal('Prof'),
-        v.literal('Dr'),
-        v.literal('Engr'),
-        v.literal('Mr'),
-        v.literal('Mrs'),
-      ),
-    ),
-    email: v.string(),
-    officialSchoolName: v.optional(v.string()),
     registrationNumber: v.optional(v.string()),
-    yearLevel: v.optional(v.string()),
-    passportPhotoId: v.optional(v.id('_storage')),
+    yearLevel: v.optional(studentYearLevelSchema),
+    student_passport_photo_id: v.optional(v.id('_storage')),
+    // officialSchoolName: v.optional(v.string()),
   }).index('by_role', ['role']),
   // ClassList - Core abstraction for student groups
   classLists: defineTable({
@@ -242,4 +257,6 @@ export default defineSchema({
   ...applicationTables,
 });
 
-export type BackendUserRoleType = Infer<typeof userRole>;
+// applicationTables.userProfiles.validator.fields[""]
+
+export type BackendUserRoleType = Infer<typeof userRoleSchema>;

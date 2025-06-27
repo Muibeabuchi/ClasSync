@@ -1,3 +1,66 @@
+import { ConvexError, v } from 'convex/values';
+import {
+  AuthenticatedUserMutation,
+  AuthenticatedUserQuery,
+} from './middlewares/authenticatedMiddleware';
+import { userRoleSchema } from './schema';
+import { query } from './_generated/server';
+import { getCurrentUser, getUserProfileId } from './models/userprofileModel';
+
+export const getAuthenticatedUser = query({
+  args: {},
+  async handler(ctx) {
+    return await getUserProfileId(ctx);
+  },
+});
+
+export const getUserRole = query({
+  args: {},
+  returns: v.union(userRoleSchema, v.null()),
+  async handler(ctx) {
+    const user = await getCurrentUser({ ctx });
+    if (!user) throw new ConvexError('Unauthorized user request');
+
+    // If the user has not yet selected a role, the response is gonna be null
+    return user.role ?? null;
+  },
+});
+
+export const updateUserOnboardedStatus = AuthenticatedUserMutation({
+  args: {
+    isOnboarded: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(ctx.userId, {
+      isOnboarded: args.isOnboarded,
+    });
+  },
+});
+
+export const updateUserRole = AuthenticatedUserMutation({
+  args: {
+    role: userRoleSchema,
+  },
+  returns: userRoleSchema,
+  async handler(ctx, args) {
+    await ctx.db.patch(ctx.userId, {
+      role: args.role,
+    });
+    return args.role;
+  },
+});
+
+export const getUserOnboardedStatus = AuthenticatedUserQuery({
+  returns: v.union(v.boolean(), v.null()),
+  handler: async (ctx) => {
+    const userInfo = await ctx.db.get(ctx.user._id);
+    if (!userInfo) return null;
+    return userInfo.isOnboarded;
+  },
+});
+
+// export const createUserRole = mutation({});
+
 // import { mutation, query } from "./_generated/server";
 // import { v } from "convex/values";
 // import { getAuthUserId } from "@convex-dev/auth/server";

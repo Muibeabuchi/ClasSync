@@ -45,12 +45,12 @@ import {
 import { convex } from '@convex-dev/better-auth/plugins';
 import { betterAuth } from 'better-auth';
 import { components, internal } from './_generated/api';
-import { query, type GenericCtx } from './_generated/server';
-import type { Id, DataModel } from './_generated/dataModel';
+import { type GenericCtx } from './_generated/server';
+import type { DataModel } from './_generated/dataModel';
 
 import * as AuthModel from './models/authModel';
 
-// Typesafe way to pass Convex functions defined in this file
+// Type safe way to pass Convex functions defined in this file
 const authFunctions: AuthFunctions = internal.auth;
 
 // Initialize the component
@@ -59,12 +59,10 @@ export const betterAuthComponent = new BetterAuth(components.betterAuth, {
 });
 
 export const createAuth = (ctx: GenericCtx) =>
-  // Configure your Better Auth instance here
   betterAuth({
     // All auth requests will be proxied through your TanStack Start server
     baseURL: 'http://localhost:3000',
     database: convexAdapter(ctx, betterAuthComponent),
-
     socialProviders: {
       google: {
         // prompt: "select_account",
@@ -81,8 +79,6 @@ export const createAuth = (ctx: GenericCtx) =>
 // These are required named exports
 export const { createUser, updateUser, deleteUser, createSession } =
   betterAuthComponent.createAuthFunctions<DataModel>({
-    // Must create a user and return the user id
     onCreateUser: AuthModel.createUser,
-    // Delete the user when they are deleted from Better Auth
     onDeleteUser: AuthModel.deleteUser,
   });

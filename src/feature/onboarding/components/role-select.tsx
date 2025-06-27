@@ -1,6 +1,5 @@
-// components/onboarding/RoleSelect.tsx
-import React, { useState } from 'react';
-// import { useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import {
   Card,
   CardContent,
@@ -11,19 +10,27 @@ import {
 import { Button } from '@/components/ui/button';
 import { GraduationCap, Users, BookOpen, X } from 'lucide-react';
 import { CancelModal } from './cancel-modal';
+import { UserRoleType } from '../schema/onboarding-schema';
+import { useUpdateUserRole } from '../api/api-hooks';
 // import { UserRoleType } from '../schema/onboarding-schema';
 
-export const RoleSelect: React.FC = () => {
-  // const navigate = useNavigate();
+export const RoleSelect = () => {
+  const navigate = useNavigate();
+  const { mutateAsync: updateUserRole, isPending: updatingUserRole } =
+    useUpdateUserRole();
   const [showCancelModal, setShowCancelModal] = useState(false);
 
-  // const handleRoleSelect = () =>
-  //   // role: UserRoleType
-  //   {
-  //     navigate({
-  //       to: '/onboard',
-  //     });
-  //   };
+  const handleRoleSelect = async (role: UserRoleType) => {
+    if (updatingUserRole) return;
+    // make a call to the backend and store the users role
+    await updateUserRole({
+      role,
+    });
+    // navigate the user to the role page
+    navigate({
+      to: '/role',
+    });
+  };
 
   const handleCancel = () => {
     setShowCancelModal(true);
@@ -65,7 +72,7 @@ export const RoleSelect: React.FC = () => {
             {/* Lecturer Card */}
             <Card
               className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-2 hover:border-indigo-300 dark:hover:border-indigo-600"
-              // onClick={() => handleRoleSelect('lecturer')}
+              onClick={() => handleRoleSelect('lecturer')}
             >
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -91,7 +98,11 @@ export const RoleSelect: React.FC = () => {
                     Generate reports and analytics
                   </li>
                 </ul>
-                <Button className="w-full" size="lg">
+                <Button
+                  className="w-full"
+                  size="lg"
+                  disabled={updatingUserRole}
+                >
                   Continue as Lecturer
                 </Button>
               </CardContent>
@@ -100,7 +111,7 @@ export const RoleSelect: React.FC = () => {
             {/* Student Card */}
             <Card
               className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-2 hover:border-green-300 dark:hover:border-green-600"
-              // onClick={() => handleRoleSelect('student')}
+              onClick={() => handleRoleSelect('student')}
             >
               <CardHeader className="text-center pb-4">
                 <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -129,6 +140,7 @@ export const RoleSelect: React.FC = () => {
                 <Button
                   className="w-full bg-green-600 hover:bg-green-700"
                   size="lg"
+                  disabled={updatingUserRole}
                 >
                   Continue as Student
                 </Button>

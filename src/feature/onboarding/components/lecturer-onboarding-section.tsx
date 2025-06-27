@@ -1,5 +1,3 @@
-import { createFileRoute } from '@tanstack/react-router';
-
 import { useState } from 'react';
 import {
   Card,
@@ -25,13 +23,7 @@ import {
   getDepartmentsByFaculty,
 } from '@/constants/faculty-department';
 
-// import { mockSubmitLecturerOnboarding } from '@/lib/form-utils';
-
-export const Route = createFileRoute('/_auth/onboard/lecturer')({
-  component: LecturerOnboardingPage,
-});
-
-export default function LecturerOnboardingPage() {
+export default function LecturerOnboardingSection() {
   const [currentStep, setCurrentStep] = useState(1);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,7 +46,7 @@ export default function LecturerOnboardingPage() {
   const handleStepTwoNext = async () => {
     if (faculty && department) {
       setIsSubmitting(true);
-      const completeData = { fullName, title, faculty, department };
+      // const completeData = { fullName, title, faculty, department };
       // await mockSubmitLecturerOnboarding(completeData);
       setIsSubmitting(false);
       setCurrentStep(3);
@@ -107,7 +99,7 @@ export default function LecturerOnboardingPage() {
             <CardHeader>
               <CardTitle>Personal Information</CardTitle>
               <CardDescription>
-                Let's start with your basic information
+                {`Let's start with your basic information`}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -311,7 +303,7 @@ export default function LecturerOnboardingPage() {
           </CardHeader>
           <CardContent className="text-center space-y-6">
             <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
-              <h3 className="font-semibold mb-2">What's next?</h3>
+              <h3 className="font-semibold mb-2">{`What's next?`}</h3>
               <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
                 <li>• Create your first course</li>
                 <li>• Set up class schedules</li>

@@ -10,9 +10,10 @@
 
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
+import type * as middlewares_authenticatedMiddleware from "../middlewares/authenticatedMiddleware.js";
 import type * as models_authModel from "../models/authModel.js";
 import type * as models_userprofileModel from "../models/userprofileModel.js";
-import type * as router from "../router.js";
+import type * as userProfile from "../userProfile.js";
 
 import type {
   ApiFromModules,
@@ -31,9 +32,10 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   http: typeof http;
+  "middlewares/authenticatedMiddleware": typeof middlewares_authenticatedMiddleware;
   "models/authModel": typeof models_authModel;
   "models/userprofileModel": typeof models_userprofileModel;
-  router: typeof router;
+  userProfile: typeof userProfile;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

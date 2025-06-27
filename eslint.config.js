@@ -12,6 +12,8 @@ import importPlugin from 'eslint-plugin-import';
 import tanstackQueryPlugin from '@tanstack/eslint-plugin-query';
 import prettierPlugin from 'eslint-plugin-prettier';
 
+import convexPlugin from '@convex-dev/eslint-plugin';
+
 // Import config objects for extending.
 import configPrettier from 'eslint-config-prettier';
 
@@ -36,6 +38,7 @@ export default [
   // --- TypeScript Configuration ---
   // This includes @typescript-eslint/parser and recommended rules
   ...tsEslint.configs.recommended,
+  ...convexPlugin.configs.recommended,
 
   // --- Common Configuration for JS/JSX and TS/TSX files ---
   {

@@ -11,6 +11,7 @@ import { ConvexProvider, ConvexReactClient } from 'convex/react';
 import { routeTree } from './routeTree.gen';
 import { DefaultCatchBoundary } from './components/DefaultCatchBoundary';
 import { NotFound } from './components/NotFound';
+import { gcTimeConstant } from './constants/constants';
 
 export function createRouter() {
   if (typeof document !== 'undefined') {
@@ -32,6 +33,7 @@ export function createRouter() {
       queries: {
         queryKeyHashFn: convexQueryClient.hashFn(),
         queryFn: convexQueryClient.queryFn(),
+        gcTime: gcTimeConstant,
       },
     },
     mutationCache: new MutationCache({

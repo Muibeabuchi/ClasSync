@@ -13,11 +13,12 @@ import { createServerRootRoute } from '@tanstack/react-start/server'
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as OnboardRouteRouteImport } from './routes/_onboard/route'
-import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as OnboardRoleRouteImport } from './routes/_onboard/role'
 import { Route as OnboardOnboardRouteImport } from './routes/_onboard/onboard'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as AuthOnboardStudentRouteImport } from './routes/_auth/onboard.student'
+import { Route as AuthOnboardLecturerRouteImport } from './routes/_auth/onboard.lecturer'
+import { Route as AuthOnboardRoleRoleRouteImport } from './routes/_auth/onboard.role.$role'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 
 const rootServerRouteImport = createServerRootRoute()
@@ -31,19 +32,10 @@ const OnboardRouteRoute = OnboardRouteRouteImport.update({
   id: '/_onboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRouteRoute = AuthRouteRouteImport.update({
-  id: '/_auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
-} as any)
-const OnboardRoleRoute = OnboardRoleRouteImport.update({
-  id: '/role',
-  path: '/role',
-  getParentRoute: () => OnboardRouteRoute,
 } as any)
 const OnboardOnboardRoute = OnboardOnboardRouteImport.update({
   id: '/onboard',
@@ -51,9 +43,24 @@ const OnboardOnboardRoute = OnboardOnboardRouteImport.update({
   getParentRoute: () => OnboardRouteRoute,
 } as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/login',
+  id: '/_auth/login',
   path: '/login',
-  getParentRoute: () => AuthRouteRoute,
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthOnboardStudentRoute = AuthOnboardStudentRouteImport.update({
+  id: '/_auth/onboard/student',
+  path: '/onboard/student',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthOnboardLecturerRoute = AuthOnboardLecturerRouteImport.update({
+  id: '/_auth/onboard/lecturer',
+  path: '/onboard/lecturer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthOnboardRoleRoleRoute = AuthOnboardRoleRoleRouteImport.update({
+  id: '/_auth/onboard/role/$role',
+  path: '/onboard/role/$role',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
   id: '/api/auth/$',
@@ -66,46 +73,69 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/login': typeof AuthLoginRoute
   '/onboard': typeof OnboardOnboardRoute
-  '/role': typeof OnboardRoleRoute
+  '/onboard/lecturer': typeof AuthOnboardLecturerRoute
+  '/onboard/student': typeof AuthOnboardStudentRoute
+  '/onboard/role/$role': typeof AuthOnboardRoleRoleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof AuthLoginRoute
   '/onboard': typeof OnboardOnboardRoute
-  '/role': typeof OnboardRoleRoute
+  '/onboard/lecturer': typeof AuthOnboardLecturerRoute
+  '/onboard/student': typeof AuthOnboardStudentRoute
+  '/onboard/role/$role': typeof AuthOnboardRoleRoleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_auth': typeof AuthRouteRouteWithChildren
   '/_onboard': typeof OnboardRouteRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_onboard/onboard': typeof OnboardOnboardRoute
-  '/_onboard/role': typeof OnboardRoleRoute
+  '/_auth/onboard/lecturer': typeof AuthOnboardLecturerRoute
+  '/_auth/onboard/student': typeof AuthOnboardStudentRoute
+  '/_auth/onboard/role/$role': typeof AuthOnboardRoleRoleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login' | '/onboard' | '/role'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/onboard'
+    | '/onboard/lecturer'
+    | '/onboard/student'
+    | '/onboard/role/$role'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/onboard' | '/role'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/onboard'
+    | '/onboard/lecturer'
+    | '/onboard/student'
+    | '/onboard/role/$role'
   id:
     | '__root__'
     | '/'
-    | '/_auth'
     | '/_onboard'
     | '/dashboard'
     | '/_auth/login'
     | '/_onboard/onboard'
-    | '/_onboard/role'
+    | '/_auth/onboard/lecturer'
+    | '/_auth/onboard/student'
+    | '/_auth/onboard/role/$role'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthRouteRoute: typeof AuthRouteRouteWithChildren
   OnboardRouteRoute: typeof OnboardRouteRouteWithChildren
   DashboardRoute: typeof DashboardRoute
+  AuthLoginRoute: typeof AuthLoginRoute
+  AuthOnboardLecturerRoute: typeof AuthOnboardLecturerRoute
+  AuthOnboardStudentRoute: typeof AuthOnboardStudentRoute
+  AuthOnboardRoleRoleRoute: typeof AuthOnboardRoleRoleRoute
 }
 export interface FileServerRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatServerRoute
@@ -145,26 +175,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/_onboard/role': {
-      id: '/_onboard/role'
-      path: '/role'
-      fullPath: '/role'
-      preLoaderRoute: typeof OnboardRoleRouteImport
-      parentRoute: typeof OnboardRouteRoute
     }
     '/_onboard/onboard': {
       id: '/_onboard/onboard'
@@ -178,7 +194,28 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof AuthRouteRoute
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/onboard/student': {
+      id: '/_auth/onboard/student'
+      path: '/onboard/student'
+      fullPath: '/onboard/student'
+      preLoaderRoute: typeof AuthOnboardStudentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/onboard/lecturer': {
+      id: '/_auth/onboard/lecturer'
+      path: '/onboard/lecturer'
+      fullPath: '/onboard/lecturer'
+      preLoaderRoute: typeof AuthOnboardLecturerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_auth/onboard/role/$role': {
+      id: '/_auth/onboard/role/$role'
+      path: '/onboard/role/$role'
+      fullPath: '/onboard/role/$role'
+      preLoaderRoute: typeof AuthOnboardRoleRoleRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -194,26 +231,12 @@ declare module '@tanstack/react-start/server' {
   }
 }
 
-interface AuthRouteRouteChildren {
-  AuthLoginRoute: typeof AuthLoginRoute
-}
-
-const AuthRouteRouteChildren: AuthRouteRouteChildren = {
-  AuthLoginRoute: AuthLoginRoute,
-}
-
-const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
-  AuthRouteRouteChildren,
-)
-
 interface OnboardRouteRouteChildren {
   OnboardOnboardRoute: typeof OnboardOnboardRoute
-  OnboardRoleRoute: typeof OnboardRoleRoute
 }
 
 const OnboardRouteRouteChildren: OnboardRouteRouteChildren = {
   OnboardOnboardRoute: OnboardOnboardRoute,
-  OnboardRoleRoute: OnboardRoleRoute,
 }
 
 const OnboardRouteRouteWithChildren = OnboardRouteRoute._addFileChildren(
@@ -222,9 +245,12 @@ const OnboardRouteRouteWithChildren = OnboardRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthRouteRoute: AuthRouteRouteWithChildren,
   OnboardRouteRoute: OnboardRouteRouteWithChildren,
   DashboardRoute: DashboardRoute,
+  AuthLoginRoute: AuthLoginRoute,
+  AuthOnboardLecturerRoute: AuthOnboardLecturerRoute,
+  AuthOnboardStudentRoute: AuthOnboardStudentRoute,
+  AuthOnboardRoleRoleRoute: AuthOnboardRoleRoleRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

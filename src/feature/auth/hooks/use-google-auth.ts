@@ -19,7 +19,7 @@ export const useSignOut = () => {
       fetchOptions: {
         onSuccess: () => {
           navigate({
-            to: '/',
+            to: '/dashboard',
           }); // redirect to login page
         },
       },
