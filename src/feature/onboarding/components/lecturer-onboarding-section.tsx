@@ -22,8 +22,13 @@ import {
   getFaculties,
   getDepartmentsByFaculty,
 } from '@/constants/faculty-department';
+import { useNavigate } from '@tanstack/react-router';
 
-export default function LecturerOnboardingSection() {
+export default function LecturerOnboardingSection({
+  handleConfirmCancel,
+}: {
+  handleConfirmCancel: () => void;
+}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -33,6 +38,8 @@ export default function LecturerOnboardingSection() {
   const [title, setTitle] = useState('');
   const [faculty, setFaculty] = useState('');
   const [department, setDepartment] = useState('');
+
+  const navigate = useNavigate();
 
   const faculties = getFaculties();
   const departments = faculty ? getDepartmentsByFaculty(faculty) : [];
@@ -54,20 +61,13 @@ export default function LecturerOnboardingSection() {
   };
 
   const handleGoToDashboard = () => {
-    window.location.href = '/dashboard';
+    navigate({
+      to: '/dashboard',
+    });
   };
 
   const handleCancel = () => {
     setShowCancelModal(true);
-  };
-
-  const handleConfirmCancel = () => {
-    // Mock account deletion
-    console.log('Account deleted');
-    // Mock logout
-    console.log('User logged out');
-    // Redirect to home
-    // navigate('/');
   };
 
   // Step 1: Personal Info

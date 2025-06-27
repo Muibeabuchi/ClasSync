@@ -6,6 +6,7 @@ import {
 import { userRoleSchema } from './schema';
 import { query } from './_generated/server';
 import { getCurrentUser, getUserProfileId } from './models/userprofileModel';
+// import { createAuth } from './auth';
 
 export const getAuthenticatedUser = query({
   args: {},
@@ -53,12 +54,22 @@ export const updateUserRole = AuthenticatedUserMutation({
 export const getUserOnboardedStatus = AuthenticatedUserQuery({
   returns: v.union(v.boolean(), v.null()),
   handler: async (ctx) => {
+    const auth = await ctx.auth.getUserIdentity();
+    if (!auth) return null;
     const userInfo = await ctx.db.get(ctx.user._id);
     if (!userInfo) return null;
     return userInfo.isOnboarded;
   },
 });
 
+// export const cancelOnboardingFlow = AuthenticatedUserMutation({
+//   args: {},
+//   async handler(ctx, args) {
+//     const auth = createAuth(ctx);
+//     auth.api.deleteUser();
+//     // check if the user has onboarded. If true,return null,else remove and delete the user
+//   },
+// });
 // export const createUserRole = mutation({});
 
 // import { mutation, query } from "./_generated/server";

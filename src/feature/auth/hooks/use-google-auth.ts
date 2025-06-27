@@ -6,20 +6,20 @@ export const useGoogleSignIn = () => {
     return await authClient.signIn.social({
       provider: 'google',
       newUserCallbackURL: '/onboard',
+      callbackURL: '/dashboard',
     });
   }
   return signIn;
 };
 
 export const useSignOut = () => {
-  // const router = useRouter()
   const navigate = useNavigate();
   async function signOut() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
           navigate({
-            to: '/dashboard',
+            to: '/login',
           }); // redirect to login page
         },
       },

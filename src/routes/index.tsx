@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { createFileRoute } from '@tanstack/react-router';
 
 export const Route = createFileRoute('/')({
@@ -5,5 +6,12 @@ export const Route = createFileRoute('/')({
 });
 
 function RouteComponent() {
-  return <div>Hello !</div>;
+  return (
+    <div className="w-full">
+      Hello !
+      <button className="ml-auto bg-red-400 p-3">
+        <Link to="/login">Log in</Link>
+      </button>
+    </div>
+  );
 }

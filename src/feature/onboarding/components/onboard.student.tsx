@@ -23,7 +23,11 @@ import {
   getDepartmentsByFaculty,
 } from '@/constants/faculty-department';
 
-export default function StudentOnboardingSection() {
+export default function StudentOnboardingSection({
+  handleConfirmCancel,
+}: {
+  handleConfirmCancel: () => void;
+}) {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState<string[]>([]);
@@ -84,15 +88,6 @@ export default function StudentOnboardingSection() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleConfirmCancel = () => {
-    // Mock account deletion
-    console.log('Account deleted');
-    // Mock logout
-    console.log('User logged out');
-    // Redirect to home
-    // navigate('/');
   };
 
   return (

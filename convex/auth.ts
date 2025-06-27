@@ -70,6 +70,11 @@ export const createAuth = (ctx: GenericCtx) =>
         clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       },
     },
+    user: {
+      deleteUser: {
+        enabled: true,
+      },
+    },
     plugins: [
       // The Convex plugin is required
       convex(),

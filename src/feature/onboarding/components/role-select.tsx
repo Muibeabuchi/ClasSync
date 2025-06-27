@@ -14,7 +14,11 @@ import { UserRoleType } from '../schema/onboarding-schema';
 import { useUpdateUserRole } from '../api/api-hooks';
 // import { UserRoleType } from '../schema/onboarding-schema';
 
-export const RoleSelect = () => {
+export const RoleSelect = ({
+  handleConfirmCancel,
+}: {
+  handleConfirmCancel: () => void;
+}) => {
   const navigate = useNavigate();
   const { mutateAsync: updateUserRole, isPending: updatingUserRole } =
     useUpdateUserRole();
@@ -34,15 +38,6 @@ export const RoleSelect = () => {
 
   const handleCancel = () => {
     setShowCancelModal(true);
-  };
-
-  const handleConfirmCancel = () => {
-    // Mock account deletion
-    console.log('Account deleted');
-    // Mock logout
-    console.log('User logged out');
-    // Redirect to home
-    // navigate('/');
   };
 
   return (

@@ -1,4 +1,5 @@
 // import { userRoleConstant } from '@/constants/constants';
+import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
 import { useGetUserRole } from '@/feature/onboarding/api/api-hooks';
 import LecturerOnboardingSection from '@/feature/onboarding/components/lecturer-onboarding-section';
 import StudentOnboardingSection from '@/feature/onboarding/components/onboard.student';
@@ -35,6 +36,10 @@ export const Route = createFileRoute('/_onboard/role')({
 function RouteComponent() {
   const navigate = Route.useNavigate();
   const { data: userRole } = useGetUserRole();
+  const signOut = useSignOut();
+  const handleConfirmCancel = async () => {
+    await signOut();
+  };
   if (userRole === null) {
     navigate({
       to: '/onboard',
@@ -42,9 +47,13 @@ function RouteComponent() {
   }
 
   if (userRole === 'lecturer') {
-    return <LecturerOnboardingSection />;
+    return (
+      <LecturerOnboardingSection handleConfirmCancel={handleConfirmCancel} />
+    );
   }
   if (userRole === 'student') {
-    return <StudentOnboardingSection />;
+    return (
+      <StudentOnboardingSection handleConfirmCancel={handleConfirmCancel} />
+    );
   }
 }
