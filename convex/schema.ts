@@ -25,7 +25,6 @@ export const studentYearLevelSchema = v.union(
   v.literal(studentYearLevelConstants[300]),
   v.literal(studentYearLevelConstants[400]),
   v.literal(studentYearLevelConstants[500]),
-  v.literal(studentYearLevelConstants[600]),
 );
 
 export const studentGenderSchema = v.union(

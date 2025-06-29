@@ -22,11 +22,19 @@ import {
   getFaculties,
   getDepartmentsByFaculty,
 } from '@/constants/faculty-department';
+import {
+  GenderType,
+  OnboardingDataType,
+  yearLevelType,
+} from '../schema/onboarding-schema';
+import { yearLevelArrayConstant } from '@/constants/constants';
 
 export default function StudentOnboardingSection({
   handleConfirmCancel,
+  handleCompleteOnboarding,
 }: {
   handleConfirmCancel: () => void;
+  handleCompleteOnboarding: (data: OnboardingDataType) => Promise<void>;
 }) {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -35,8 +43,8 @@ export default function StudentOnboardingSection({
   // Form data
   const [fullName, setFullName] = useState('');
   const [registrationNumber, setRegistrationNumber] = useState('');
-  const [gender, setGender] = useState('');
-  const [yearLevel, setYearLevel] = useState('');
+  const [gender, setGender] = useState<GenderType>();
+  const [yearLevel, setYearLevel] = useState<yearLevelType>('100');
   const [faculty, setFaculty] = useState('');
   const [department, setDepartment] = useState('');
 
@@ -73,16 +81,17 @@ export default function StudentOnboardingSection({
 
     setIsSubmitting(true);
     try {
-      // const data = {
-      //   fullName,
-      //   registrationNumber,
-      //   gender,
-      //   yearLevel,
-      //   faculty,
-      //   department,
-      // };
-      // await mockSubmitStudentOnboarding(data);
-      window.location.href = '/dashboard';
+      const data = {
+        fullName,
+        registrationNumber,
+        gender,
+        yearLevel,
+        faculty,
+        department,
+      };
+      await handleCompleteOnboarding({
+        ...data,
+      });
     } catch (error) {
       console.error('Submission error:', error);
     } finally {
@@ -146,30 +155,41 @@ export default function StudentOnboardingSection({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="gender">Gender</Label>
-                <Select value={gender} onValueChange={setGender}>
+                <Select
+                  value={gender}
+                  onValueChange={(value) => {
+                    setGender(value as GenderType);
+                  }}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="yearLevel">Year Level</Label>
-                <Select value={yearLevel} onValueChange={setYearLevel}>
+                <Select
+                  value={yearLevel}
+                  onValueChange={(value) =>
+                    setYearLevel(value as yearLevelType)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select year" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="100">100 Level</SelectItem>
-                    <SelectItem value="200">200 Level</SelectItem>
-                    <SelectItem value="300">300 Level</SelectItem>
-                    <SelectItem value="400">400 Level</SelectItem>
-                    <SelectItem value="500">500 Level</SelectItem>
-                    <SelectItem value="600">600 Level</SelectItem>
+                    {yearLevelArrayConstant.map((year) => {
+                      return (
+                        <SelectItem key={year} value={year}>
+                          {year}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>

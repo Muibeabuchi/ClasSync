@@ -29,3 +29,8 @@ export const useUpdateUserRole = () => {
     mutationFn: useConvexMutation(api.userProfile.updateUserRole),
   });
 };
+
+export const useCompleteOnboarding = () =>
+  useMutation({
+    mutationFn: useConvexMutation(api.userProfile.completeUserOnboarding),
+  });

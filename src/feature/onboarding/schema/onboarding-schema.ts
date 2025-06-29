@@ -1,4 +1,8 @@
 // import { BackendUserRoleType } from '@/convex/schema';
+import {
+  lecturerTitleArrayConstant,
+  yearLevelArrayConstant,
+} from '@/constants/constants';
 import { BackendUserRoleType } from './../../../../convex/schema';
 // lib/zodSchemas.ts
 import { z } from 'zod';
@@ -6,6 +10,13 @@ import { z } from 'zod';
 
 // export const onboardSearchSchema = v.optional(v.fallback(v.literal('role')));
 // const oboardingState = v.picklist(['']);
+
+const yearLevelSchema = z.enum(yearLevelArrayConstant, {
+  required_error: 'Please select your year level',
+});
+const lecturerTitleSchema = z.enum(lecturerTitleArrayConstant, {
+  required_error: 'Please select a title',
+});
 
 const passportPhotoSchema = z
   .instanceof(File)
@@ -19,9 +30,7 @@ const passportPhotoSchema = z
 const genderSchema = z.union([z.literal('male'), z.literal('female')]);
 export const lecturerPersonalInfoSchema = z.object({
   fullName: z.string().min(5, 'Full name must be at least 5 characters'),
-  title: z.enum(['Prof', 'Dr', 'Engr', 'Mr', 'Mrs', 'Ms'], {
-    required_error: 'Please select a title',
-  }),
+  title: lecturerTitleSchema,
 });
 
 export const lecturerAcademicInfoSchema = z.object({
@@ -40,9 +49,7 @@ export const studentFormSchema = z.object({
   gender: genderSchema,
   //   .min(1, 'Please select your gender'),
 
-  yearLevel: z.enum(['100', '200', '300', '400', '500'], {
-    required_error: 'Please select your year level',
-  }),
+  yearLevel: yearLevelSchema,
   faculty: z.string().min(1, 'Please select a faculty'),
   department: z.string().min(1, 'Please select a department'),
   passportPhoto: passportPhotoSchema.optional(),
@@ -53,7 +60,13 @@ export const studentFormSchema = z.object({
 // export type StudentFormData = z.infer<typeof studentFormSchema>;
 export type UserRoleType = BackendUserRoleType;
 export type GenderType = z.infer<typeof genderSchema>;
+export type yearLevelType = z.infer<typeof yearLevelSchema>;
+export type lecturerTitleType = z.infer<typeof lecturerTitleSchema>;
 
 export type LecturerPersonalInfo = z.infer<typeof lecturerPersonalInfoSchema>;
 export type LecturerAcademicInfo = z.infer<typeof lecturerAcademicInfoSchema>;
 export type StudentFormData = z.infer<typeof studentFormSchema>;
+
+export type OnboardingDataType = Partial<
+  StudentFormData & LecturerAcademicInfo & LecturerPersonalInfo
+>;

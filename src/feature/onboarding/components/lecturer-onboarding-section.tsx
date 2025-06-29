@@ -22,12 +22,20 @@ import {
   getFaculties,
   getDepartmentsByFaculty,
 } from '@/constants/faculty-department';
-import { useNavigate } from '@tanstack/react-router';
+// import { useNavigate } from '@tanstack/react-router';
+import {
+  lecturerTitleType,
+  OnboardingDataType,
+} from '../schema/onboarding-schema';
+import { lecturerTitleArrayConstant } from '@/constants/constants';
 
 export default function LecturerOnboardingSection({
   handleConfirmCancel,
+  // handleCompleteOnboarding,
+  handleCompleteOnboarding,
 }: {
   handleConfirmCancel: () => void;
+  handleCompleteOnboarding: (data: OnboardingDataType) => Promise<void>;
 }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -35,11 +43,9 @@ export default function LecturerOnboardingSection({
 
   // Form data
   const [fullName, setFullName] = useState('Dr. John Smith');
-  const [title, setTitle] = useState('');
+  const [title, setTitle] = useState<lecturerTitleType>();
   const [faculty, setFaculty] = useState('');
   const [department, setDepartment] = useState('');
-
-  const navigate = useNavigate();
 
   const faculties = getFaculties();
   const departments = faculty ? getDepartmentsByFaculty(faculty) : [];
@@ -53,18 +59,14 @@ export default function LecturerOnboardingSection({
   const handleStepTwoNext = async () => {
     if (faculty && department) {
       setIsSubmitting(true);
-      // const completeData = { fullName, title, faculty, department };
       //? store  the users data in the data base. Make  a call to the  backend
-      // await mockSubmitLecturerOnboarding(completeData);
-      setIsSubmitting(false);
+      const completeData = { fullName, title, faculty, department };
+      handleCompleteOnboarding({
+        ...completeData,
+      });
       setCurrentStep(3);
+      setIsSubmitting(false);
     }
-  };
-
-  const handleGoToDashboard = () => {
-    navigate({
-      to: '/dashboard',
-    });
   };
 
   const handleCancel = () => {
@@ -116,17 +118,21 @@ export default function LecturerOnboardingSection({
 
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
-                <Select value={title} onValueChange={setTitle}>
+                <Select
+                  value={title}
+                  onValueChange={(value) =>
+                    setTitle(value as lecturerTitleType)
+                  }
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select your title" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Prof">Prof</SelectItem>
-                    <SelectItem value="Dr">Dr</SelectItem>
-                    <SelectItem value="Engr">Engr</SelectItem>
-                    <SelectItem value="Mr">Mr</SelectItem>
-                    <SelectItem value="Mrs">Mrs</SelectItem>
-                    <SelectItem value="Ms">Ms</SelectItem>
+                    {lecturerTitleArrayConstant.map((title) => (
+                      <SelectItem key={title} value={title}>
+                        {title}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -317,7 +323,7 @@ export default function LecturerOnboardingSection({
               <Button variant="outline" onClick={handleCancel}>
                 Cancel
               </Button>
-              <Button onClick={handleGoToDashboard}>Go to Dashboard</Button>
+              {/* <Button onClick={}>Go to Dashboard</Button> */}
             </div>
           </CardContent>
         </Card>
