@@ -19,14 +19,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
   lecturerAcademicInfoSchema,
   LecturerAcademicInfo,
 } from '../schema/onboarding-schema';
