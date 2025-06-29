@@ -11,7 +11,7 @@ export const userRoleSchema = v.union(
   v.literal(userRoleConstant.lecturer),
 );
 
-const lecturerTitleSchema = v.union(
+export const lecturerTitleSchema = v.union(
   v.literal(lecturerTitleConstant.Dr),
   v.literal(lecturerTitleConstant.prof),
   v.literal(lecturerTitleConstant.Eng),
@@ -19,7 +19,7 @@ const lecturerTitleSchema = v.union(
   v.literal(lecturerTitleConstant.Mrs),
 );
 
-const studentYearLevelSchema = v.union(
+export const studentYearLevelSchema = v.union(
   v.literal(studentYearLevelConstants[100]),
   v.literal(studentYearLevelConstants[200]),
   v.literal(studentYearLevelConstants[300]),
@@ -28,12 +28,18 @@ const studentYearLevelSchema = v.union(
   v.literal(studentYearLevelConstants[600]),
 );
 
+export const studentGenderSchema = v.union(
+  v.literal('male'),
+  v.literal('female'),
+);
+
 const applicationTables = {
   // User profiles table
   userProfiles: defineTable({
     email: v.string(),
     fullName: v.string(),
     isOnboarded: v.boolean(),
+    gender: v.optional(studentGenderSchema),
     role: v.optional(userRoleSchema),
     title: v.optional(lecturerTitleSchema),
     faculty: v.optional(v.string()),
@@ -41,8 +47,10 @@ const applicationTables = {
     registrationNumber: v.optional(v.string()),
     yearLevel: v.optional(studentYearLevelSchema),
     student_passport_photo_id: v.optional(v.id('_storage')),
-    // officialSchoolName: v.optional(v.string()),
-  }).index('by_role', ['role']),
+  })
+    .index('by_role', ['role'])
+    .index('by_registration_number', ['registrationNumber'])
+    .index('by_department', ['department']),
   // ClassList - Core abstraction for student groups
   classLists: defineTable({
     title: v.string(),

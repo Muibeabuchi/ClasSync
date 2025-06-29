@@ -40,7 +40,7 @@ export const CancelModal: React.FC<CancelModalProps> = ({
             onClick={onConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Delete Account
+            Cancel Onboarding
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

@@ -54,6 +54,7 @@ export default function LecturerOnboardingSection({
     if (faculty && department) {
       setIsSubmitting(true);
       // const completeData = { fullName, title, faculty, department };
+      //? store  the users data in the data base. Make  a call to the  backend
       // await mockSubmitLecturerOnboarding(completeData);
       setIsSubmitting(false);
       setCurrentStep(3);
