@@ -61,7 +61,7 @@ export const betterAuthComponent = new BetterAuth(components.betterAuth, {
 export const createAuth = (ctx: GenericCtx) =>
   betterAuth({
     // All auth requests will be proxied through your TanStack Start server
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.SITE_URL || 'http://localhost:3000',
     database: convexAdapter(ctx, betterAuthComponent),
     socialProviders: {
       google: {
