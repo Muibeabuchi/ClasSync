@@ -30,16 +30,12 @@ export function useDashboardRedirect() {
   useEffect(() => {
     // Only proceed with redirection logic if data has been fetched and is not loading
     if (!isLoading) {
-      console.log({ onboardStatus });
-
       if (onboardStatus === null) {
-        console.log('User is not authenticated');
         navigate({
           to: '/login',
         });
       } else if (onboardStatus !== null) {
         if (onboardStatus === false) {
-          console.log('User is authenticated but has not onboarded');
           navigate({
             to: '/onboard',
           });

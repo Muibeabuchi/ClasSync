@@ -11,7 +11,6 @@ export const getUserOnboardStatusAction = createServerFn({
       api.userProfile.getUserOnboardedStatus,
     );
   } catch {
-    console.log('An error occurred while fetching the users onboarding status');
     return null;
   }
 });

@@ -13,9 +13,7 @@ import { useGoogleSignIn } from '../hooks/use-google-auth';
 const LoginPage = () => {
   const loginWithGoogle = useGoogleSignIn();
   const handleGoogleLogin = async () => {
-    console.log('Google login initiated');
-    const response = await loginWithGoogle();
-    console.log(response);
+    loginWithGoogle();
   };
 
   return (
