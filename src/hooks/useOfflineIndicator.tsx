@@ -1,6 +1,6 @@
-import { onlineManager } from '@tanstack/react-query'
-import { useEffect } from 'react'
-import toast from 'react-hot-toast'
+import { onlineManager } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import toast from 'react-hot-toast';
 
 export function useOfflineIndicator() {
   useEffect(() => {
@@ -9,13 +9,13 @@ export function useOfflineIndicator() {
         toast.success('online', {
           id: 'ReactQuery',
           duration: 2000,
-        })
+        });
       } else {
         toast.error('offline', {
           id: 'ReactQuery',
           duration: Infinity,
-        })
+        });
       }
-    })
-  }, [])
+    });
+  }, []);
 }

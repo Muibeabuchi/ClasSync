@@ -1,355 +1,355 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { getAuthUserId } from "@convex-dev/auth/server";
-import { api } from "./_generated/api";
+// import { v } from "convex/values";
+// import { mutation, query } from "./_generated/server";
+// import { getAuthUserId } from "@convex-dev/auth/server";
+// import { api } from "./_generated/api";
 
-// Create course with ClassLists
-export const createCourseWithClassLists = mutation({
-  args: {
-    courseName: v.string(),
-    courseCode: v.string(),
-    description: v.optional(v.string()),
-    classListIds: v.array(v.id("classLists")),
-    excludedStudents: v.optional(v.array(v.object({
-      classListId: v.id("classLists"),
-      registrationNumber: v.string(),
-      reason: v.optional(v.string()),
-    }))),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+// // Create course with ClassLists
+// export const createCourseWithClassLists = mutation({
+//   args: {
+//     courseName: v.string(),
+//     courseCode: v.string(),
+//     description: v.optional(v.string()),
+//     classListIds: v.array(v.id("classLists")),
+//     excludedStudents: v.optional(v.array(v.object({
+//       classListId: v.id("classLists"),
+//       registrationNumber: v.string(),
+//       reason: v.optional(v.string()),
+//     }))),
+//   },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
 
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-    
-    if (!profile || profile.role !== "lecturer") {
-      throw new Error("Only lecturers can create courses");
-    }
+//     const profile = await ctx.db
+//       .query("userProfiles")
+//       .withIndex("by_user_id", (q) => q.eq("userId", userId))
+//       .unique();
 
-    // Validate ClassLists belong to lecturer
-    for (const classListId of args.classListIds) {
-      const classList = await ctx.db.get(classListId);
-      if (!classList || classList.lecturerId !== userId) {
-        throw new Error("Invalid ClassList access");
-      }
-    }
+//     if (!profile || profile.role !== "lecturer") {
+//       throw new Error("Only lecturers can create courses");
+//     }
 
-    // Generate unique join code
-    let joinCode: string;
-    let isUnique = false;
-    do {
-      joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const existing = await ctx.db
-        .query("courses")
-        .withIndex("by_join_code", (q) => q.eq("joinCode", joinCode))
-        .first();
-      isUnique = !existing;
-    } while (!isUnique);
+//     // Validate ClassLists belong to lecturer
+//     for (const classListId of args.classListIds) {
+//       const classList = await ctx.db.get(classListId);
+//       if (!classList || classList.lecturerId !== userId) {
+//         throw new Error("Invalid ClassList access");
+//       }
+//     }
 
-    // Generate attendance list from ClassLists
-    const attendanceList = await generateAttendanceListFromClassLists(
-      ctx,
-      args.classListIds,
-      args.excludedStudents || []
-    );
+//     // Generate unique join code
+//     let joinCode: string;
+//     let isUnique = false;
+//     do {
+//       joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+//       const existing = await ctx.db
+//         .query("courses")
+//         .withIndex("by_join_code", (q) => q.eq("joinCode", joinCode))
+//         .first();
+//       isUnique = !existing;
+//     } while (!isUnique);
 
-    const courseId = await ctx.db.insert("courses", {
-      courseName: args.courseName,
-      courseCode: args.courseCode,
-      description: args.description,
-      lecturerId: userId,
-      joinCode,
-      classListIds: args.classListIds,
-      excludedStudents: args.excludedStudents || [],
-      attendanceList,
-      isAttendanceListLocked: false,
-      status: "active",
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+//     // Generate attendance list from ClassLists
+//     const attendanceList = await generateAttendanceListFromClassLists(
+//       ctx,
+//       args.classListIds,
+//       args.excludedStudents || []
+//     );
 
-    return { courseId, joinCode };
-  },
-});
+//     const courseId = await ctx.db.insert("courses", {
+//       courseName: args.courseName,
+//       courseCode: args.courseCode,
+//       description: args.description,
+//       lecturerId: userId,
+//       joinCode,
+//       classListIds: args.classListIds,
+//       excludedStudents: args.excludedStudents || [],
+//       attendanceList,
+//       isAttendanceListLocked: false,
+//       status: "active",
+//       createdAt: Date.now(),
+//       updatedAt: Date.now(),
+//     });
 
-// Helper function to generate attendance list
-async function generateAttendanceListFromClassLists(
-  ctx: any,
-  classListIds: string[],
-  excludedStudents: Array<{
-    classListId: string;
-    registrationNumber: string;
-    reason?: string;
-  }>
-) {
-  const attendanceList = [];
-  const seenRegistrationNumbers = new Set();
+//     return { courseId, joinCode };
+//   },
+// });
 
-  for (const classListId of classListIds) {
-    const classList = await ctx.db.get(classListId);
-    if (!classList) continue;
+// // Helper function to generate attendance list
+// async function generateAttendanceListFromClassLists(
+//   ctx: any,
+//   classListIds: string[],
+//   excludedStudents: Array<{
+//     classListId: string;
+//     registrationNumber: string;
+//     reason?: string;
+//   }>
+// ) {
+//   const attendanceList = [];
+//   const seenRegistrationNumbers = new Set();
 
-    for (const student of classList.students) {
-      // Skip if already added (from another ClassList)
-      if (seenRegistrationNumbers.has(student.registrationNumber)) {
-        continue;
-      }
+//   for (const classListId of classListIds) {
+//     const classList = await ctx.db.get(classListId);
+//     if (!classList) continue;
 
-      // Skip if excluded
-      const isExcluded = excludedStudents.some(
-        excluded => excluded.classListId === classListId && 
-                   excluded.registrationNumber === student.registrationNumber
-      );
+//     for (const student of classList.students) {
+//       // Skip if already added (from another ClassList)
+//       if (seenRegistrationNumbers.has(student.registrationNumber)) {
+//         continue;
+//       }
 
-      if (!isExcluded) {
-        attendanceList.push({
-          ...student,
-          classListId,
-          isLinked: false,
-          linkedUserId: undefined,
-        });
-        seenRegistrationNumbers.add(student.registrationNumber);
-      }
-    }
-  }
+//       // Skip if excluded
+//       const isExcluded = excludedStudents.some(
+//         excluded => excluded.classListId === classListId &&
+//                    excluded.registrationNumber === student.registrationNumber
+//       );
 
-  return attendanceList;
-}
+//       if (!isExcluded) {
+//         attendanceList.push({
+//           ...student,
+//           classListId,
+//           isLinked: false,
+//           linkedUserId: undefined,
+//         });
+//         seenRegistrationNumbers.add(student.registrationNumber);
+//       }
+//     }
+//   }
 
-// Regenerate attendance list for a course
-export const regenerateAttendanceList = mutation({
-  args: { courseId: v.id("courses") },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+//   return attendanceList;
+// }
 
-    const course = await ctx.db.get(args.courseId);
-    if (!course) {
-      throw new Error("Course not found");
-    }
+// // Regenerate attendance list for a course
+// export const regenerateAttendanceList = mutation({
+//   args: { courseId: v.id("courses") },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
 
-    if (course.lecturerId !== userId) {
-      throw new Error("Access denied");
-    }
+//     const course = await ctx.db.get(args.courseId);
+//     if (!course) {
+//       throw new Error("Course not found");
+//     }
 
-    if (course.isAttendanceListLocked) {
-      throw new Error("Attendance list is locked and cannot be regenerated");
-    }
+//     if (course.lecturerId !== userId) {
+//       throw new Error("Access denied");
+//     }
 
-    // Preserve existing links
-    const existingLinks = new Map();
-    for (const student of course.attendanceList) {
-      if (student.isLinked && student.linkedUserId) {
-        existingLinks.set(student.registrationNumber, student.linkedUserId);
-      }
-    }
+//     if (course.isAttendanceListLocked) {
+//       throw new Error("Attendance list is locked and cannot be regenerated");
+//     }
 
-    // Generate new attendance list
-    const newAttendanceList = await generateAttendanceListFromClassLists(
-      ctx,
-      course.classListIds,
-      course.excludedStudents
-    );
+//     // Preserve existing links
+//     const existingLinks = new Map();
+//     for (const student of course.attendanceList) {
+//       if (student.isLinked && student.linkedUserId) {
+//         existingLinks.set(student.registrationNumber, student.linkedUserId);
+//       }
+//     }
 
-    // Restore links
-    for (const student of newAttendanceList) {
-      if (existingLinks.has(student.registrationNumber)) {
-        student.isLinked = true;
-        student.linkedUserId = existingLinks.get(student.registrationNumber);
-      }
-    }
+//     // Generate new attendance list
+//     const newAttendanceList = await generateAttendanceListFromClassLists(
+//       ctx,
+//       course.classListIds,
+//       course.excludedStudents
+//     );
 
-    await ctx.db.patch(args.courseId, {
-      attendanceList: newAttendanceList,
-      updatedAt: Date.now(),
-    });
+//     // Restore links
+//     for (const student of newAttendanceList) {
+//       if (existingLinks.has(student.registrationNumber)) {
+//         student.isLinked = true;
+//         student.linkedUserId = existingLinks.get(student.registrationNumber);
+//       }
+//     }
 
-    return { success: true };
-  },
-});
+//     await ctx.db.patch(args.courseId, {
+//       attendanceList: newAttendanceList,
+//       updatedAt: Date.now(),
+//     });
 
-// Lock/unlock attendance list
-export const toggleAttendanceListLock = mutation({
-  args: {
-    courseId: v.id("courses"),
-    locked: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+//     return { success: true };
+//   },
+// });
 
-    const course = await ctx.db.get(args.courseId);
-    if (!course) {
-      throw new Error("Course not found");
-    }
+// // Lock/unlock attendance list
+// export const toggleAttendanceListLock = mutation({
+//   args: {
+//     courseId: v.id("courses"),
+//     locked: v.boolean(),
+//   },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
 
-    if (course.lecturerId !== userId) {
-      throw new Error("Access denied");
-    }
+//     const course = await ctx.db.get(args.courseId);
+//     if (!course) {
+//       throw new Error("Course not found");
+//     }
 
-    await ctx.db.patch(args.courseId, {
-      isAttendanceListLocked: args.locked,
-      updatedAt: Date.now(),
-    });
+//     if (course.lecturerId !== userId) {
+//       throw new Error("Access denied");
+//     }
 
-    return { success: true };
-  },
-});
+//     await ctx.db.patch(args.courseId, {
+//       isAttendanceListLocked: args.locked,
+//       updatedAt: Date.now(),
+//     });
 
-// Get course with enhanced data
-export const getCourseWithDetails = query({
-  args: { courseId: v.id("courses") },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+//     return { success: true };
+//   },
+// });
 
-    const course = await ctx.db.get(args.courseId);
-    if (!course) {
-      throw new Error("Course not found");
-    }
+// // Get course with enhanced data
+// export const getCourseWithDetails = query({
+//   args: { courseId: v.id("courses") },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
 
-    if (course.lecturerId !== userId) {
-      throw new Error("Access denied");
-    }
+//     const course = await ctx.db.get(args.courseId);
+//     if (!course) {
+//       throw new Error("Course not found");
+//     }
 
-    // Get ClassLists
-    const classLists = await Promise.all(
-      course.classListIds.map(id => ctx.db.get(id))
-    );
+//     if (course.lecturerId !== userId) {
+//       throw new Error("Access denied");
+//     }
 
-    // Get join requests
-    const joinRequests = await ctx.db
-      .query("joinRequests")
-      .withIndex("by_course", (q) => q.eq("courseId", args.courseId))
-      .collect();
+//     // Get ClassLists
+//     const classLists = await Promise.all(
+//       course.classListIds.map(id => ctx.db.get(id))
+//     );
 
-    // Get attendance sessions
-    const sessions = await ctx.db
-      .query("attendanceSessions")
-      .withIndex("by_course", (q) => q.eq("courseId", args.courseId))
-      .collect();
+//     // Get join requests
+//     const joinRequests = await ctx.db
+//       .query("joinRequests")
+//       .withIndex("by_course", (q) => q.eq("courseId", args.courseId))
+//       .collect();
 
-    return {
-      course,
-      classLists: classLists.filter(Boolean),
-      joinRequests,
-      sessions,
-    };
-  },
-});
+//     // Get attendance sessions
+//     const sessions = await ctx.db
+//       .query("attendanceSessions")
+//       .withIndex("by_course", (q) => q.eq("courseId", args.courseId))
+//       .collect();
 
-// Complete course and generate report
-export const completeCourse = mutation({
-  args: {
-    courseId: v.id("courses"),
-    confirmationText: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+//     return {
+//       course,
+//       classLists: classLists.filter(Boolean),
+//       joinRequests,
+//       sessions,
+//     };
+//   },
+// });
 
-    const course = await ctx.db.get(args.courseId);
-    if (!course) {
-      throw new Error("Course not found");
-    }
+// // Complete course and generate report
+// export const completeCourse = mutation({
+//   args: {
+//     courseId: v.id("courses"),
+//     confirmationText: v.string(),
+//   },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
 
-    if (course.lecturerId !== userId) {
-      throw new Error("Access denied");
-    }
+//     const course = await ctx.db.get(args.courseId);
+//     if (!course) {
+//       throw new Error("Course not found");
+//     }
 
-    if (args.confirmationText !== course.courseName) {
-      throw new Error("Confirmation text does not match course name");
-    }
+//     if (course.lecturerId !== userId) {
+//       throw new Error("Access denied");
+//     }
 
-    // TODO: Generate completion report
-    // const analytics = await ctx.runQuery(api.courseManagement.getCourseAnalytics, {
-    //   courseId: args.courseId,
-    // });
-    
-    const enrolledStudents = course.attendanceList.filter((s: any) => s.isLinked);
-    
-    const analytics = {
-      totalStudents: enrolledStudents.length,
-      totalSessions: 0,
-      averageAttendance: 0,
-      topPerformers: [],
-      bottomPerformers: [],
-      sessionBreakdown: [],
-    };
+//     if (args.confirmationText !== course.courseName) {
+//       throw new Error("Confirmation text does not match course name");
+//     }
 
-    await ctx.db.insert("courseReports", {
-      courseId: args.courseId,
-      reportType: "completion",
-      data: {
-        totalStudents: analytics.totalStudents,
-        totalSessions: analytics.totalSessions,
-        averageAttendance: analytics.averageAttendance,
-        topPerformers: analytics.topPerformers,
-        bottomPerformers: analytics.bottomPerformers,
-        sessionBreakdown: analytics.sessionBreakdown,
-      },
-      generatedAt: Date.now(),
-      generatedBy: userId,
-    });
+//     // TODO: Generate completion report
+//     // const analytics = await ctx.runQuery(api.courseManagement.getCourseAnalytics, {
+//     //   courseId: args.courseId,
+//     // });
 
-    // Update course status
-    await ctx.db.patch(args.courseId, {
-      status: "completed",
-      updatedAt: Date.now(),
-    });
+//     const enrolledStudents = course.attendanceList.filter((s: any) => s.isLinked);
 
-    // Notify all linked students
-    for (const student of course.attendanceList) {
-      if (student.isLinked && student.linkedUserId) {
-        await ctx.db.insert("notifications", {
-          userId: student.linkedUserId,
-          type: "course_completed",
-          title: "Course Completed",
-          message: `${course.courseName} has been marked as completed. Your final attendance report is now available.`,
-          data: { courseId: args.courseId },
-          isRead: false,
-          createdAt: Date.now(),
-        });
-      }
-    }
+//     const analytics = {
+//       totalStudents: enrolledStudents.length,
+//       totalSessions: 0,
+//       averageAttendance: 0,
+//       topPerformers: [],
+//       bottomPerformers: [],
+//       sessionBreakdown: [],
+//     };
 
-    return { success: true };
-  },
-});
+//     await ctx.db.insert("courseReports", {
+//       courseId: args.courseId,
+//       reportType: "completion",
+//       data: {
+//         totalStudents: analytics.totalStudents,
+//         totalSessions: analytics.totalSessions,
+//         averageAttendance: analytics.averageAttendance,
+//         topPerformers: analytics.topPerformers,
+//         bottomPerformers: analytics.bottomPerformers,
+//         sessionBreakdown: analytics.sessionBreakdown,
+//       },
+//       generatedAt: Date.now(),
+//       generatedBy: userId,
+//     });
 
-// Get all courses by status
-export const getCoursesByStatus = query({
-  args: {
-    status: v.optional(v.union(v.literal("active"), v.literal("archived"), v.literal("completed"))),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getAuthUserId(ctx);
-    if (!userId) {
-      throw new Error("Not authenticated");
-    }
+//     // Update course status
+//     await ctx.db.patch(args.courseId, {
+//       status: "completed",
+//       updatedAt: Date.now(),
+//     });
 
-    let query = ctx.db
-      .query("courses")
-      .withIndex("by_lecturer", (q) => q.eq("lecturerId", userId));
+//     // Notify all linked students
+//     for (const student of course.attendanceList) {
+//       if (student.isLinked && student.linkedUserId) {
+//         await ctx.db.insert("notifications", {
+//           userId: student.linkedUserId,
+//           type: "course_completed",
+//           title: "Course Completed",
+//           message: `${course.courseName} has been marked as completed. Your final attendance report is now available.`,
+//           data: { courseId: args.courseId },
+//           isRead: false,
+//           createdAt: Date.now(),
+//         });
+//       }
+//     }
 
-    if (args.status) {
-      const courses = await query.collect();
-      return courses.filter(course => course.status === args.status);
-    }
+//     return { success: true };
+//   },
+// });
 
-    return await query.collect();
-  },
-});
+// // Get all courses by status
+// export const getCoursesByStatus = query({
+//   args: {
+//     status: v.optional(v.union(v.literal("active"), v.literal("archived"), v.literal("completed"))),
+//   },
+//   handler: async (ctx, args) => {
+//     const userId = await getAuthUserId(ctx);
+//     if (!userId) {
+//       throw new Error("Not authenticated");
+//     }
+
+//     let query = ctx.db
+//       .query("courses")
+//       .withIndex("by_lecturer", (q) => q.eq("lecturerId", userId));
+
+//     if (args.status) {
+//       const courses = await query.collect();
+//       return courses.filter(course => course.status === args.status);
+//     }
+
+//     return await query.collect();
+//   },
+// });
