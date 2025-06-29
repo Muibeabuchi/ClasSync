@@ -21,28 +21,16 @@ export function useLoginRedirect() {
     isLoading,
     isError,
     error,
-  } = useQuery(
-    convexQuery(api.userProfile.getUserOnboardedStatus, {}),
-    // queryKey: ['userOnboardStatus'], // Unique key for this query
-    // queryFn: getUserOnboardStatusAction, // The function to fetch the data
-    // staleTime: Infinity, // Keep data fresh indefinitely for authentication status
-    // cacheTime: Infinity, // Keep data in cache indefinitely
-    // // Add any other useQuery options as needed, e.g., refetchOnWindowFocus: false
-  );
+  } = useQuery(convexQuery(api.userProfile.getUserOnboardedStatus, {}));
 
   useEffect(() => {
     // Only proceed with redirection logic if data has been fetched and is not loading
     if (!isLoading) {
-      console.log({ onboardStatus });
-
       if (onboardStatus === null) {
-        console.log('User is not authenticated');
         // You might navigate to a login page here if that's the desired behavior
       } else if (onboardStatus === true) {
-        console.log('User is authenticated and has onboarded');
         navigate({ to: '/dashboard' });
       } else if (onboardStatus === false) {
-        console.log('User is authenticated and has not onboarded');
         navigate({ to: '/onboard' });
       }
     }
