@@ -210,7 +210,7 @@ export function LecturerStepOne({
           <CardHeader>
             <CardTitle>Personal Information</CardTitle>
             <CardDescription>
-              Let's start with your basic information
+              {`Let's start with your basic information`}
             </CardDescription>
           </CardHeader>
           <CardContent>
