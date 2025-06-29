@@ -21,6 +21,7 @@ export default defineConfig({
       projects: ['./tsconfig.json'],
     }),
     tanstackStart({
+      target: 'netlify',
       react: {
         babel: {
           plugins: [['babel-plugin-react-compiler', ReactCompilerConfig]],
