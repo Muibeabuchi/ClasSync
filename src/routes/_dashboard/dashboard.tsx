@@ -1,4 +1,5 @@
 import { useDashboardRedirect } from '@/feature/onboarding/hooks/use-dashboard-redirect';
+import StudentDashboard from '@/feature/student/components/student-dashboard';
 // import { getUserOnboardStatusAction } from '@/server/userprofile';
 import {
   createFileRoute,
@@ -24,7 +25,14 @@ export const Route = createFileRoute('/_dashboard/dashboard')({
   component: RouteComponent,
 });
 
+const userData = {
+  fullName: 'Dachiksta',
+  regNumber: '20201248252',
+  department: 'SOE',
+  yearLevel: '200',
+};
+
 function RouteComponent() {
   useDashboardRedirect();
-  return <div>Hello Dashboard</div>;
+  return <StudentDashboard userData={userData} />;
 }
