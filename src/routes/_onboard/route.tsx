@@ -1,4 +1,5 @@
 // import { getUserOnboardStatusAction } from '@/server/userprofile';
+import { useOnboardRedirect } from '@/feature/onboarding/hooks/use-onboard-redirect';
 import {
   Outlet,
   //  redirect
@@ -28,6 +29,7 @@ export const Route = createFileRoute('/_onboard')({
 });
 
 function RouteComponent() {
+  useOnboardRedirect();
   return (
     <main>
       <Outlet />
