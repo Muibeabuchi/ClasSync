@@ -45,7 +45,11 @@ import {
 } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
 import { betterAuth } from 'better-auth';
-import { components, internal } from './_generated/api';
+import {
+  // api,
+  components,
+  internal,
+} from './_generated/api';
 import { type GenericCtx } from './_generated/server';
 import type { DataModel } from './_generated/dataModel';
 
