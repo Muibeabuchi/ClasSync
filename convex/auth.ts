@@ -40,6 +40,7 @@
 import {
   BetterAuth,
   convexAdapter,
+  // PublicAuthFunctions,
   type AuthFunctions,
 } from '@convex-dev/better-auth';
 import { convex } from '@convex-dev/better-auth/plugins';
@@ -52,6 +53,7 @@ import * as AuthModel from './models/authModel';
 
 // Type safe way to pass Convex functions defined in this file
 const authFunctions: AuthFunctions = internal.auth;
+// const publicAuthFunctions: PublicAuthFunctions = api.auth;
 
 // Initialize the component
 export const betterAuthComponent = new BetterAuth(components.betterAuth, {
@@ -61,7 +63,7 @@ export const betterAuthComponent = new BetterAuth(components.betterAuth, {
 export const createAuth = (ctx: GenericCtx) =>
   betterAuth({
     // All auth requests will be proxied through your TanStack Start server
-    baseURL: process.env.SITE_URL || 'https://classynk.netlify.app',
+    baseURL: process.env.SITE_URL,
     database: convexAdapter(ctx, betterAuthComponent),
     socialProviders: {
       google: {
