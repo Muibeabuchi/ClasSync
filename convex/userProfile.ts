@@ -37,11 +37,7 @@ export const getUserRole = query({
 export const getUserOnboardedStatus = AuthenticatedUserQuery({
   returns: v.union(v.boolean(), v.null()),
   handler: async (ctx) => {
-    const auth = await ctx.auth.getUserIdentity();
-    if (!auth) return null;
-    const userInfo = await ctx.db.get(ctx.user._id);
-    if (!userInfo) return null;
-    return userInfo.isOnboarded;
+    return ctx.user.isOnboarded;
   },
 });
 
