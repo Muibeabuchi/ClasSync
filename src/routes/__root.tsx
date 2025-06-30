@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
 import * as React from 'react';
-import { Toaster } from 'react-hot-toast';
+// import { Toaster } from 'react-hot-toast';
 import { ConvexReactClient } from 'convex/react';
+import { Toaster } from '@/components/ui/sonner';
 
 import {
   Outlet,
