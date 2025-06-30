@@ -132,7 +132,7 @@ importers:
         specifier: ^8.2.2
         version: 8.2.2
       convex:
-        specifier: ^1.19.0
+        specifier: ^1.25.0
         version: 1.25.0(react@19.1.0)
       convex-helpers:
         specifier: ^0.1.95
