@@ -1,3 +1,4 @@
+import LecturerDashboard from '@/feature/lecturer/components/lecturer-dashboard';
 import { UserRoleSchema } from '@/feature/onboarding/schema/onboarding-schema';
 import StudentDashboard from '@/feature/student/components/student-dashboard';
 import { createFileRoute } from '@tanstack/react-router';
@@ -22,5 +23,6 @@ function RouteComponent() {
   if (role === 'student') {
     return <StudentDashboard userData={userData} />;
   }
-  return <div> Lecturer Dashboard</div>;
+
+  return <LecturerDashboard userData={userData} />;
 }
