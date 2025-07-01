@@ -35,9 +35,12 @@ export const getUserRole = query({
 });
 
 export const getUserOnboardedStatus = AuthenticatedUserQuery({
-  returns: v.union(v.boolean(), v.null()),
+  returns: v.object({
+    isOnboarded: v.union(v.boolean(), v.null()),
+    role: v.optional(userRoleSchema),
+  }),
   handler: async (ctx) => {
-    return ctx.user.isOnboarded;
+    return { isOnboarded: ctx.user.isOnboarded, role: ctx.user.role };
   },
 });
 

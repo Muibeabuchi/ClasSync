@@ -1,15 +1,38 @@
-// import { BackendUserRoleType } from '@/convex/schema';
 import {
   lecturerTitleArrayConstant,
+  userRoleConstant,
+  // userRoleConstant,
   yearLevelArrayConstant,
 } from '@/constants/constants';
-import { BackendUserRoleType } from './../../../../convex/schema';
-// lib/zodSchemas.ts
+import {
+  BackendUserRoleType,
+  // userRoleSchema,
+} from './../../../../convex/schema';
 import { z } from 'zod';
+// lib/zodSchemas.ts
+// import { BackendUserRoleType } from '@/convex/schema';
+// import { toStandardSchema } from 'convex-helpers/standardSchema';
+// import { v } from 'convex/values';
 // import * as v from 'valibot';
 
 // export const onboardSearchSchema = v.optional(v.fallback(v.literal('role')));
 // const oboardingState = v.picklist(['']);
+
+// export const userRoleSchema = z.union([
+//   z.literal(userRoleConstant.student),
+//   z.literal(userRoleConstant.lecturer),
+// ]);
+
+// export const userRoleStandardValidator = toStandardSchema(
+//   v.object({ role: userRoleSchema }),
+// );
+
+export const UserRoleSchema = z.object({
+  role: z.union([
+    z.literal(userRoleConstant.student),
+    z.literal(userRoleConstant.lecturer),
+  ]),
+});
 
 const yearLevelSchema = z.enum(yearLevelArrayConstant, {
   required_error: 'Please select your year level',
@@ -28,6 +51,7 @@ const passportPhotoSchema = z
   });
 
 const genderSchema = z.union([z.literal('male'), z.literal('female')]);
+
 export const lecturerPersonalInfoSchema = z.object({
   fullName: z.string().min(5, 'Full name must be at least 5 characters'),
   title: lecturerTitleSchema,

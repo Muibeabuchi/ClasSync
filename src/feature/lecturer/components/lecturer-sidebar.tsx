@@ -1,0 +1,190 @@
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import { Home, BookOpen, Users, Bell, Plus, LogOut, User } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+// import { Button } from "@/components/ui/button";
+// import { ThemeToggle } from "@/components/theme-toggle";
+
+interface LecturerSidebarProps {
+  activePage: string;
+  onPageChange: (page: any) => void;
+  userData: any;
+}
+
+const LecturerSidebar = ({
+  activePage,
+  onPageChange,
+  userData,
+}: LecturerSidebarProps) => {
+  const { state } = useSidebar();
+
+  const navigationItems = [
+    {
+      id: 'dashboard',
+      label: 'Dashboard',
+      icon: Home,
+      badge: null,
+    },
+    {
+      id: 'courses',
+      label: 'My Courses',
+      icon: BookOpen,
+      badge: '3',
+    },
+    {
+      id: 'create-course',
+      label: 'Create Course',
+      icon: Plus,
+      badge: null,
+    },
+    {
+      id: 'join-requests',
+      label: 'Join Requests',
+      icon: Users,
+      badge: '8',
+    },
+    {
+      id: 'notifications',
+      label: 'Notifications',
+      icon: Bell,
+      badge: '5',
+    },
+  ];
+
+  const handleSignOut = () => {
+    console.log('Signing out...');
+  };
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarHeader>
+        <div className="flex items-center gap-2 px-2 py-2">
+          <div className="bg-blue-600 p-2 rounded-lg">
+            <BookOpen className="h-4 w-4 text-white" />
+          </div>
+          {state === 'expanded' && (
+            <div className="flex flex-col flex-1">
+              <h2 className="text-sm font-semibold">ClassSync</h2>
+              <p className="text-xs text-muted-foreground">Lecturer Portal</p>
+            </div>
+          )}
+          {/* <ThemeToggle /> */}
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = activePage === item.id;
+
+                return (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      onClick={() => onPageChange(item.id)}
+                      tooltip={state === 'collapsed' ? item.label : undefined}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                      {item.badge && state === 'expanded' && (
+                        <Badge variant="secondary" className="ml-auto">
+                          {item.badge}
+                        </Badge>
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                >
+                  <Avatar className="h-8 w-8 rounded-lg">
+                    <AvatarImage src={userData?.profileImage} />
+                    <AvatarFallback className="rounded-lg">
+                      {userData?.fullName
+                        ?.split(' ')
+                        .map(
+                          // @ts-expect-error : temporary data
+                          (n) => n[0],
+                        )
+                        .join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  {state === 'expanded' && (
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">
+                        {userData?.title} {userData?.fullName}
+                      </span>
+                      <span className="truncate text-xs">
+                        {userData?.department}
+                      </span>
+                    </div>
+                  )}
+                  <Bell className="ml-auto size-4" />
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                side="bottom"
+                align="end"
+                sideOffset={4}
+              >
+                <DropdownMenuItem onClick={() => onPageChange('profile')}>
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onPageChange('settings')}>
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="text-red-600"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  );
+};
+
+export default LecturerSidebar;

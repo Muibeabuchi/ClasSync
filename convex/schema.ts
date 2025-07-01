@@ -1,10 +1,13 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { Infer, v } from 'convex/values';
 import {
-  userRoleConstant,
+  // userRoleConstant,
   lecturerTitleConstant,
   studentYearLevelConstants,
+  userRoleConstant,
 } from '../src/constants/constants';
+// userRoleSchema;
+// import {}
 
 export const userRoleSchema = v.union(
   v.literal(userRoleConstant.student),
