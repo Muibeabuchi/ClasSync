@@ -18,24 +18,17 @@ export function useDashboardRedirect() {
     isLoading,
     isError,
     error,
-  } = useQuery(
-    convexQuery(api.userProfile.getUserOnboardedStatus, {}),
-    // queryKey: ['userOnboardStatus'], // Unique key for this query
-    // queryFn: getUserOnboardStatusAction, // The function to fetch the data
-    // staleTime: Infinity, // Keep data fresh indefinitely for authentication status
-    // cacheTime: Infinity, // Keep data in cache indefinitely
-    // // Add any other useQuery options as needed, e.g., refetchOnWindowFocus: false
-  );
+  } = useQuery(convexQuery(api.userProfile.getUserOnboardedStatus, {}));
 
   useEffect(() => {
     // Only proceed with redirection logic if data has been fetched and is not loading
     if (!isLoading) {
-      if (onboardStatus === null) {
+      if (onboardStatus && onboardStatus.isOnboarded === null) {
         navigate({
           to: '/login',
         });
-      } else if (onboardStatus !== null) {
-        if (onboardStatus === false) {
+      } else if (onboardStatus && onboardStatus.isOnboarded !== null) {
+        if (onboardStatus.isOnboarded === false) {
           navigate({
             to: '/onboard',
           });

@@ -18,6 +18,7 @@ import { Route as OnboardRoleRouteImport } from './routes/_onboard/role'
 import { Route as OnboardOnboardRouteImport } from './routes/_onboard/onboard'
 import { Route as DashboardDashboardRouteImport } from './routes/_dashboard/dashboard'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as DashboardDashboardRoleRouteImport } from './routes/_dashboard/dashboard.$role'
 import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
 
 const rootServerRouteImport = createServerRootRoute()
@@ -55,6 +56,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const DashboardDashboardRoleRoute = DashboardDashboardRoleRouteImport.update({
+  id: '/$role',
+  path: '/$role',
+  getParentRoute: () => DashboardDashboardRoute,
+} as any)
 const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
   id: '/api/auth/$',
   path: '/api/auth/$',
@@ -64,16 +70,18 @@ const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
-  '/dashboard': typeof DashboardDashboardRoute
+  '/dashboard': typeof DashboardDashboardRouteWithChildren
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
+  '/dashboard/$role': typeof DashboardDashboardRoleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof AuthLoginRoute
-  '/dashboard': typeof DashboardDashboardRoute
+  '/dashboard': typeof DashboardDashboardRouteWithChildren
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
+  '/dashboard/$role': typeof DashboardDashboardRoleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -81,15 +89,22 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_onboard': typeof OnboardRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
-  '/_dashboard/dashboard': typeof DashboardDashboardRoute
+  '/_dashboard/dashboard': typeof DashboardDashboardRouteWithChildren
   '/_onboard/onboard': typeof OnboardOnboardRoute
   '/_onboard/role': typeof OnboardRoleRoute
+  '/_dashboard/dashboard/$role': typeof DashboardDashboardRoleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/dashboard' | '/onboard' | '/role'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/dashboard'
+    | '/onboard'
+    | '/role'
+    | '/dashboard/$role'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard' | '/onboard' | '/role'
+  to: '/' | '/login' | '/dashboard' | '/onboard' | '/role' | '/dashboard/$role'
   id:
     | '__root__'
     | '/'
@@ -99,13 +114,14 @@ export interface FileRouteTypes {
     | '/_dashboard/dashboard'
     | '/_onboard/onboard'
     | '/_onboard/role'
+    | '/_dashboard/dashboard/$role'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   OnboardRouteRoute: typeof OnboardRouteRouteWithChildren
-  DashboardDashboardRoute: typeof DashboardDashboardRoute
+  DashboardDashboardRoute: typeof DashboardDashboardRouteWithChildren
 }
 export interface FileServerRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatServerRoute
@@ -180,6 +196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
+    '/_dashboard/dashboard/$role': {
+      id: '/_dashboard/dashboard/$role'
+      path: '/$role'
+      fullPath: '/dashboard/$role'
+      preLoaderRoute: typeof DashboardDashboardRoleRouteImport
+      parentRoute: typeof DashboardDashboardRoute
+    }
   }
 }
 declare module '@tanstack/react-start/server' {
@@ -220,11 +243,22 @@ const OnboardRouteRouteWithChildren = OnboardRouteRoute._addFileChildren(
   OnboardRouteRouteChildren,
 )
 
+interface DashboardDashboardRouteChildren {
+  DashboardDashboardRoleRoute: typeof DashboardDashboardRoleRoute
+}
+
+const DashboardDashboardRouteChildren: DashboardDashboardRouteChildren = {
+  DashboardDashboardRoleRoute: DashboardDashboardRoleRoute,
+}
+
+const DashboardDashboardRouteWithChildren =
+  DashboardDashboardRoute._addFileChildren(DashboardDashboardRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   OnboardRouteRoute: OnboardRouteRouteWithChildren,
-  DashboardDashboardRoute: DashboardDashboardRoute,
+  DashboardDashboardRoute: DashboardDashboardRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

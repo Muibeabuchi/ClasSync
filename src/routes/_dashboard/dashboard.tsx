@@ -1,10 +1,8 @@
+import { Loader } from '@/components/Loader';
 import { useDashboardRedirect } from '@/feature/onboarding/hooks/use-dashboard-redirect';
-import StudentDashboard from '@/feature/student/components/student-dashboard';
-// import { getUserOnboardStatusAction } from '@/server/userprofile';
-import {
-  createFileRoute,
-  //  redirect
-} from '@tanstack/react-router';
+import { useNavigate } from '@tanstack/react-router';
+import { createFileRoute, Outlet } from '@tanstack/react-router';
+import { useEffect } from 'react';
 
 export const Route = createFileRoute('/_dashboard/dashboard')({
   async beforeLoad() {
@@ -25,14 +23,25 @@ export const Route = createFileRoute('/_dashboard/dashboard')({
   component: RouteComponent,
 });
 
-const userData = {
-  fullName: 'Dachiksta',
-  regNumber: '20201248252',
-  department: 'SOE',
-  yearLevel: '200',
-};
-
 function RouteComponent() {
-  useDashboardRedirect();
-  return <StudentDashboard userData={userData} />;
+  const onBoardStatus = useDashboardRedirect();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (onBoardStatus.data?.role) {
+      navigate({
+        replace: true,
+        to: '/dashboard/$role',
+        params: {
+          role: onBoardStatus.data?.role,
+        },
+      });
+    }
+  }, [navigate, onBoardStatus.data?.role]);
+
+  // create a loading/pending component
+  if (onBoardStatus.isLoading) {
+    return <Loader />;
+  }
+  return <Outlet />;
 }
