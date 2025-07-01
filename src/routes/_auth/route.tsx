@@ -9,12 +9,12 @@ export const Route = createFileRoute('/_auth')({
 
     if (onboardStatus === null) {
       return;
-    } else if (onboardStatus !== null) {
-      if (onboardStatus === true) {
+    } else if (onboardStatus && onboardStatus.isOnboarded !== null) {
+      if (onboardStatus && onboardStatus.isOnboarded === true) {
         throw redirect({
           to: '/dashboard',
         });
-      } else if (onboardStatus === false) {
+      } else if (onboardStatus && onboardStatus.isOnboarded === false) {
         throw redirect({
           to: '/onboard',
         });
