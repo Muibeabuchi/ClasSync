@@ -1,0 +1,8 @@
+# netlify.toml
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# You can add other Netlify configurations here later if needed,Xt

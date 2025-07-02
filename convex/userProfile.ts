@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values';
 import {
   AuthenticatedUserMutation,
-  AuthenticatedUserQuery,
+  // AuthenticatedUserQuery,
 } from './middlewares/authenticatedMiddleware';
 import {
   lecturerTitleSchema,
@@ -34,13 +34,18 @@ export const getUserRole = query({
   },
 });
 
-export const getUserOnboardedStatus = AuthenticatedUserQuery({
-  returns: v.object({
-    isOnboarded: v.union(v.boolean(), v.null()),
-    role: v.optional(userRoleSchema),
-  }),
+export const getUserOnboardedStatus = query({
+  returns: v.union(
+    v.object({
+      isOnboarded: v.union(v.boolean(), v.null()),
+      role: v.optional(userRoleSchema),
+    }),
+    v.null(),
+  ),
   handler: async (ctx) => {
-    return { isOnboarded: ctx.user.isOnboarded, role: ctx.user.role };
+    const user = await getCurrentUser({ ctx });
+    if (!user) return null;
+    return { isOnboarded: user.isOnboarded, role: user.role };
   },
 });
 

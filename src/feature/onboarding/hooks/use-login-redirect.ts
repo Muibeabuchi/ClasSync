@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query'; // Import useQuery
 import { convexQuery } from '@convex-dev/react-query';
 import { api } from 'convex/_generated/api';
+// import { useQuery } from 'convex/react';
 
 /**
  * A custom hook that handles user authentication status and redirects
@@ -18,9 +19,9 @@ export function useLoginRedirect() {
   // Use useQuery to fetch the onboard status
   const {
     data: onboardStatus,
-    isLoading,
     isError,
     error,
+    isLoading,
   } = useQuery(convexQuery(api.userProfile.getUserOnboardedStatus, {}));
 
   useEffect(() => {
@@ -35,16 +36,16 @@ export function useLoginRedirect() {
       }
     }
 
-    if (isError) {
-      console.error('Error checking authentication status:', error);
-      // Handle error, e.g., show an error message or navigate to an error page
-    }
-  }, [onboardStatus, isLoading, isError, error, navigate]); // Dependencies for useEffect
+    // if (isError) {
+    //   console.error('Error checking authentication status:', error);
+    //   // Handle error, e.g., show an error message or navigate to an error page
+    // }
+  }, [onboardStatus, isLoading, navigate]); // Dependencies for useEffect
 
   return {
-    data: onboardStatus,
-    isLoading,
+    onboardStatus,
     isError,
     error,
+    isLoading,
   };
 }

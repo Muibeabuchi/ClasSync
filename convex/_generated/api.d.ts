@@ -50,17 +50,6 @@ export declare const internal: FilterApi<
 
 export declare const components: {
   betterAuth: {
-    adapterTest: {
-      count: FunctionReference<"query", "internal", any, any>;
-      create: FunctionReference<"mutation", "internal", any, any>;
-      delete: FunctionReference<"mutation", "internal", any, any>;
-      deleteMany: FunctionReference<"mutation", "internal", any, any>;
-      findMany: FunctionReference<"query", "internal", any, any>;
-      findOne: FunctionReference<"query", "internal", any, any>;
-      isAuthenticated: FunctionReference<"query", "internal", {}, any>;
-      update: FunctionReference<"mutation", "internal", any, any>;
-      updateMany: FunctionReference<"mutation", "internal", any, any>;
-    };
     lib: {
       create: FunctionReference<
         "mutation",
@@ -167,6 +156,12 @@ export declare const components: {
         },
         any
       >;
+      deleteExpiredSessions: FunctionReference<
+        "mutation",
+        "internal",
+        { expiresAt: number; userId: string },
+        any
+      >;
       deleteOldVerifications: FunctionReference<
         "action",
         "internal",
@@ -237,6 +232,12 @@ export declare const components: {
       >;
       getCurrentSession: FunctionReference<"query", "internal", {}, any>;
       getJwks: FunctionReference<"query", "internal", { limit?: number }, any>;
+      getSessionsByUserId: FunctionReference<
+        "query",
+        "internal",
+        { limit?: number; userId: string },
+        any
+      >;
       listVerificationsByIdentifier: FunctionReference<
         "query",
         "internal",

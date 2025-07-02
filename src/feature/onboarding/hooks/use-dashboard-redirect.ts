@@ -28,7 +28,7 @@ export function useDashboardRedirect() {
           to: '/login',
         });
       } else if (onboardStatus && onboardStatus.isOnboarded !== null) {
-        if (onboardStatus.isOnboarded === false) {
+        if (onboardStatus?.isOnboarded === false) {
           navigate({
             to: '/onboard',
           });

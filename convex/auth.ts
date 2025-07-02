@@ -43,7 +43,7 @@ import {
   // PublicAuthFunctions,
   type AuthFunctions,
 } from '@convex-dev/better-auth';
-import { convex } from '@convex-dev/better-auth/plugins';
+import { convex, crossDomain } from '@convex-dev/better-auth/plugins';
 import { betterAuth } from 'better-auth';
 import {
   // api,
@@ -62,12 +62,12 @@ const authFunctions: AuthFunctions = internal.auth;
 // Initialize the component
 export const betterAuthComponent = new BetterAuth(components.betterAuth, {
   authFunctions,
+  verbose: true,
 });
 
 export const createAuth = (ctx: GenericCtx) =>
   betterAuth({
     // All auth requests will be proxied through your TanStack Start server
-    baseURL: process.env.SITE_URL,
     database: convexAdapter(ctx, betterAuthComponent),
     socialProviders: {
       google: {
@@ -84,6 +84,9 @@ export const createAuth = (ctx: GenericCtx) =>
     plugins: [
       // The Convex plugin is required
       convex(),
+      crossDomain({
+        siteUrl: process.env.SITE_URL!,
+      }),
     ],
   });
 
