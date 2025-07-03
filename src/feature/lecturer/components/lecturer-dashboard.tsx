@@ -22,6 +22,7 @@ import LecturerAttendanceSection from './lecturer-attendance-section';
 import { Button } from '@/components/ui/button';
 import { api } from 'convex/_generated/api';
 import { useAction } from 'convex/react';
+import { toast } from 'sonner';
 
 interface LecturerDashboardProps {
   userData: any;
@@ -168,6 +169,9 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
     });
     if (response && response.success) {
       window.location.href = response.data;
+    }
+    if (!response?.success) {
+      toast.error('Failed to initialize transaction. Try again later ');
     }
 
     // console.log({ url });
