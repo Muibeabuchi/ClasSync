@@ -21,18 +21,22 @@ export function useDashboardRedirect() {
   } = useQuery(convexQuery(api.userProfile.getUserOnboardedStatus, {}));
 
   useEffect(() => {
+    console.log({ isLoading });
     // Only proceed with redirection logic if data has been fetched and is not loading
-    if (!isLoading) {
-      if (onboardStatus && onboardStatus.isOnboarded === null) {
+    if (!isLoading || onboardStatus !== undefined) {
+      console.log({ onboardStatus });
+      if (onboardStatus === null) {
         navigate({
           to: '/login',
+          replace: true,
         });
-      } else if (onboardStatus && onboardStatus.isOnboarded !== null) {
-        if (onboardStatus?.isOnboarded === false) {
-          navigate({
-            to: '/onboard',
-          });
-        }
+      }
+      if (onboardStatus && onboardStatus.isOnboarded === false) {
+        console.log('navigating to onboard page');
+        navigate({
+          to: '/onboard',
+          replace: true,
+        });
       }
     }
 

@@ -27,12 +27,10 @@ export function useLoginRedirect() {
   useEffect(() => {
     // Only proceed with redirection logic if data has been fetched and is not loading
     if (!isLoading) {
-      if (onboardStatus && onboardStatus.isOnboarded === null) {
-        // You might navigate to a login page here if that's the desired behavior
-      } else if (onboardStatus && onboardStatus.isOnboarded === true) {
-        navigate({ to: '/dashboard' });
+      if (onboardStatus && onboardStatus.isOnboarded === true) {
+        navigate({ to: '/dashboard', replace: true });
       } else if (onboardStatus && onboardStatus.isOnboarded === false) {
-        navigate({ to: '/onboard' });
+        navigate({ to: '/onboard', replace: true });
       }
     }
 

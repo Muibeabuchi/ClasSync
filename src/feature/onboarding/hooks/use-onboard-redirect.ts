@@ -23,16 +23,17 @@ export function useOnboardRedirect() {
   useEffect(() => {
     // Only proceed with redirection logic if data has been fetched and is not loading
     if (!isLoading) {
-      if (onboardStatus && onboardStatus.isOnboarded === null) {
+      if (onboardStatus === null) {
         navigate({
           to: '/login',
+          replace: true,
         });
-      } else if (onboardStatus && onboardStatus.isOnboarded !== null) {
-        if (onboardStatus.isOnboarded === true) {
-          navigate({
-            to: '/dashboard',
-          });
-        }
+      }
+      if (onboardStatus && onboardStatus.isOnboarded === true) {
+        navigate({
+          to: '/dashboard',
+          replace: true,
+        });
       }
     }
 

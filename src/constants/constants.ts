@@ -1,4 +1,4 @@
-export const gcTimeConstant = 60 * 60 * 2;
+export const gcTimeConstant = 1000 * 60 * 60 * 2;
 
 const userRoleConstant = {
   student: 'student',

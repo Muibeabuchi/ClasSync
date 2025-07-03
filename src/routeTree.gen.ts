@@ -9,15 +9,20 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as OnboardRouteRouteImport } from './routes/_onboard/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DashboardRoleRouteImport } from './routes/dashboard/$role'
 import { Route as OnboardRoleRouteImport } from './routes/_onboard/role'
 import { Route as OnboardOnboardRouteImport } from './routes/_onboard/onboard'
-import { Route as DashboardDashboardRouteImport } from './routes/_dashboard/dashboard'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as DashboardDashboardRoleRouteImport } from './routes/_dashboard/dashboard.$role'
 
+const DashboardRouteRoute = DashboardRouteRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardRouteRoute = OnboardRouteRouteImport.update({
   id: '/_onboard',
   getParentRoute: () => rootRouteImport,
@@ -31,6 +36,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoleRoute = DashboardRoleRouteImport.update({
+  id: '/$role',
+  path: '/$role',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const OnboardRoleRoute = OnboardRoleRouteImport.update({
   id: '/role',
   path: '/role',
@@ -41,81 +51,78 @@ const OnboardOnboardRoute = OnboardOnboardRouteImport.update({
   path: '/onboard',
   getParentRoute: () => OnboardRouteRoute,
 } as any)
-const DashboardDashboardRoute = DashboardDashboardRouteImport.update({
-  id: '/_dashboard/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const DashboardDashboardRoleRoute = DashboardDashboardRoleRouteImport.update({
-  id: '/$role',
-  path: '/$role',
-  getParentRoute: () => DashboardDashboardRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
-  '/dashboard': typeof DashboardDashboardRouteWithChildren
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
-  '/dashboard/$role': typeof DashboardDashboardRoleRoute
+  '/dashboard/$role': typeof DashboardRoleRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
-  '/dashboard': typeof DashboardDashboardRouteWithChildren
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
-  '/dashboard/$role': typeof DashboardDashboardRoleRoute
+  '/dashboard/$role': typeof DashboardRoleRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_onboard': typeof OnboardRouteRouteWithChildren
+  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
-  '/_dashboard/dashboard': typeof DashboardDashboardRouteWithChildren
   '/_onboard/onboard': typeof OnboardOnboardRoute
   '/_onboard/role': typeof OnboardRoleRoute
-  '/_dashboard/dashboard/$role': typeof DashboardDashboardRoleRoute
+  '/dashboard/$role': typeof DashboardRoleRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/login'
     | '/dashboard'
+    | '/login'
     | '/onboard'
     | '/role'
     | '/dashboard/$role'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard' | '/onboard' | '/role' | '/dashboard/$role'
+  to: '/' | '/dashboard' | '/login' | '/onboard' | '/role' | '/dashboard/$role'
   id:
     | '__root__'
     | '/'
     | '/_auth'
     | '/_onboard'
+    | '/dashboard'
     | '/_auth/login'
-    | '/_dashboard/dashboard'
     | '/_onboard/onboard'
     | '/_onboard/role'
-    | '/_dashboard/dashboard/$role'
+    | '/dashboard/$role'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   OnboardRouteRoute: typeof OnboardRouteRouteWithChildren
-  DashboardDashboardRoute: typeof DashboardDashboardRouteWithChildren
+  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_onboard': {
       id: '/_onboard'
       path: ''
@@ -137,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard/$role': {
+      id: '/dashboard/$role'
+      path: '/$role'
+      fullPath: '/dashboard/$role'
+      preLoaderRoute: typeof DashboardRoleRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/_onboard/role': {
       id: '/_onboard/role'
       path: '/role'
@@ -151,26 +165,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardOnboardRouteImport
       parentRoute: typeof OnboardRouteRoute
     }
-    '/_dashboard/dashboard': {
-      id: '/_dashboard/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardDashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_auth/login': {
       id: '/_auth/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
-    }
-    '/_dashboard/dashboard/$role': {
-      id: '/_dashboard/dashboard/$role'
-      path: '/$role'
-      fullPath: '/dashboard/$role'
-      preLoaderRoute: typeof DashboardDashboardRoleRouteImport
-      parentRoute: typeof DashboardDashboardRoute
     }
   }
 }
@@ -201,22 +201,23 @@ const OnboardRouteRouteWithChildren = OnboardRouteRoute._addFileChildren(
   OnboardRouteRouteChildren,
 )
 
-interface DashboardDashboardRouteChildren {
-  DashboardDashboardRoleRoute: typeof DashboardDashboardRoleRoute
+interface DashboardRouteRouteChildren {
+  DashboardRoleRoute: typeof DashboardRoleRoute
 }
 
-const DashboardDashboardRouteChildren: DashboardDashboardRouteChildren = {
-  DashboardDashboardRoleRoute: DashboardDashboardRoleRoute,
+const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardRoleRoute: DashboardRoleRoute,
 }
 
-const DashboardDashboardRouteWithChildren =
-  DashboardDashboardRoute._addFileChildren(DashboardDashboardRouteChildren)
+const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
+  DashboardRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   OnboardRouteRoute: OnboardRouteRouteWithChildren,
-  DashboardDashboardRoute: DashboardDashboardRouteWithChildren,
+  DashboardRouteRoute: DashboardRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
