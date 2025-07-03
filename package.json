@@ -55,6 +55,7 @@
     "convex": "^1.25.0",
     "convex-helpers": "^0.1.95",
     "crypto": "^1.0.1",
+    "crypto-js": "^4.2.0",
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "hono": "^4.8.3",

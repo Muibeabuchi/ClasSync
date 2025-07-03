@@ -1,20 +1,16 @@
 // import { QueryCtx } from './../_generated/server.d';
 import { Id } from '../_generated/dataModel';
-import { QueryCtx } from '../_generated/server';
+import { MutationCtx, QueryCtx } from '../_generated/server';
 import { betterAuthComponent } from '../auth';
 
 // Example function for getting the current user
 // Feel free to edit, omit, etc.
 
-export async function getUserProfileId(ctx: QueryCtx) {
-  const userId = await betterAuthComponent.getAuthUserId(ctx);
-  if (!userId) {
-    return null;
-  }
-  return userId;
-}
-
-export const getCurrentUser = async ({ ctx }: { ctx: QueryCtx }) => {
+export const getCurrentUser = async ({
+  ctx,
+}: {
+  ctx: QueryCtx | MutationCtx;
+}) => {
   // Get user data from Better Auth - email, name, image, etc.
   const userMetadata = await betterAuthComponent.getAuthUser(ctx);
   if (!userMetadata) {

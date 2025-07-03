@@ -19,6 +19,9 @@ import EnhancedStudentDetailSection from './enhanced-details-section';
 import LecturerNotifications from './lecturer-notifications';
 import LecturerProfile from './lecturer-profile';
 import LecturerAttendanceSection from './lecturer-attendance-section';
+import { Button } from '@/components/ui/button';
+import { api } from 'convex/_generated/api';
+import { useAction } from 'convex/react';
 
 interface LecturerDashboardProps {
   userData: any;
@@ -156,6 +159,26 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
         );
     }
   };
+
+  // const {} = useMutation(useConvexMutation(api.payment.initializePayment));
+  const initializeAction = useAction(api.payment.initializePayment);
+  async function handlePayment() {
+    const response = await initializeAction({
+      plan: 'LECTURER_BASIC_PLAN',
+    });
+    if (response && response.success) {
+      window.location.href = response.data;
+    }
+
+    // console.log({ url });
+    // return redirect({ href: url?.data });
+  }
+
+  return (
+    <div>
+      <Button onClick={handlePayment}>Initialize Payment</Button>
+    </div>
+  );
 
   return (
     <SidebarProvider defaultOpen={true}>

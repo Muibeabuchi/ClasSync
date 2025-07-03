@@ -10,7 +10,7 @@ import {
   userRoleSchema,
 } from './schema';
 import { query } from './_generated/server';
-import { getCurrentUser, getUserProfileId } from './models/userprofileModel';
+import { getCurrentUser } from './models/userprofileModel';
 // import { createAuth } from './auth';
 
 // ? ====================QUERIES====================
@@ -18,7 +18,8 @@ import { getCurrentUser, getUserProfileId } from './models/userprofileModel';
 export const getAuthenticatedUser = query({
   args: {},
   async handler(ctx) {
-    return await getUserProfileId(ctx);
+    const user = getCurrentUser({ ctx });
+    return user;
   },
 });
 

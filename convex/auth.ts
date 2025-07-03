@@ -62,7 +62,7 @@ const authFunctions: AuthFunctions = internal.auth;
 // Initialize the component
 export const betterAuthComponent = new BetterAuth(components.betterAuth, {
   authFunctions,
-  verbose: true,
+  // verbose: true,
 });
 
 export const createAuth = (ctx: GenericCtx) =>

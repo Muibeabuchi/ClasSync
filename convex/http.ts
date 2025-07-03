@@ -14,6 +14,7 @@ import { cors } from 'hono/cors';
 import { HonoWithConvex, HttpRouterWithHono } from 'convex-helpers/server/hono';
 import { ActionCtx } from './_generated/server';
 import { createAuth } from './auth';
+import { internal } from './_generated/api';
 
 const app: HonoWithConvex<ActionCtx> = new Hono();
 const http = new HttpRouterWithHono(app);
@@ -42,6 +43,29 @@ app.get('/.well-known/openid-configuration', async (c) => {
 
 // ? ========== HTTP-ACTIONS =================   //
 
-app.post('/paystackwebhook', async (c) => {});
+app.post('/paystackwebhook', async (c) => {
+  const body = await c.req.json();
+  const headers = c.req.raw.headers;
+  // c.req.valid('json');
+  const hash = await c.env.runAction(
+    internal.service.paystack.validateWebhook,
+    {
+      body: JSON.stringify(body),
+    },
+  );
+
+  if (hash === headers.get('x-paystack-signature')) {
+    // code that confirms the order as paid for goes here
+    console.log('WEBHOOK SUCCESSFUL');
+    // confirm the price that was paid for the order
+    // confirm the event
+    return new Response('order created successfully', {
+      status: 200,
+    });
+  } else {
+    console.log('Webhook hit an error');
+    return Response.json({ status: 'invalid signature' }, { status: 401 });
+  }
+});
 
 export default http;
