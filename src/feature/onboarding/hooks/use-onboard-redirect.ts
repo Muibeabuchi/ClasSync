@@ -31,7 +31,10 @@ export function useOnboardRedirect() {
       }
       if (onboardStatus && onboardStatus.isOnboarded === true) {
         navigate({
-          to: '/dashboard',
+          to: '/dashboard/$role',
+          params: {
+            role: onboardStatus.role!,
+          },
           replace: true,
         });
       }

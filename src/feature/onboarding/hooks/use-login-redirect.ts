@@ -28,7 +28,11 @@ export function useLoginRedirect() {
     // Only proceed with redirection logic if data has been fetched and is not loading
     if (!isLoading) {
       if (onboardStatus && onboardStatus.isOnboarded === true) {
-        navigate({ to: '/dashboard', replace: true });
+        navigate({
+          to: '/dashboard/$role',
+          params: { role: onboardStatus.role! },
+          replace: true,
+        });
       } else if (onboardStatus && onboardStatus.isOnboarded === false) {
         navigate({ to: '/onboard', replace: true });
       }
