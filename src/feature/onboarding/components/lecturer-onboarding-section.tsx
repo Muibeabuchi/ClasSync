@@ -27,7 +27,7 @@ import {
   lecturerTitleType,
   OnboardingDataType,
 } from '../schema/onboarding-schema';
-import { lecturerTitleArrayConstant } from '@/constants/constants';
+import { lecturerTitleArrayConstant } from '@/constants/onboarding';
 
 export default function LecturerOnboardingSection({
   handleConfirmCancel,

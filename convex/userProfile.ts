@@ -131,6 +131,10 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
       await ctx.db.patch(ctx.userId, {
         ...onboardingData,
         isOnboarded: true,
+        lecturerCurrentPlan: {
+          plan: 'FREE',
+          isActive: true,
+        },
       });
     }
     return {

@@ -162,7 +162,8 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
   };
 
   // const {} = useMutation(useConvexMutation(api.payment.initializePayment));
-  const initializeAction = useAction(api.payment.initializePayment);
+  const initializeAction = useAction(api.payment.initializeSubscription);
+  const fetchSubscription = useAction(api.payment.fetchSubscription);
   async function handlePayment() {
     const response = await initializeAction({
       plan: 'LECTURER_BASIC_PLAN',
@@ -173,14 +174,18 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
     if (!response?.success) {
       toast.error('Failed to initialize transaction. Try again later ');
     }
-
-    // console.log({ url });
-    // return redirect({ href: url?.data });
+  }
+  async function handleFetchSubscription() {
+    const response = await fetchSubscription();
+    console.log({ response });
   }
 
   return (
-    <div>
+    <div className="flex items-center justify-between">
       <Button onClick={handlePayment}>Initialize Payment</Button>
+      <Button onClick={handleFetchSubscription} variant={'outline'}>
+        Fetch Subscription
+      </Button>
     </div>
   );
 

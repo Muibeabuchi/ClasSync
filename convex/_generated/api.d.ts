@@ -11,8 +11,11 @@
 import type * as auth from "../auth.js";
 import type * as constants_payment from "../constants/payment.js";
 import type * as http from "../http.js";
+import type * as lib_helpers from "../lib/helpers.js";
+import type * as lib_trigger from "../lib/trigger.js";
 import type * as lib_zodHelpers from "../lib/zodHelpers.js";
 import type * as middlewares_authenticatedMiddleware from "../middlewares/authenticatedMiddleware.js";
+import type * as middlewares_lecturerMiddleware from "../middlewares/lecturerMiddleware.js";
 import type * as models_authModel from "../models/authModel.js";
 import type * as models_userprofileModel from "../models/userprofileModel.js";
 import type * as payment from "../payment.js";
@@ -37,8 +40,11 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   "constants/payment": typeof constants_payment;
   http: typeof http;
+  "lib/helpers": typeof lib_helpers;
+  "lib/trigger": typeof lib_trigger;
   "lib/zodHelpers": typeof lib_zodHelpers;
   "middlewares/authenticatedMiddleware": typeof middlewares_authenticatedMiddleware;
+  "middlewares/lecturerMiddleware": typeof middlewares_lecturerMiddleware;
   "models/authModel": typeof models_authModel;
   "models/userprofileModel": typeof models_userprofileModel;
   payment: typeof payment;

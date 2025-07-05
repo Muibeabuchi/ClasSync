@@ -3,7 +3,7 @@ import {
   userRoleConstant,
   // userRoleConstant,
   yearLevelArrayConstant,
-} from '@/constants/constants';
+} from '@/constants/onboarding';
 import {
   BackendUserRoleType,
   // userRoleSchema,

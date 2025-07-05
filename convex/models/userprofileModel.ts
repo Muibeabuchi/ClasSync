@@ -1,4 +1,5 @@
 // import { QueryCtx } from './../_generated/server.d';
+import { ConvexError } from 'convex/values';
 import { Id } from '../_generated/dataModel';
 import { MutationCtx, QueryCtx } from '../_generated/server';
 import { betterAuthComponent } from '../auth';
@@ -25,4 +26,18 @@ export const getCurrentUser = async ({
     ...userMetadata,
   };
   // },
+};
+
+export const ensureIsLecturer = async (ctx: MutationCtx) => {
+  const user = await getCurrentUser({ ctx });
+
+  if (!user)
+    throw new ConvexError(
+      'Unauthorized: User must be authenticated to take this action',
+    );
+
+  if (user.role !== 'lecturer')
+    throw new ConvexError('Unauthorized: User must bea lecturer');
+
+  return user;
 };

@@ -12,7 +12,7 @@ import {
   ConvexReactClient,
   //  ConvexProvider
 } from 'convex/react';
-import { gcTimeConstant } from './constants/constants';
+import { gcTimeConstant } from './constants/onboarding';
 import { toast } from 'sonner';
 import { NotFound } from './components/NotFound';
 import { DefaultCatchBoundary } from './components/DefaultCatchBoundary';

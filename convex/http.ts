@@ -1,20 +1,12 @@
-// import { httpRouter } from 'convex/server';
-// import { betterAuthComponent, createAuth } from './auth';
-
-// const http = httpRouter();
-
-// betterAuthComponent.registerRoutes(http, createAuth, {
-//   cors: true,
-// });
-
-// export default http;
-
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { HonoWithConvex, HttpRouterWithHono } from 'convex-helpers/server/hono';
 import { ActionCtx } from './_generated/server';
 import { createAuth } from './auth';
 import { internal } from './_generated/api';
+import { paystackEvents } from './constants/payment';
+
+import { type Subscription_Create_Event } from './../src/types/subscription-types';
 
 const app: HonoWithConvex<ActionCtx> = new Hono();
 const http = new HttpRouterWithHono(app);
@@ -54,11 +46,44 @@ app.post('/paystackwebhook', async (c) => {
     },
   );
 
-  if (hash === headers.get('x-paystack-signature')) {
+  const validWebhook = hash === headers.get('x-paystack-signature');
+
+  if (validWebhook) {
     // code that confirms the order as paid for goes here
     console.log('WEBHOOK SUCCESSFUL');
+    console.log({ body });
+    console.log({ event: body.event });
     // confirm the price that was paid for the order
     // confirm the event
+
+    if (body.event === 'charge.success') {
+      console.log('Charge was successful');
+    }
+    console.log({
+      createSubscriptionConstant: paystackEvents.create_subscription,
+      isSubbed: paystackEvents.create_subscription === body.event,
+    });
+
+    if (body.event === paystackEvents.create_subscription) {
+      const event: Subscription_Create_Event = body;
+      console.log('subscription created');
+
+      // No need to check the amount paid since it will always be equal to the amount in the plan
+      // ? Store the lecturers subscriptionCode,planCode,paystackCustomerId,nextPaymentDate
+      // ? Update the lecturers currentPlan and set the subscriptionStatus to "active"
+      try {
+        await c.env.runMutation(internal.payment.createSubscription, {
+          lecturerEmail: event.data.customer.email,
+          nextPaymentDate: event.data.next_payment_date,
+          PayStackCustomerId: event.data.customer.customer_code,
+          // TODO: Validate the plan code
+          planCode: event.data.plan.plan_code,
+          subscriptionCode: event.data.subscription_code,
+        });
+      } catch (error) {
+        console.log('Error in creating subscription', { error });
+      }
+    }
     return new Response('order created successfully', {
       status: 200,
     });

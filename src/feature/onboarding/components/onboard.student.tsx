@@ -27,7 +27,7 @@ import {
   OnboardingDataType,
   yearLevelType,
 } from '../schema/onboarding-schema';
-import { yearLevelArrayConstant } from '@/constants/constants';
+import { yearLevelArrayConstant } from '@/constants/onboarding';
 
 export default function StudentOnboardingSection({
   handleConfirmCancel,
