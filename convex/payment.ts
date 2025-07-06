@@ -51,7 +51,7 @@ export const initializeSubscription = zodAction({
       throw new ConvexError('Unauthorized: User must be onboarded');
     if (userInfo.role !== 'lecturer')
       throw new ConvexError('Unauthorized: User must be a lecturer');
-    const { email } = userInfo;
+    const { email, _id: lecturerId } = userInfo;
 
     // ! Extra checks has to be made to handle lecturers downgrading their plan or changing subscription plans
 
@@ -62,6 +62,9 @@ export const initializeSubscription = zodAction({
       amount: '0000',
       channels: ['card'],
       callback_url: 'http://localhost:3000/dashboard/lecturer',
+      metadata: {
+        lecturerId,
+      },
     });
     if (transaction.status) {
       // handle successful transaction
@@ -83,20 +86,24 @@ export const initializeSubscription = zodAction({
 
 export const createSubscription = internalMutation({
   args: {
+    authorizationCode: v.string(),
     subscriptionCode: v.string(),
     planCode: v.string(),
     nextPaymentDate: v.string(),
     PayStackCustomerId: v.string(),
     lecturerEmail: v.string(),
+    emailToken: v.string(),
   },
   async handler(
     ctx,
     {
       subscriptionCode,
+      authorizationCode,
       lecturerEmail,
       planCode,
       PayStackCustomerId,
       nextPaymentDate,
+      emailToken,
     },
   ) {
     // await ensureIsLecturer(ctx);
@@ -120,12 +127,15 @@ export const createSubscription = internalMutation({
       throw new ConvexError('Lecturer cannot have more than one Subscription');
     // create a lecturers subscription
     await ctx.db.insert('subscriptions', {
+      emailToken,
       subscriptionCode,
       planCode,
       nextPaymentDate,
       lecturerId,
       PayStackCustomerId,
+      authorizationCode,
     });
+    // TODO: Ensure the new subscription is not the same as the old subscription
     // update the lecturers userProfile subscription status
     await ctx.db.patch(lecturerId, {
       lecturerCurrentPlan: {

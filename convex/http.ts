@@ -1,3 +1,4 @@
+import { transaction_events } from './../src/constants/paystack-events';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { HonoWithConvex, HttpRouterWithHono } from 'convex-helpers/server/hono';
@@ -50,19 +51,16 @@ app.post('/paystackwebhook', async (c) => {
 
   if (validWebhook) {
     // code that confirms the order as paid for goes here
-    console.log('WEBHOOK SUCCESSFUL');
-    console.log({ body });
-    console.log({ event: body.event });
-    // confirm the price that was paid for the order
-    // confirm the event
 
-    if (body.event === 'charge.success') {
-      console.log('Charge was successful');
-    }
     console.log({
-      createSubscriptionConstant: paystackEvents.create_subscription,
-      isSubbed: paystackEvents.create_subscription === body.event,
+      event: body,
     });
+
+    if (body.event === transaction_events.success) {
+      console.log('customer has been successfully charged');
+
+      // ? call a mutation that handles payment charge
+    }
 
     if (body.event === paystackEvents.create_subscription) {
       const event: Subscription_Create_Event = body;
@@ -73,7 +71,9 @@ app.post('/paystackwebhook', async (c) => {
       // ? Update the lecturers currentPlan and set the subscriptionStatus to "active"
       try {
         await c.env.runMutation(internal.payment.createSubscription, {
+          authorizationCode: event.data.authorization.authorization_code,
           lecturerEmail: event.data.customer.email,
+          emailToken: event.data.email_token,
           nextPaymentDate: event.data.next_payment_date,
           PayStackCustomerId: event.data.customer.customer_code,
           // TODO: Validate the plan code

@@ -77,7 +77,20 @@ const applicationTables = {
     .index('by_email', ['email'])
     .index('by_department', ['department']),
 
+  // ? This table must be unique per lecturer.
+  // ? This will be updated by  triggers
+  //TODO: This should be deleted once the lecturer deletes their account
+  // TODO: Once the lecturer account has  been created, this field has to be created for them ✅
+  lecturerPlan: defineTable({
+    lecturerId: v.id('userProfiles'),
+    attendanceSessionCount: v.number(),
+    createdCourseCount: v.number(),
+    registeredStudentCount: v.number(),
+  }).index('by_lecturerId', ['lecturerId']),
+
   subscriptions: defineTable({
+    emailToken: v.string(),
+    authorizationCode: v.string(),
     lecturerId: v.id('userProfiles'),
     subscriptionCode: v.string(),
     planCode: v.string(),
@@ -176,12 +189,6 @@ const applicationTables = {
     .index('by_course', ['courseId'])
     .index('by_active', ['isActive'])
     .index('by_lecturerId', ['lecturerId']),
-
-  // ? This will be updated by a attendance session trigger
-  attendanceSessionCount: defineTable({
-    lecturerId: v.id('userProfiles'),
-    attendanceCount: v.number(),
-  }).index('by_lecturerId', ['lecturerId']),
 
   // Attendance records
   // ? A student attendance record will only exist if the attendance was taken

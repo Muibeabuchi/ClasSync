@@ -23,12 +23,6 @@ export function useDashboardRedirect() {
   useEffect(() => {
     // Only proceed with redirection logic if data has been fetched and is not loading
     if (!isLoading || onboardStatus !== undefined) {
-      if (onboardStatus === null) {
-        navigate({
-          to: '/login',
-          replace: true,
-        });
-      }
       if (onboardStatus && onboardStatus.isOnboarded === false) {
         navigate({
           to: '/onboard',
@@ -39,6 +33,12 @@ export function useDashboardRedirect() {
         navigate({
           to: '/dashboard/$role',
           params: { role: onboardStatus.role },
+          replace: true,
+        });
+      }
+      if (onboardStatus === null) {
+        navigate({
+          to: '/login',
           replace: true,
         });
       }

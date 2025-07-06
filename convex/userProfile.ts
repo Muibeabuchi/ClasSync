@@ -128,6 +128,14 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
         department: args.department,
       };
 
+      // create a lecturerPlan
+      await ctx.db.insert('lecturerPlan', {
+        lecturerId: ctx.userId,
+        attendanceSessionCount: 0,
+        createdCourseCount: 0,
+        registeredStudentCount: 0,
+      });
+
       await ctx.db.patch(ctx.userId, {
         ...onboardingData,
         isOnboarded: true,
