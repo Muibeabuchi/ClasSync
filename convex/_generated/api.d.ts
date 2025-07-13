@@ -9,16 +9,20 @@
  */
 
 import type * as auth from "../auth.js";
-import type * as constants_payment from "../constants/payment.js";
+import type * as classListStudents from "../classListStudents.js";
+import type * as classLists from "../classLists.js";
+import type * as courses from "../courses.js";
 import type * as http from "../http.js";
 import type * as lib_helpers from "../lib/helpers.js";
-import type * as lib_trigger from "../lib/trigger.js";
 import type * as lib_zodHelpers from "../lib/zodHelpers.js";
 import type * as middlewares_authenticatedMiddleware from "../middlewares/authenticatedMiddleware.js";
 import type * as middlewares_lecturerMiddleware from "../middlewares/lecturerMiddleware.js";
+import type * as middlewares_studentMiddleware from "../middlewares/studentMiddleware.js";
 import type * as models_authModel from "../models/authModel.js";
+import type * as models_classListModel from "../models/classListModel.js";
+import type * as models_classListStudentModel from "../models/classListStudentModel.js";
+import type * as models_coursesModel from "../models/coursesModel.js";
 import type * as models_userprofileModel from "../models/userprofileModel.js";
-import type * as payment from "../payment.js";
 import type * as service_paystack from "../service/paystack.js";
 import type * as userProfile from "../userProfile.js";
 
@@ -38,16 +42,20 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
-  "constants/payment": typeof constants_payment;
+  classListStudents: typeof classListStudents;
+  classLists: typeof classLists;
+  courses: typeof courses;
   http: typeof http;
   "lib/helpers": typeof lib_helpers;
-  "lib/trigger": typeof lib_trigger;
   "lib/zodHelpers": typeof lib_zodHelpers;
   "middlewares/authenticatedMiddleware": typeof middlewares_authenticatedMiddleware;
   "middlewares/lecturerMiddleware": typeof middlewares_lecturerMiddleware;
+  "middlewares/studentMiddleware": typeof middlewares_studentMiddleware;
   "models/authModel": typeof models_authModel;
+  "models/classListModel": typeof models_classListModel;
+  "models/classListStudentModel": typeof models_classListStudentModel;
+  "models/coursesModel": typeof models_coursesModel;
   "models/userprofileModel": typeof models_userprofileModel;
-  payment: typeof payment;
   "service/paystack": typeof service_paystack;
   userProfile: typeof userProfile;
 }>;

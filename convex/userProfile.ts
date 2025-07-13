@@ -129,7 +129,7 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
       };
 
       // create a lecturerPlan
-      await ctx.db.insert('lecturerPlan', {
+      await ctx.db.insert('lecturerConsumption', {
         lecturerId: ctx.userId,
         attendanceSessionCount: 0,
         createdCourseCount: 0,
@@ -139,10 +139,6 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
       await ctx.db.patch(ctx.userId, {
         ...onboardingData,
         isOnboarded: true,
-        lecturerCurrentPlan: {
-          plan: 'FREE',
-          isActive: true,
-        },
       });
     }
     return {

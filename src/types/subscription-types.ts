@@ -2,7 +2,7 @@ export type SubscriptionStatus =
   | 'active'
   | 'non-renewing'
   | 'attention'
-  | 'completed'
+  | 'complete'
   | 'cancelled';
 
 export interface Subscription_Create_Event {

@@ -19,10 +19,6 @@ import EnhancedStudentDetailSection from './enhanced-details-section';
 import LecturerNotifications from './lecturer-notifications';
 import LecturerProfile from './lecturer-profile';
 import LecturerAttendanceSection from './lecturer-attendance-section';
-import { Button } from '@/components/ui/button';
-import { api } from 'convex/_generated/api';
-import { useAction } from 'convex/react';
-import { toast } from 'sonner';
 
 interface LecturerDashboardProps {
   userData: any;
@@ -160,34 +156,6 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
         );
     }
   };
-
-  // const {} = useMutation(useConvexMutation(api.payment.initializePayment));
-  const initializeAction = useAction(api.payment.initializeSubscription);
-  const fetchSubscription = useAction(api.payment.fetchSubscription);
-  async function handlePayment() {
-    const response = await initializeAction({
-      plan: 'LECTURER_BASIC_PLAN',
-    });
-    if (response && response.success) {
-      window.location.href = response.data;
-    }
-    if (!response?.success) {
-      toast.error('Failed to initialize transaction. Try again later ');
-    }
-  }
-  async function handleFetchSubscription() {
-    const response = await fetchSubscription();
-    console.log({ response });
-  }
-
-  return (
-    <div className="flex items-center justify-between">
-      <Button onClick={handlePayment}>Initialize Payment</Button>
-      <Button onClick={handleFetchSubscription} variant={'outline'}>
-        Fetch Subscription
-      </Button>
-    </div>
-  );
 
   return (
     <SidebarProvider defaultOpen={true}>

@@ -34,7 +34,7 @@ export async function deleteUser(ctx: MutationCtx, id: string) {
 
     // get the lecturer plan
     const lecturerPlan = await ctx.db
-      .query('lecturerPlan')
+      .query('lecturerConsumption')
       .withIndex('by_lecturerId', (q) => q.eq('lecturerId', userId))
       .unique();
     if (!lecturerPlan) throw new ConvexError('Lecturer has no plan');

@@ -1,316 +1,364 @@
-// import { mutation, query } from "./_generated/server";
-// import { v } from "convex/values";
-// import { getAuthUserId } from "@convex-dev/auth/server";
+import { ConvexError, v } from 'convex/values';
+import {
+  courseMutation,
+  LecturerCourseQuery,
+  lecturerMutation,
+  lecturerQuery,
+} from './middlewares/lecturerMiddleware';
+import { filter } from 'convex-helpers/server/filter';
+import { lecturerCourseStatusSchema } from './schema';
+import * as CoursesModel from './models/coursesModel';
+import { AuthenticatedUserQuery } from './middlewares/authenticatedMiddleware';
+import { StudentMutationMiddleware } from './middlewares/studentMiddleware';
+import * as ClassListModel from './models/classListModel';
+import * as ClassListStudentModel from './models/classListStudentModel';
+// import * as classListModel from './models/classListModel';
 
-// // Generate a random join code
-// function generateJoinCode(): string {
-//   return Math.random().toString(36).substring(2, 8).toUpperCase();
-// }
+export const createCourse = lecturerMutation({
+  args: {
+    courseName: v.string(),
+    initialCourseCode: v.string(),
+    classListIds: v.array(v.id('classLists')),
+  },
+  handler: async (ctx, { courseName, initialCourseCode, classListIds }) => {
+    const lecturerId = ctx.user._id;
 
-// export const createCourse = mutation({
-//   args: {
-//     courseName: v.string(),
-//     courseCode: v.string(),
-//     department: v.string(),
-//     year: v.string(),
-//     studentsData: v.array(v.object({
-//       name: v.string(),
-//       gender: v.string(),
-//       registrationNumber: v.string(),
-//     })),
-//   },
-//   handler: async (ctx, args) => {
-//     const userId = await getAuthUserId(ctx);
-//     if (!userId) {
-//       throw new Error("Not authenticated");
-//     }
+    const courseCode = CoursesModel.generateCourseCode(
+      initialCourseCode,
+      lecturerId,
+    );
 
-//     // Verify user is a lecturer
-//     const profile = await ctx.db
-//       .query("userProfiles")
-//       .withIndex("by_user_id", (q) => q.eq("userId", userId))
-//       .unique();
+    const courseId = await ctx.db.insert('courses', {
+      lecturerId,
+      courseName: courseName,
+      courseCode: courseCode,
+      status: 'active',
+      classListIds,
+    });
 
-//     if (!profile || profile.role !== "lecturer") {
-//       throw new Error("Only lecturers can create courses");
-//     }
+    // const [classListStudents] = await Promise.all(
+    //   classListIds.map(async (classListId) => {
+    //     const classList = await classListModel.ensureClassListExists({
+    //       ctx,
+    //       lecturerId,
+    //       classListId,
+    //     });
+    //     if (!classList) throw new ConvexError('ClassList does not exist');
+    //     // grab the students that belong to the classList
+    //     return await ctx.db
+    //       .query('classListStudents')
+    //       .withIndex('by_classListId', (q) => q.eq('classListId', classListId))
+    //       .collect();
+    //   }),
+    // );
 
-//     // Check if course code already exists
-//     const existingCourse = await ctx.db
-//       .query("courses")
-//       .withIndex("by_course_code", (q) => q.eq("courseCode", args.courseCode))
-//       .unique();
+    // // insert the classListStudent into the courseAttendanceList
+    // await Promise.all(
+    //   classListStudents.map(async (classListStudent) => {
+    //     const classListStudentId = classListStudent._id;
+    //     // create courseAttendanceList using the classList
+    //     await ctx.db.insert('courseAttendanceList', {
+    //       courseId,
+    //       lecturerId,
+    //       classListStudentId,
+    //     });
+    //   }),
+    // );
 
-//     if (existingCourse) {
-//       throw new Error("Course code already exists");
-//     }
+    await CoursesModel.updateLecturerConsumption({
+      ctx,
+      lecturerId,
+      method: 'insert',
+    });
 
-//     const joinCode = generateJoinCode();
+    return courseId;
+  },
+});
 
-//     const courseId = await ctx.db.insert("courses", {
-//       lecturerId: userId,
-//       courseName: args.courseName,
-//       courseCode: args.courseCode,
-//       joinCode,
-//       status: "active",
-//       department: args.department,
-//       year: args.year,
-//       studentsData: args.studentsData.map(student => ({
-//         ...student,
-//         isLinked: false,
-//       })),
-//       createdAt: Date.now(),
-//     });
+export const getLecturerCourses = lecturerQuery({
+  args: {
+    status: v.optional(lecturerCourseStatusSchema),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
 
-//     // Create attendance list entries
-//     for (const student of args.studentsData) {
-//       await ctx.db.insert("attendanceList", {
-//         courseId,
-//         name: student.name,
-//         gender: student.gender,
-//         registrationNumber: student.registrationNumber,
-//         isLinked: false,
-//         uploadedAt: Date.now(),
-//       });
-//     }
+    return await filter(
+      ctx.db
+        .query('courses')
+        .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId)),
+      (c) => c.status === args.status,
+    ).collect();
 
-//     return courseId;
-//   },
-// });
+    //   // For students, get approved courses
+    //   const approvedRequests = await ctx.db
+    //     .query("joinRequests")
+    //     .withIndex("by_student", (q) => q.eq("studentId", userId))
+    //     .filter((q) => q.eq(q.field("status"), "approved"))
+    //     .collect();
 
-// export const getMyCourses = query({
-//   args: {
-//     status: v.optional(v.union(v.literal("active"), v.literal("archived"), v.literal("completed"))),
-//   },
-//   handler: async (ctx, args) => {
-//     const userId = await getAuthUserId(ctx);
-//     if (!userId) {
-//       return [];
-//     }
+    //   const courses = [];
+    //   for (const request of approvedRequests) {
+    //     const course = await ctx.db.get(request.courseId);
+    //     if (course) {
+    //       courses.push(course);
+    //     }
+    //   }
+    //   return courses;
+  },
+});
 
-//     const profile = await ctx.db
-//       .query("userProfiles")
-//       .withIndex("by_user_id", (q) => q.eq("userId", userId))
-//       .unique();
+export const searchCourse = AuthenticatedUserQuery({
+  args: { courseCode: v.string() },
+  handler: async (ctx, args) => {
+    const course = await ctx.db
+      .query('courses')
+      .withIndex('by_courseCode', (q) => q.eq('courseCode', args.courseCode))
+      .unique();
 
-//     if (!profile) {
-//       return [];
-//     }
+    if (!course || course.status !== 'active') {
+      return null;
+    }
+    // grab the lecturers Info
+    const lecturer = await ctx.db.get(course.lecturerId);
+    if (!lecturer) return null;
+    return {
+      _id: course._id,
+      courseName: course.courseName,
+      courseCode: course.courseCode,
+      lecturer: {
+        name: lecturer.fullName,
+      },
+    };
+  },
+});
 
-//     if (profile.role === "lecturer") {
-//       if (args.status) {
-//         return await ctx.db
-//           .query("courses")
-//           .withIndex("by_lecturer_status", (q) => q.eq("lecturerId", userId).eq("status", args.status as "active" | "archived" | "completed"))
-//           .collect();
-//       } else {
-//         return await ctx.db
-//           .query("courses")
-//           .withIndex("by_lecturer", (q) => q.eq("lecturerId", userId))
-//           .collect();
-//       }
-//     } else {
-//       // For students, get approved courses
-//       const approvedRequests = await ctx.db
-//         .query("joinRequests")
-//         .withIndex("by_student", (q) => q.eq("studentId", userId))
-//         .filter((q) => q.eq(q.field("status"), "approved"))
-//         .collect();
+export const updateCourse = courseMutation({
+  args: {
+    courseName: v.optional(v.string()),
+    status: v.optional(lecturerCourseStatusSchema),
+  },
+  async handler(ctx, args) {
+    const course = ctx.course;
 
-//       const courses = [];
-//       for (const request of approvedRequests) {
-//         const course = await ctx.db.get(request.courseId);
-//         if (course) {
-//           courses.push(course);
-//         }
-//       }
-//       return courses;
-//     }
-//   },
-// });
+    if (args.status === 'archived')
+      throw new ConvexError('Course cannot be archived by Lecturer');
 
-// export const searchCourse = query({
-//   args: { courseCode: v.string() },
-//   handler: async (ctx, args) => {
-//     const course = await ctx.db
-//       .query("courses")
-//       .withIndex("by_course_code", (q) => q.eq("courseCode", args.courseCode))
-//       .unique();
+    await ctx.db.patch(args.courseId, {
+      courseName: args.courseName ?? course.courseName,
+      status: args.status ?? course.status,
+    });
+  },
+});
 
-//     if (!course || course.status !== "active") {
-//       return null;
-//     }
+export const removeCourseClassList = courseMutation({
+  args: {
+    classListIds: v.array(v.id('classLists')),
+  },
+  async handler(ctx, args) {
+    const course = ctx.course;
+    const lecturerId = ctx.user._id;
 
-//     return {
-//       _id: course._id,
-//       courseName: course.courseName,
-//       courseCode: course.courseCode,
-//     };
-//   },
-// });
+    if (course.status !== 'active')
+      throw new ConvexError(
+        'Course must be active in order to allow deleting of  ',
+      );
 
-// export const requestToJoinCourse = mutation({
-//   args: { courseId: v.id("courses") },
-//   handler: async (ctx, args) => {
-//     const userId = await getAuthUserId(ctx);
-//     if (!userId) {
-//       throw new Error("Not authenticated");
-//     }
+    // Verify that the classLists are part of the course
+    const validClassListIds = await Promise.all(
+      args.classListIds.map(async (classlistId) => {
+        const classList = await ctx.db.get(classlistId);
+        if (!classList) throw new ConvexError('ClassList does not exist');
+        const isIncluded = course.classListIds.includes(classlistId);
+        if (!isIncluded)
+          throw new ConvexError('The classList is not part of the Course');
+        return classlistId;
+      }),
+    );
 
-//     const course = await ctx.db.get(args.courseId);
-//     if (!course || course.status !== "active") {
-//       throw new Error("Course not available for enrollment");
-//     }
+    await Promise.all(
+      validClassListIds.map(async (classListId) => {
+        // TODO: Abstract into a model method
+        const courseAttendanceList = await ctx.db
+          .query('courseAttendanceList')
+          .withIndex('by_classListId_by_courseId_by_lecturerId', (q) =>
+            q
+              .eq('classListId', classListId)
+              .eq('courseId', course._id)
+              .eq('lecturerId', lecturerId),
+          )
+          .collect();
 
-//     // Check if request already exists
-//     const existingRequest = await ctx.db
-//       .query("joinRequests")
-//       .withIndex("by_student", (q) => q.eq("studentId", userId))
-//       .filter((q) => q.eq(q.field("courseId"), args.courseId))
-//       .unique();
+        await Promise.all(
+          courseAttendanceList.map(async (courseAttendanceList) => {
+            await ctx.db.delete(courseAttendanceList._id);
+          }),
+        );
+      }),
+    );
 
-//     if (existingRequest) {
-//       throw new Error("Join request already exists");
-//     }
+    const updatedCourseClassListIds = course.classListIds.filter(
+      (classListId) => {
+        return !!validClassListIds.find((c) => c === classListId);
+      },
+    );
 
-//     const requestId = await ctx.db.insert("joinRequests", {
-//       courseId: args.courseId,
-//       studentId: userId,
-//       status: "pending",
-//       requestedAt: Date.now(),
-//     });
+    // remove the classListId from the course
+    await ctx.db.patch(course._id, {
+      classListIds: updatedCourseClassListIds,
+    });
+  },
+});
 
-//     return requestId;
-//   },
-// });
+export const requestToJoinCourse = StudentMutationMiddleware({
+  args: { courseId: v.id('courses') },
+  handler: async (ctx, args) => {
+    const studentId = ctx.user._id;
 
-// export const getJoinRequests = query({
-//   args: { courseId: v.id("courses") },
-//   handler: async (ctx, args) => {
-//     const userId = await getAuthUserId(ctx);
-//     if (!userId) {
-//       return [];
-//     }
+    const course = await ctx.db.get(args.courseId);
+    if (!course || course.status !== 'active') {
+      throw new ConvexError('Course not available for enrollment');
+    }
 
-//     const course = await ctx.db.get(args.courseId);
-//     if (!course || course.lecturerId !== userId) {
-//       throw new Error("Unauthorized");
-//     }
+    // Check if request already exists
+    const existingRequest = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_student_by_courseId', (q) =>
+        q.eq('studentId', studentId).eq('courseId', args.courseId),
+      )
+      .unique();
 
-//     const requests = await ctx.db
-//       .query("joinRequests")
-//       .withIndex("by_course", (q) => q.eq("courseId", args.courseId))
-//       .filter((q) => q.eq(q.field("status"), "pending"))
-//       .collect();
+    if (existingRequest) {
+      throw new Error('Join request already exists');
+    }
 
-//     const requestsWithStudentInfo = [];
-//     for (const request of requests) {
-//       const studentProfile = await ctx.db
-//         .query("userProfiles")
-//         .withIndex("by_user_id", (q) => q.eq("userId", request.studentId))
-//         .unique();
+    const requestId = await ctx.db.insert('joinRequests', {
+      studentId,
+      lecturerId: course.lecturerId,
+      courseId: args.courseId,
+      status: 'pending',
+    });
 
-//       if (studentProfile) {
-//         requestsWithStudentInfo.push({
-//           ...request,
-//           studentProfile,
-//         });
-//       }
-//     }
+    return requestId;
+  },
+});
 
-//     return requestsWithStudentInfo;
-//   },
-// });
+export const getCourseJoinRequests = LecturerCourseQuery({
+  // TODO: Tweak the function to show all join requests of a lecturer
+  args: { courseId: v.id('courses') },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
+    const requests = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_lecturerId_by_courseId', (q) =>
+        q.eq('lecturerId', lecturerId).eq('courseId', args.courseId),
+      )
+      .filter((q) => q.eq(q.field('status'), 'pending'))
+      .collect();
 
-// export const approveJoinRequest = mutation({
-//   args: {
-//     requestId: v.id("joinRequests"),
-//     registrationNumber: v.string(),
-//   },
-//   handler: async (ctx, args) => {
-//     const userId = await getAuthUserId(ctx);
-//     if (!userId) {
-//       throw new Error("Not authenticated");
-//     }
+    const requestsWithStudentInfo = [];
+    for (const request of requests) {
+      const studentProfile = await ctx.db
+        .query('userProfiles')
+        .withIndex('by_id', (q) => q.eq('_id', request.studentId))
+        .unique();
 
-//     const request = await ctx.db.get(args.requestId);
-//     if (!request) {
-//       throw new Error("Request not found");
-//     }
+      if (!studentProfile) throw new ConvexError('Student does not exist');
 
-//     const course = await ctx.db.get(request.courseId);
-//     if (!course || course.lecturerId !== userId) {
-//       throw new Error("Unauthorized");
-//     }
+      requestsWithStudentInfo.push({
+        ...request,
+        studentProfile,
+      });
+    }
 
-//     // Find and link attendance list entry
-//     const attendanceEntry = await ctx.db
-//       .query("attendanceList")
-//       .withIndex("by_course", (q) => q.eq("courseId", request.courseId))
-//       .filter((q) => q.eq(q.field("registrationNumber"), args.registrationNumber))
-//       .unique();
+    return requestsWithStudentInfo;
+  },
+});
 
-//     if (!attendanceEntry) {
-//       throw new Error("Registration number not found in attendance list");
-//     }
+export const updateJoinRequest = lecturerMutation({
+  args: {
+    status: v.union(v.literal('approved'), v.literal('rejected')),
+    joinRequestId: v.id('joinRequests'),
+    classListId: v.id('classLists'),
+    classListStudentId: v.id('classListStudents'),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
+    const request = await ctx.db.get(args.joinRequestId);
+    if (!request) {
+      throw new ConvexError('Request not found');
+    }
+    // if(request.status === "approved")
 
-//     if (attendanceEntry.isLinked) {
-//       throw new Error("This attendance entry is already linked to another student");
-//     }
+    const course = await ctx.db.get(request.courseId);
+    if (!course || course.lecturerId !== lecturerId) {
+      throw new ConvexError('Unauthorized: Lecturer has no access this course');
+    }
 
-//     // Link the attendance entry
-//     await ctx.db.patch(attendanceEntry._id, {
-//       linkedStudentId: request.studentId,
-//       isLinked: true,
-//     });
+    // ????  TODO: ensure the student registration number is equal to the classListStudent registration number
 
-//     // Update the course studentsData
-//     const updatedStudentsData = course.studentsData.map(student => {
-//       if (student.registrationNumber === args.registrationNumber) {
-//         return {
-//           ...student,
-//           isLinked: true,
-//           linkedUserId: request.studentId,
-//         };
-//       }
-//       return student;
-//     });
+    // ensure the classList exists and belongs to the lecturer
+    const classList = await ClassListModel.ensureClassListExists({
+      ctx,
+      classListId: args.classListId,
+      lecturerId,
+    });
+    if (!classList) throw new ConvexError('ClassList does not exist');
 
-//     await ctx.db.patch(request.courseId, {
-//       studentsData: updatedStudentsData,
-//     });
+    // ensure the classListStudent belongs to the classList
+    const classListStudent = await ClassListStudentModel.verifyClassListStudent(
+      {
+        ctx,
+        classListId: classList._id,
+        classListStudentId: args.classListStudentId,
+      },
+    );
 
-//     // Update request status
-//     await ctx.db.patch(args.requestId, {
-//       status: "approved",
-//       processedAt: Date.now(),
-//       linkedAttendanceListId: attendanceEntry._id,
-//     });
+    if (args.status === 'rejected') {
+      return await ctx.db.patch(args.joinRequestId, {
+        status: 'rejected',
+      });
+    }
 
-//     // Create student course stats
-//     await ctx.db.insert("studentCourseStats", {
-//       studentId: request.studentId,
-//       courseId: request.courseId,
-//       attendancePercentage: 0,
-//       sessionsAttended: 0,
-//       totalSessions: 0,
-//       firstJoinDate: Date.now(),
-//       status: "active",
-//     });
+    // check if  the student has already been added to the attendanceList
+    const linkedStudent = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_courseId_by_studentId', (q) =>
+        q.eq('courseId', course._id).eq('studentId', request.studentId),
+      )
+      .unique();
 
-//     // Send notification to student
-//     await ctx.db.insert("notifications", {
-//       recipientId: request.studentId,
-//       senderId: userId,
-//       courseId: request.courseId,
-//       title: "Enrollment Approved",
-//       message: `You have been accepted into ${course.courseName} (${course.courseCode})`,
-//       type: "enrollment",
-//       isRead: false,
-//       createdAt: Date.now(),
-//       actionUrl: `/dashboard`,
-//     });
+    if (linkedStudent)
+      throw new ConvexError(
+        'Student is already part of the courseAttendanceList',
+      );
 
-//     return true;
-//   },
-// });
+    // update the  joinRequest status
+    await ctx.db.patch(args.joinRequestId, {
+      status: 'approved',
+    });
+
+    // insert the student into the courseAttendanceList
+    await ctx.db.insert('courseAttendanceList', {
+      lecturerId,
+      studentId: request.studentId,
+      courseId: course._id,
+      classListId: classList._id,
+      classListStudentId: classListStudent._id,
+    });
+
+    // // Send notification to student
+    // await ctx.db.insert('notifications', {
+    //   recipientId: request.studentId,
+    //   senderId: userId,
+    //   courseId: request.courseId,
+    //   title: 'Enrollment Approved',
+    //   message: `You have been accepted into ${course.courseName} (${course.courseCode})`,
+    //   type: 'enrollment',
+    //   isRead: false,
+    //   createdAt: Date.now(),
+    //   actionUrl: `/dashboard`,
+    // });
+
+    return true;
+  },
+});

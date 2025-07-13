@@ -39,22 +39,35 @@ export const studentGenderSchema = v.union(
   v.literal('female'),
 );
 
-const lecturerCurrentPlanSchema = v.optional(
-  v.union(
-    v.object({
-      plan: v.literal(lecturerCurrentPlan.LECTURER_FREE_PLAN),
-      isActive: v.boolean(),
-    }),
-    v.object({
-      plan: v.literal(lecturerCurrentPlan.LECTURER_BASIC_PLAN),
-      isActive: v.boolean(),
-    }),
-    v.object({
-      plan: v.literal(lecturerCurrentPlan.LECTURER_PRO_PLAN),
-      isActive: v.boolean(),
-    }),
-  ),
+export const lecturerCourseStatusSchema = v.union(
+  v.literal('active'),
+  v.literal('archived'),
+  v.literal('completed'),
 );
+
+export const classListStudentSchema = v.object({
+  classlistPosition: v.number(),
+  studentName: v.string(),
+  studentGender: studentGenderSchema,
+  studentRegistrationNumber: v.string(),
+});
+
+// const lecturerCurrentPlanSchema = v.optional(
+//   v.union(
+//     v.object({
+//       plan: v.literal(lecturerCurrentPlan.LECTURER_FREE_PLAN),
+//       isActive: v.boolean(),
+//     }),
+//     v.object({
+//       plan: v.literal(lecturerCurrentPlan.LECTURER_BASIC_PLAN),
+//       isActive: v.boolean(),
+//     }),
+//     v.object({
+//       plan: v.literal(lecturerCurrentPlan.LECTURER_PRO_PLAN),
+//       isActive: v.boolean(),
+//     }),
+//   ),
+// );
 
 const applicationTables = {
   // User profiles table
@@ -70,7 +83,7 @@ const applicationTables = {
     registrationNumber: v.optional(v.string()),
     yearLevel: v.optional(studentYearLevelSchema),
     student_passport_photo_id: v.optional(v.id('_storage')),
-    lecturerCurrentPlan: lecturerCurrentPlanSchema,
+    lecturerPassportImage: v.optional(v.id('_storage')),
   })
     .index('by_role', ['role'])
     .index('by_registration_number', ['registrationNumber'])
@@ -81,33 +94,34 @@ const applicationTables = {
   // ? This will be updated by  triggers
   //TODO: This should be deleted once the lecturer deletes their account
   // TODO: Once the lecturer account has  been created, this field has to be created for them ✅
-  lecturerPlan: defineTable({
+  lecturerConsumption: defineTable({
     lecturerId: v.id('userProfiles'),
     attendanceSessionCount: v.number(),
     createdCourseCount: v.number(),
     registeredStudentCount: v.number(),
   }).index('by_lecturerId', ['lecturerId']),
 
+  // Only lecturers on a paid plan can have a subscription
   subscriptions: defineTable({
+    lecturerId: v.id('userProfiles'),
     emailToken: v.string(),
     authorizationCode: v.string(),
-    lecturerId: v.id('userProfiles'),
     subscriptionCode: v.string(),
     planCode: v.string(),
     PayStackCustomerId: v.string(),
-    //? Next payment date will be in  ISO 8601 format
+    // Next payment date will be in  ISO 8601 format
     nextPaymentDate: v.string(),
   }).index('by_lecturerId', ['lecturerId']),
 
   // ClassList - Core abstraction for student groups
   classLists: defineTable({
-    title: v.string(),
+    classListName: v.optional(v.string()),
     department: v.string(),
     yearGroup: v.string(), // e.g., "Software Engineering - 2022"
     faculty: v.string(),
-    // ? ClassLists have to be tied to a lecturer
-    lecturerId: v.id('users'),
-    // ?For figuring out classLists that are archived
+    //  ClassLists have to be tied to a lecturer
+    lecturerId: v.id('userProfiles'),
+    // For figuring out classLists that are archived
     isArchived: v.boolean(),
   })
     .index('by_lecturer', ['lecturerId'])
@@ -116,66 +130,59 @@ const applicationTables = {
 
   classListStudents: defineTable({
     classListId: v.id('classLists'),
-    student: v.object({
-      classlistPosition: v.number(),
-      studentName: v.string(),
-      studentGender: studentGenderSchema,
-      studentRegistrationNumber: v.number(),
-    }),
-  }),
-  // Updated courses table
+    student: classListStudentSchema,
+  }).index('by_classListId', ['classListId']),
+
   courses: defineTable({
     courseName: v.string(),
     courseCode: v.string(),
-    description: v.optional(v.string()),
     lecturerId: v.id('userProfiles'),
     classListIds: v.array(v.id('classLists')), // Reference to ClassLists
-    status: v.union(
-      v.literal('active'),
-      v.literal('archived'),
-      v.literal('completed'),
-    ),
-    //!  A Course can only have one attendanceList
-    // TODO Encode this in the mutations
-    attendanceListId: v.optional(v.id('attendanceList')),
+    status: lecturerCourseStatusSchema,
   })
     .index('by_lecturer', ['lecturerId'])
-    .index('by_status', ['status'])
-    .index('courseCode', ['courseCode'])
-    .index('attendanceListId', ['attendanceListId']),
+    .index('by_courseCode', ['courseCode']),
 
-  attendanceList: defineTable({
+  courseAttendanceList: defineTable({
+    //!  A Course can only have one attendanceList
+    // TODO Encode this in the mutations
     courseId: v.id('courses'),
     lecturerId: v.id('userProfiles'),
     studentId: v.id('userProfiles'),
+    classListId: v.id('classLists'),
     classListStudentId: v.id('classListStudents'),
   })
+    .index('by_classListId_by_courseId_by_lecturerId', [
+      'classListId',
+      'courseId',
+      'lecturerId',
+    ])
     .index('by_courseId', ['courseId'])
     .index('by_lecturerId', ['lecturerId'])
-    .index('by_studentId', ['studentId'])
+    .index('by_courseId_by_lecturerId', ['courseId', 'lecturerId'])
+    .index('by_courseId_by_studentId', ['courseId', 'studentId'])
     .index('by_classListStudentId', ['classListStudentId']),
 
-  // Enhanced join requests
   joinRequests: defineTable({
-    studentId: v.id('users'),
-    courseCode: v.string(),
+    studentId: v.id('userProfiles'),
+    lecturerId: v.id('userProfiles'),
+    courseId: v.id('courses'),
     status: v.union(
       v.literal('pending'),
       v.literal('approved'),
       v.literal('rejected'),
     ),
     message: v.optional(v.string()),
-    // linkedTo: v.optional(v.string()), // registration number from attendance list
   })
-    .index('by_course', ['courseCode'])
-    .index('by_student', ['studentId'])
+    .index('by_student_by_courseId', ['studentId', 'courseId'])
+    .index('by_lecturerId_by_courseId', ['lecturerId', 'courseId'])
     .index('by_status', ['status']),
 
   // Attendance sessions
   attendanceSessions: defineTable({
     courseId: v.id('courses'),
     lecturerId: v.id('userProfiles'),
-    // ? Lecturers can optionally name a session. Defaults to the {courseNAME}-{sessionNumber}
+    //  Lecturers can optionally name a session. Defaults to the {courseNAME}-{sessionNumber}
     // TODO: Encode this in the creation logic of an attendance session
     sessionName: v.string(),
     location: v.object({
@@ -183,7 +190,7 @@ const applicationTables = {
       long: v.number(),
     }),
     isActive: v.boolean(),
-    // ? This will be the time the attendance session ends. It will be automatically set by a cron_job
+    //  This will be the time the attendance session ends. It will be automatically set by a cron_job
     endedAt: v.optional(v.number()),
   })
     .index('by_course', ['courseId'])
@@ -191,12 +198,12 @@ const applicationTables = {
     .index('by_lecturerId', ['lecturerId']),
 
   // Attendance records
-  // ? A student attendance record will only exist if the attendance was taken
+  // A student attendance record will only exist if the attendance was taken
   attendanceRecords: defineTable({
     sessionId: v.id('attendanceSessions'),
     studentId: v.id('userProfiles'),
 
-    //? This will be the ISO 8601 timestamp of when the student takes the attendance
+    // This will be the ISO 8601 timestamp of when the student takes the attendance
     checkedInAt: v.string(),
     location: v.object({
       lat: v.number(),

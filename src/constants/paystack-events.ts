@@ -5,6 +5,11 @@ export const subscription_events = {
   expiring_cards: 'subscription.expiring_cards',
 };
 
+export const invoice_events = {
+  update: 'invoice.update',
+  paymentFailed: 'invoice.payment_failed',
+};
+
 export const transaction_events = {
   success: 'charge.success',
 };
