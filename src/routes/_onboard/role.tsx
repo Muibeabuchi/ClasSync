@@ -5,7 +5,7 @@ import {
 } from '@/feature/onboarding/api/api-hooks';
 import LecturerOnboardingSection from '@/feature/onboarding/components/lecturer-onboarding-section';
 import StudentOnboardingSection from '@/feature/onboarding/components/onboard.student';
-import { OnboardingDataType } from '@/feature/onboarding/schema/onboarding-schema';
+import { type OnboardingDataType } from '@/feature/onboarding/schema/onboarding-schema';
 import { useNavigate } from '@tanstack/react-router';
 import { createFileRoute } from '@tanstack/react-router';
 import { toast } from 'sonner';

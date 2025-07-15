@@ -24,8 +24,8 @@ import {
 } from '@/constants/faculty-department';
 // import { useNavigate } from '@tanstack/react-router';
 import {
-  lecturerTitleType,
-  OnboardingDataType,
+  type lecturerTitleType,
+  type OnboardingDataType,
 } from '../schema/onboarding-schema';
 import { lecturerTitleArrayConstant } from '@/constants/onboarding';
 

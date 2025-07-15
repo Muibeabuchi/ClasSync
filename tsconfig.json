@@ -2,6 +2,7 @@
   "include": ["**/*.ts", "**/*.tsx", "src/routes/_auth/onboard.role.$roletsx"],
   "compilerOptions": {
     "strict": true,
+    "verbatimModuleSyntax": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
     "module": "ESNext",

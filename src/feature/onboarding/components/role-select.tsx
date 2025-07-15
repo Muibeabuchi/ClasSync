@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { GraduationCap, Users, BookOpen, X } from 'lucide-react';
 import { CancelModal } from './cancel-modal';
-import { UserRoleType } from '../schema/onboarding-schema';
+import { type UserRoleType } from '../schema/onboarding-schema';
 import { useUpdateUserRole } from '../api/api-hooks';
 // import { UserRoleType } from '../schema/onboarding-schema';
 

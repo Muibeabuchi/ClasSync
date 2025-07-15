@@ -5,7 +5,7 @@ import {
   yearLevelArrayConstant,
 } from '@/constants/onboarding';
 import {
-  BackendUserRoleType,
+  type BackendUserRoleType,
   // userRoleSchema,
 } from './../../../../convex/schema';
 import { z } from 'zod';

@@ -23,9 +23,9 @@ import {
   getDepartmentsByFaculty,
 } from '@/constants/faculty-department';
 import {
-  GenderType,
-  OnboardingDataType,
-  yearLevelType,
+  type GenderType,
+  type OnboardingDataType,
+  type yearLevelType,
 } from '../schema/onboarding-schema';
 import { yearLevelArrayConstant } from '@/constants/onboarding';
 
