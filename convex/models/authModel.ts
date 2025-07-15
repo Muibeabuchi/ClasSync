@@ -21,6 +21,8 @@ export async function deleteUser(ctx: MutationCtx, id: string) {
   const user = await ctx.db.get(userId);
   if (!user) throw new ConvexError('User does not exist');
 
+  // TODO: DElete all instances of the students attendance records (If Necessary)
+
   // delete the lecturers subscription
   if (user.role === 'lecturer') {
     // grab the lecturers subscription

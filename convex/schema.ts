@@ -178,31 +178,36 @@ const applicationTables = {
     .index('by_lecturerId_by_courseId', ['lecturerId', 'courseId'])
     .index('by_status', ['status']),
 
-  // Attendance sessions
+  // attendance created by lecturer
   attendanceSessions: defineTable({
     courseId: v.id('courses'),
     lecturerId: v.id('userProfiles'),
+    attendanceCode: v.optional(v.string()),
     //  Lecturers can optionally name a session. Defaults to the {courseNAME}-{sessionNumber}
     // TODO: Encode this in the creation logic of an attendance session
-    sessionName: v.string(),
     location: v.object({
       lat: v.number(),
       long: v.number(),
     }),
-    isActive: v.boolean(),
+    status: v.union(
+      v.literal('active'),
+      v.literal('pending'),
+      v.literal('complete'),
+    ),
     //  This will be the time the attendance session ends. It will be automatically set by a cron_job
     endedAt: v.optional(v.number()),
   })
-    .index('by_course', ['courseId'])
-    .index('by_active', ['isActive'])
+    .index('by_courseId_by_lecturerId', ['courseId', 'lecturerId'])
+    .index('by_courseId', ['courseId'])
+    .index('by_status', ['status'])
     .index('by_lecturerId', ['lecturerId']),
 
   // Attendance records
   // A student attendance record will only exist if the attendance was taken
   attendanceRecords: defineTable({
-    sessionId: v.id('attendanceSessions'),
+    attendanceSessionId: v.id('attendanceSessions'),
     studentId: v.id('userProfiles'),
-
+    courseId: v.id('courses'),
     // This will be the ISO 8601 timestamp of when the student takes the attendance
     checkedInAt: v.string(),
     location: v.object({
@@ -210,8 +215,12 @@ const applicationTables = {
       long: v.number(),
     }),
   })
-    .index('by_session', ['sessionId'])
-    .index('by_student', ['studentId']),
+    .index('by_attendanceSessionId_by_StudentId', [
+      'attendanceSessionId',
+      'studentId',
+    ])
+    .index('by_attendanceSessionId', ['attendanceSessionId'])
+    .index('by_studentId', ['studentId']),
 
   // ? ==================== WILL LOOK AT THIS LATER ========================  //
 

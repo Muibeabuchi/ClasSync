@@ -12,7 +12,7 @@ import { AuthenticatedUserQuery } from './middlewares/authenticatedMiddleware';
 import { StudentMutationMiddleware } from './middlewares/studentMiddleware';
 import * as ClassListModel from './models/classListModel';
 import * as ClassListStudentModel from './models/classListStudentModel';
-// import * as classListModel from './models/classListModel';
+import * as joinRequestModel from './models/joinRequestModel';
 
 export const createCourse = lecturerMutation({
   args: {
@@ -132,6 +132,24 @@ export const searchCourse = AuthenticatedUserQuery({
   },
 });
 
+// Mutation For Students to Cancel a JoinRequest
+export const cancelJoinRequest = StudentMutationMiddleware({
+  args: { joinRequestId: v.id('joinRequests') },
+  async handler(ctx, args) {
+    // Ensure the joinRequest is valid
+    const joinRequest = await joinRequestModel.ensureValidJoinRequestOrThrow({
+      ctx,
+      joinRequestId: args.joinRequestId,
+    });
+
+    if (joinRequest.status === 'pending') {
+      await ctx.db.delete(joinRequest._id);
+    } else {
+      throw new ConvexError('Only Pending JoinRequest can be cancelled');
+    }
+  },
+});
+
 export const updateCourse = courseMutation({
   args: {
     courseName: v.optional(v.string()),
@@ -243,8 +261,7 @@ export const requestToJoinCourse = StudentMutationMiddleware({
 });
 
 export const getCourseJoinRequests = LecturerCourseQuery({
-  // TODO: Tweak the function to show all join requests of a lecturer
-  args: { courseId: v.id('courses') },
+  args: { courseId: v.optional(v.id('courses')) },
   handler: async (ctx, args) => {
     const lecturerId = ctx.user._id;
     const requests = await ctx.db
@@ -274,9 +291,28 @@ export const getCourseJoinRequests = LecturerCourseQuery({
   },
 });
 
-export const updateJoinRequest = lecturerMutation({
+export const rejectJoinRequest = lecturerMutation({
+  args: { joinRequestId: v.id('joinRequests') },
+  async handler(ctx, args) {
+    const lecturerId = ctx.user._id;
+    const request = await ctx.db.get(args.joinRequestId);
+    if (!request) {
+      throw new ConvexError('Request not found');
+    }
+
+    const course = await ctx.db.get(request.courseId);
+    if (!course || course.lecturerId !== lecturerId) {
+      throw new ConvexError('Unauthorized: Lecturer has no access this course');
+    }
+
+    await ctx.db.patch(args.joinRequestId, {
+      status: 'rejected',
+    });
+  },
+});
+
+export const acceptAndLinkJoinRequest = lecturerMutation({
   args: {
-    status: v.union(v.literal('approved'), v.literal('rejected')),
     joinRequestId: v.id('joinRequests'),
     classListId: v.id('classLists'),
     classListStudentId: v.id('classListStudents'),
@@ -287,14 +323,11 @@ export const updateJoinRequest = lecturerMutation({
     if (!request) {
       throw new ConvexError('Request not found');
     }
-    // if(request.status === "approved")
 
     const course = await ctx.db.get(request.courseId);
     if (!course || course.lecturerId !== lecturerId) {
       throw new ConvexError('Unauthorized: Lecturer has no access this course');
     }
-
-    // ????  TODO: ensure the student registration number is equal to the classListStudent registration number
 
     // ensure the classList exists and belongs to the lecturer
     const classList = await ClassListModel.ensureClassListExists({
@@ -313,11 +346,16 @@ export const updateJoinRequest = lecturerMutation({
       },
     );
 
-    if (args.status === 'rejected') {
-      return await ctx.db.patch(args.joinRequestId, {
-        status: 'rejected',
-      });
-    }
+    // ????  TODO: ensure the student registration number is equal to the classListStudent registration number
+    // if(settings.ensureValidRegistrationNumber){
+    // const student = await ctx.db.get(request.studentId);
+    // if (
+    //   !student ||
+    //   student.registrationNumber !==
+    //     classListStudent.student.studentRegistrationNumber
+    // )
+    //   throw new ConvexError('Student Registration Number does not Match');
+    // }
 
     // check if  the student has already been added to the attendanceList
     const linkedStudent = await ctx.db
@@ -332,18 +370,18 @@ export const updateJoinRequest = lecturerMutation({
         'Student is already part of the courseAttendanceList',
       );
 
-    // update the  joinRequest status
-    await ctx.db.patch(args.joinRequestId, {
-      status: 'approved',
-    });
-
     // insert the student into the courseAttendanceList
     await ctx.db.insert('courseAttendanceList', {
       lecturerId,
-      studentId: request.studentId,
       courseId: course._id,
       classListId: classList._id,
+      studentId: request.studentId,
       classListStudentId: classListStudent._id,
+    });
+
+    // update the  joinRequest status
+    return await ctx.db.patch(args.joinRequestId, {
+      status: 'approved',
     });
 
     // // Send notification to student
@@ -358,7 +396,16 @@ export const updateJoinRequest = lecturerMutation({
     //   createdAt: Date.now(),
     //   actionUrl: `/dashboard`,
     // });
+  },
+});
 
-    return true;
+export const unLinkStudentFromCourseAttendanceList = courseMutation({
+  args: { courseAttendanceListId: v.id('courseAttendanceList') },
+  async handler(ctx, args) {
+    const courseAttendanceList = await ctx.db.get(args.courseAttendanceListId);
+    if (!courseAttendanceList)
+      throw new ConvexError('CourseAttendanceList does not exist');
+
+    await ctx.db.delete(courseAttendanceList._id);
   },
 });

@@ -8,9 +8,11 @@
  * @module
  */
 
+import type * as attendance from "../attendance.js";
 import type * as auth from "../auth.js";
 import type * as classListStudents from "../classListStudents.js";
 import type * as classLists from "../classLists.js";
+import type * as constants_attendance from "../constants/attendance.js";
 import type * as courses from "../courses.js";
 import type * as http from "../http.js";
 import type * as lib_helpers from "../lib/helpers.js";
@@ -18,10 +20,13 @@ import type * as lib_zodHelpers from "../lib/zodHelpers.js";
 import type * as middlewares_authenticatedMiddleware from "../middlewares/authenticatedMiddleware.js";
 import type * as middlewares_lecturerMiddleware from "../middlewares/lecturerMiddleware.js";
 import type * as middlewares_studentMiddleware from "../middlewares/studentMiddleware.js";
+import type * as models_attendanceModel from "../models/attendanceModel.js";
+import type * as models_attendanceRecordsModel from "../models/attendanceRecordsModel.js";
 import type * as models_authModel from "../models/authModel.js";
 import type * as models_classListModel from "../models/classListModel.js";
 import type * as models_classListStudentModel from "../models/classListStudentModel.js";
 import type * as models_coursesModel from "../models/coursesModel.js";
+import type * as models_joinRequestModel from "../models/joinRequestModel.js";
 import type * as models_userprofileModel from "../models/userprofileModel.js";
 import type * as service_paystack from "../service/paystack.js";
 import type * as userProfile from "../userProfile.js";
@@ -41,9 +46,11 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  attendance: typeof attendance;
   auth: typeof auth;
   classListStudents: typeof classListStudents;
   classLists: typeof classLists;
+  "constants/attendance": typeof constants_attendance;
   courses: typeof courses;
   http: typeof http;
   "lib/helpers": typeof lib_helpers;
@@ -51,10 +58,13 @@ declare const fullApi: ApiFromModules<{
   "middlewares/authenticatedMiddleware": typeof middlewares_authenticatedMiddleware;
   "middlewares/lecturerMiddleware": typeof middlewares_lecturerMiddleware;
   "middlewares/studentMiddleware": typeof middlewares_studentMiddleware;
+  "models/attendanceModel": typeof models_attendanceModel;
+  "models/attendanceRecordsModel": typeof models_attendanceRecordsModel;
   "models/authModel": typeof models_authModel;
   "models/classListModel": typeof models_classListModel;
   "models/classListStudentModel": typeof models_classListStudentModel;
   "models/coursesModel": typeof models_coursesModel;
+  "models/joinRequestModel": typeof models_joinRequestModel;
   "models/userprofileModel": typeof models_userprofileModel;
   "service/paystack": typeof service_paystack;
   userProfile: typeof userProfile;
