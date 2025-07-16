@@ -133,10 +133,10 @@ const AttendanceCheckIn = () => {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h1 className="text-2xl font-bold text-gray-900">
+        <h1 className="text-2xl font-bold text-foreground">
           Attendance Check-In
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-muted-foreground mt-2">
           Mark your attendance for active course sessions
         </p>
       </div>
@@ -144,11 +144,11 @@ const AttendanceCheckIn = () => {
       {activeCourses.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
-            <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               No Active Sessions
             </h3>
-            <p className="text-gray-600">
+            <p className="text-muted-foreground">
               There are no attendance sessions currently active. Please wait for
               your lecturer to start a session.
             </p>
@@ -189,11 +189,11 @@ const AttendanceCheckIn = () => {
               </Select>
 
               {selectedCourseData && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <div className="mt-4 p-3 bg-primary/5 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium">{selectedCourseData.name}</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {selectedCourseData.lecturer}
                       </p>
                     </div>
@@ -210,7 +210,7 @@ const AttendanceCheckIn = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   {isCompleted ? (
-                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <CheckCircle className="h-5 w-5 text-chart-2" />
                   ) : (
                     <Clock className="h-5 w-5" />
                   )}
@@ -228,12 +228,12 @@ const AttendanceCheckIn = () => {
                     <Button
                       onClick={startAttendance}
                       size="lg"
-                      className="bg-green-600 hover:bg-green-700"
+                      className="bg-chart-2 hover:bg-chart-2/90"
                     >
                       <Play className="h-5 w-5 mr-2" />
                       Start Reading Attendance
                     </Button>
-                    <p className="text-sm text-gray-600 mt-3">
+                    <p className="text-sm text-muted-foreground mt-3">
                       {`⚠️ Don't switch tabs or refresh the page once you start`}
                     </p>
                   </div>
@@ -253,7 +253,7 @@ const AttendanceCheckIn = () => {
                             <div className="text-2xl font-bold">
                               {formatTime(timeElapsed)}
                             </div>
-                            <div className="text-xs text-gray-600">
+                            <div className="text-xs text-muted-foreground">
                               / {formatTime(sessionDuration)}
                             </div>
                           </div>
@@ -264,21 +264,21 @@ const AttendanceCheckIn = () => {
                     {/* Status Messages */}
                     <div className="text-center space-y-2">
                       {isCompleted ? (
-                        <div className="flex items-center justify-center gap-2 text-green-600">
+                        <div className="flex items-center justify-center gap-2 text-chart-2">
                           <CheckCircle className="h-5 w-5" />
                           <span className="font-medium">
                             Attendance Recorded Successfully!
                           </span>
                         </div>
                       ) : timeElapsed >= getRequiredTime() ? (
-                        <div className="flex items-center justify-center gap-2 text-green-600">
+                        <div className="flex items-center justify-center gap-2 text-chart-2">
                           <CheckCircle className="h-5 w-5" />
                           <span className="font-medium">
                             Minimum time reached - Keep going!
                           </span>
                         </div>
                       ) : (
-                        <div className="flex items-center justify-center gap-2 text-blue-600">
+                        <div className="flex items-center justify-center gap-2 text-primary">
                           <Clock className="h-5 w-5" />
                           <span>
                             {formatTime(getRequiredTime() - timeElapsed)}{' '}
@@ -287,20 +287,20 @@ const AttendanceCheckIn = () => {
                         </div>
                       )}
 
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-muted-foreground">
                         Progress: {Math.round(getProgressPercentage())}%
                       </div>
                     </div>
 
                     {/* Warning Box */}
                     {isAttending && !isCompleted && (
-                      <div className="flex items-start gap-3 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                      <div className="flex items-start gap-3 p-4 bg-chart-5/5 border border-chart-5/20 rounded-lg">
+                        <AlertTriangle className="h-5 w-5 text-chart-5 mt-0.5" />
                         <div className="text-sm">
-                          <p className="font-medium text-yellow-800">
+                          <p className="font-medium text-chart-5">
                             Stay on this page!
                           </p>
-                          <p className="text-yellow-700">
+                          <p className="text-chart-5/80">
                             Switching tabs, minimizing the window, or refreshing
                             will reset your timer.
                           </p>

@@ -5,10 +5,21 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Users, TrendingUp, Bell, Play } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
+import {
+  BookOpen,
+  Users,
+  TrendingUp,
+  Calendar,
+  Clock,
+  BarChart3,
+  Bell,
+  ArrowRight,
+  GraduationCap,
+  Activity,
+} from 'lucide-react';
 
 interface LecturerDashboardContentProps {
   userData: any;
@@ -21,229 +32,257 @@ const LecturerDashboardContent = ({
   onCourseClick,
   onAttendanceClick,
 }: LecturerDashboardContentProps) => {
-  // Mock data
-  const mockCourses = [
+  const recentCourses = [
     {
       id: '1',
-      name: 'Advanced Database Systems',
-      code: 'CS401',
+      name: 'Advanced React Development',
       students: 45,
-      sessions: 24,
-      avgAttendance: 89,
-      nextClass: 'Mon, 9:00 AM',
-      status: 'active',
+      progress: 75,
+      color: 'bg-blue-500',
     },
     {
       id: '2',
-      name: 'Software Engineering',
-      code: 'CS301',
-      students: 38,
-      sessions: 18,
-      avgAttendance: 82,
-      nextClass: 'Tue, 2:00 PM',
-      status: 'active',
+      name: 'Data Structures & Algorithms',
+      students: 32,
+      progress: 60,
+      color: 'bg-green-500',
     },
     {
       id: '3',
-      name: 'Machine Learning',
-      code: 'CS451',
-      students: 32,
-      sessions: 20,
-      avgAttendance: 91,
-      nextClass: 'Wed, 11:00 AM',
-      status: 'active',
+      name: 'Web Security Fundamentals',
+      students: 28,
+      progress: 85,
+      color: 'bg-purple-500',
     },
   ];
 
-  const mockStats = {
-    totalCourses: 3,
-    totalStudents: 115,
-    avgAttendance: 87,
-    pendingRequests: 8,
-  };
+  const upcomingClasses = [
+    { id: '1', course: 'Advanced React', time: '10:00 AM', room: 'Lab 204' },
+    { id: '2', course: 'Data Structures', time: '2:00 PM', room: 'Room 301' },
+    { id: '3', course: 'Web Security', time: '4:00 PM', room: 'Lab 105' },
+  ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 animate-fade-in-up">
       {/* Welcome Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Welcome back, {userData?.title} {userData?.fullName}
-          </h1>
-          <p className="text-gray-600">
-            {userData?.department} • Lecturer Dashboard
-          </p>
-        </div>
-        <Avatar className="h-12 w-12">
-          <AvatarImage src={userData?.profileImage} />
-          <AvatarFallback>
-            {userData?.fullName
-              ?.split(' ')
-              .map(
-                (
-                  // @ts-expect-error : temporary data
-                  n,
-                ) => n[0],
-              )
-              .join('')}
-          </AvatarFallback>
-        </Avatar>
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold tracking-tight gradient-text">
+          Welcome back, {userData?.title} {userData?.fullName}
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          {`Here's what's happening with your courses today`}
+        </p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <BookOpen className="h-6 w-6 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Active Courses
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {mockStats.totalCourses}
-                </p>
-              </div>
-            </div>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="glass-card hover:scale-[1.02] transition-transform duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Courses
+            </CardTitle>
+            <BookOpen className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">12</div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" />
+              +2 from last semester
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Users className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Total Students
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {mockStats.totalStudents}
-                </p>
-              </div>
-            </div>
+        <Card className="glass-card hover:scale-[1.02] transition-transform duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Students
+            </CardTitle>
+            <Users className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">342</div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" />
+              +18 this month
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <TrendingUp className="h-6 w-6 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Avg Attendance
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {mockStats.avgAttendance}%
-                </p>
-              </div>
-            </div>
+        <Card className="glass-card hover:scale-[1.02] transition-transform duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Avg Attendance
+            </CardTitle>
+            <Activity className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">87%</div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" />
+              +5% from last week
+            </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-orange-100 rounded-lg">
-                <Bell className="h-6 w-6 text-orange-600" />
-              </div>
-              <div>
-                <p className="text-sm font-medium text-gray-600">
-                  Pending Requests
-                </p>
-                <p className="text-2xl font-bold text-gray-900">
-                  {mockStats.pendingRequests}
-                </p>
-              </div>
-            </div>
+        <Card className="glass-card hover:scale-[1.02] transition-transform duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {`Today's Classes`}
+            </CardTitle>
+            <Calendar className="h-5 w-5 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-foreground">3</div>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Next at 10:00 AM
+            </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* My Courses */}
-      <Card>
+      {/* Recent Courses */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+                Recent Courses
+              </CardTitle>
+              <CardDescription>
+                Your most active courses this week
+              </CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary hover:text-primary"
+            >
+              View All <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {recentCourses.map((course) => (
+              <button
+                key={course.id}
+                className="space-y-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                onClick={() => onCourseClick(course.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-3 h-3 rounded-full ${course.color}`} />
+                    <div>
+                      <p className="font-medium text-foreground">
+                        {course.name}
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                        {course.students} students
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary">{course.progress}%</Badge>
+                </div>
+                <Progress value={course.progress} className="h-2" />
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Today's Schedule */}
+        <Card className="glass-card">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                {`Today's Schedule`}
+              </CardTitle>
+              <CardDescription>Your upcoming classes</CardDescription>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-primary hover:text-primary"
+            >
+              View All <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {upcomingClasses.map((class_item, index) => (
+              <button
+                key={class_item.id}
+                className="flex items-center justify-between p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
+                onClick={() => onAttendanceClick(class_item.id)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                    <GraduationCap className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {class_item.course}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {class_item.room}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-medium text-foreground">
+                    {class_item.time}
+                  </p>
+                  <Badge
+                    variant={index === 0 ? 'default' : 'secondary'}
+                    className="text-xs"
+                  >
+                    {index === 0 ? 'Next' : 'Upcoming'}
+                  </Badge>
+                </div>
+              </button>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Quick Actions */}
+      <Card className="glass-card">
         <CardHeader>
-          <CardTitle>My Courses</CardTitle>
-          <CardDescription>
-            Manage your active courses and attendance
-          </CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-primary" />
+            Quick Actions
+          </CardTitle>
+          <CardDescription>Common tasks and shortcuts</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {mockCourses.map((course) => (
-              <div
-                key={course.id}
-                className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <h3 className="font-semibold">{course.name}</h3>
-                    <p className="text-sm text-gray-600">
-                      {course.code} • {course.students} students
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Next class: {course.nextClass}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      size="sm"
-                      onClick={() => onAttendanceClick(course.id)}
-                      className="bg-green-600 hover:bg-green-700"
-                    >
-                      <Play className="h-4 w-4 mr-1" />
-                      Take Attendance
-                    </Button>
-                    <Badge variant="secondary">Active</Badge>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">
-                    {course.sessions} sessions held
-                  </span>
-                  <span
-                    className={`font-medium ${
-                      course.avgAttendance >= 90
-                        ? 'text-green-600'
-                        : course.avgAttendance >= 75
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
-                    }`}
-                  >
-                    {course.avgAttendance}% avg attendance
-                  </span>
-                </div>
-
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div
-                    className={`h-2 rounded-full ${
-                      course.avgAttendance >= 90
-                        ? 'bg-green-500'
-                        : course.avgAttendance >= 75
-                          ? 'bg-yellow-500'
-                          : 'bg-red-500'
-                    }`}
-                    style={{ width: `${course.avgAttendance}%` }}
-                  ></div>
-                </div>
-
-                <div className="flex justify-end mt-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => onCourseClick(course.id)}
-                  >
-                    View Details
-                  </Button>
-                </div>
-              </div>
-            ))}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <Button
+              variant="outline"
+              className="h-20 flex-col gap-2 hover:scale-[1.02] transition-transform"
+            >
+              <BookOpen className="h-6 w-6" />
+              <span>Create Course</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-20 flex-col gap-2 hover:scale-[1.02] transition-transform"
+            >
+              <Users className="h-6 w-6" />
+              <span>View Students</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-20 flex-col gap-2 hover:scale-[1.02] transition-transform"
+            >
+              <BarChart3 className="h-6 w-6" />
+              <span>Analytics</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="h-20 flex-col gap-2 hover:scale-[1.02] transition-transform"
+            >
+              <Bell className="h-6 w-6" />
+              <span>Notifications</span>
+            </Button>
           </div>
         </CardContent>
       </Card>

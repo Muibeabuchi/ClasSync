@@ -153,8 +153,8 @@ const JoinCoursePage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Join Course</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">Join Course</h1>
+          <p className="text-muted-foreground">
             Browse and request to join available courses
           </p>
         </div>
@@ -162,7 +162,7 @@ const JoinCoursePage = () => {
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search courses by name, code, lecturer, or department..."
           value={searchTerm}
@@ -208,28 +208,34 @@ const JoinCoursePage = () => {
                 </Avatar>
                 <div>
                   <p className="text-sm font-medium">{course.lecturer}</p>
-                  <p className="text-xs text-gray-500">{course.schedule}</p>
+                  <p className="text-xs text-muted-foreground/80">
+                    {course.schedule}
+                  </p>
                 </div>
               </div>
 
-              <p className="text-sm text-gray-600">{course.description}</p>
+              <p className="text-sm text-muted-foreground">
+                {course.description}
+              </p>
 
               <div className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-1">
-                  <Users className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
                     {course.enrolledStudents}/{course.maxStudents} students
                   </span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <Clock className="h-4 w-4 text-gray-400" />
-                  <span className="text-gray-600">{course.semester}</span>
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-muted-foreground">
+                    {course.semester}
+                  </span>
                 </div>
               </div>
 
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-muted rounded-full h-2">
                 <div
-                  className="h-2 rounded-full bg-blue-500"
+                  className="h-2 rounded-full bg-primary"
                   style={{
                     width: `${(course.enrolledStudents / course.maxStudents) * 100}%`,
                   }}
@@ -259,12 +265,14 @@ const JoinCoursePage = () => {
                   </DialogHeader>
 
                   <div className="space-y-4">
-                    <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="bg-muted/50 p-4 rounded-lg">
                       <h4 className="font-medium">{course.name}</h4>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-muted-foreground">
                         {course.code} • {course.lecturer}
                       </p>
-                      <p className="text-sm text-gray-600">{course.schedule}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {course.schedule}
+                      </p>
                     </div>
 
                     <div className="space-y-2">
@@ -299,11 +307,13 @@ const JoinCoursePage = () => {
       {filteredCourses.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
-            <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               No courses found
             </h3>
-            <p className="text-gray-600">Try adjusting your search terms</p>
+            <p className="text-muted-foreground">
+              Try adjusting your search terms
+            </p>
           </CardContent>
         </Card>
       )}

@@ -1,3 +1,4 @@
+// import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -13,7 +14,16 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Home, BookOpen, Users, Bell, Plus, LogOut, User } from 'lucide-react';
+import {
+  Home,
+  BookOpen,
+  Users,
+  Bell,
+  Plus,
+  LogOut,
+  User,
+  CreditCard,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,8 +31,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-// import { Button } from "@/components/ui/button";
-// import { ThemeToggle } from "@/components/theme-toggle";
+// import { ThemeToggle } from '@/components/theme-toggle';
 
 interface LecturerSidebarProps {
   activePage: string;
@@ -68,6 +77,18 @@ const LecturerSidebar = ({
       icon: Bell,
       badge: '5',
     },
+    {
+      id: 'classlists',
+      label: 'ClassLists',
+      icon: Users,
+      badge: null,
+    },
+    {
+      id: 'billing',
+      label: 'Billing',
+      icon: CreditCard,
+      badge: null,
+    },
   ];
 
   const handleSignOut = () => {
@@ -75,16 +96,18 @@ const LecturerSidebar = ({
   };
 
   return (
-    <Sidebar collapsible="icon">
-      <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-2">
-          <div className="bg-blue-600 p-2 rounded-lg">
-            <BookOpen className="h-4 w-4 text-white" />
+    <Sidebar collapsible="icon" className="border-r">
+      <SidebarHeader className="border-b">
+        <div className="flex items-center gap-3 px-3 py-4">
+          <div className="bg-primary p-2 rounded-lg shadow-lg">
+            <BookOpen className="h-5 w-5" />
           </div>
           {state === 'expanded' && (
             <div className="flex flex-col flex-1">
-              <h2 className="text-sm font-semibold">ClassSync</h2>
-              <p className="text-xs text-muted-foreground">Lecturer Portal</p>
+              <h2 className="text-base font-medium tracking-tight">
+                ClassSync
+              </h2>
+              <p className="text-sm font-normal opacity-70">Lecturer Portal</p>
             </div>
           )}
           {/* <ThemeToggle /> */}
@@ -93,9 +116,11 @@ const LecturerSidebar = ({
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
+          <SidebarGroupLabel className="text-xs font-medium uppercase tracking-wider px-3 py-2 opacity-70">
+            Navigation
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="px-2">
+            <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = activePage === item.id;
@@ -106,11 +131,22 @@ const LecturerSidebar = ({
                       isActive={isActive}
                       onClick={() => onPageChange(item.id)}
                       tooltip={state === 'collapsed' ? item.label : undefined}
+                      className={`
+                        h-10 px-3 rounded-lg transition-all duration-200 font-medium text-sm 
+                        ${
+                          isActive
+                            ? 'bg-primary/20 text-primary border-l-2 border-primary'
+                            : 'hover:bg-accent hover:text-accent-foreground'
+                        }
+                      `}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
+                      <Icon className="h-4 w-4 flex-shrink-0" />
+                      <span className="font-normal">{item.label}</span>
                       {item.badge && state === 'expanded' && (
-                        <Badge variant="secondary" className="ml-auto">
+                        <Badge
+                          variant="secondary"
+                          className="ml-auto text-xs px-2 py-0.5"
+                        >
                           {item.badge}
                         </Badge>
                       )}
@@ -123,57 +159,55 @@ const LecturerSidebar = ({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                  className="h-12 px-3 rounded-lg hover:bg-accent transition-colors duration-200 data-[state=open]:bg-accent"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar className="h-8 w-8 rounded-lg border">
                     <AvatarImage src={userData?.profileImage} />
-                    <AvatarFallback className="rounded-lg">
+                    <AvatarFallback className="rounded-lg text-sm font-medium">
                       {userData?.fullName
                         ?.split(' ')
-                        .map(
-                          // @ts-expect-error : temporary data
-                          (n) => n[0],
-                        )
+                        // @ts-expect-error : temporary data
+                        .map((n) => n[0])
                         .join('')}
                     </AvatarFallback>
                   </Avatar>
                   {state === 'expanded' && (
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">
+                      <span className="truncate font-medium">
                         {userData?.title} {userData?.fullName}
                       </span>
-                      <span className="truncate text-xs">
+                      <span className="truncate text-xs opacity-70">
                         {userData?.department}
                       </span>
                     </div>
                   )}
-                  <Bell className="ml-auto size-4" />
+                  <Bell className="ml-auto size-4 opacity-70" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
+                className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg shadow-lg"
                 side="bottom"
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem onClick={() => onPageChange('profile')}>
+                <DropdownMenuItem
+                  onClick={() => onPageChange('profile')}
+                  className="cursor-pointer"
+                >
                   <User className="h-4 w-4 mr-2" />
                   Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onPageChange('settings')}>
-                  Settings
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}
-                  className="text-red-600"
+                  className="text-destructive hover:bg-destructive/20 hover:text-destructive cursor-pointer"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out

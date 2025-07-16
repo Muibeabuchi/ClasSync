@@ -218,10 +218,10 @@ const CourseDetailPage = ({
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             {courseData.name}
           </h1>
-          <div className="flex items-center gap-4 text-gray-600">
+          <div className="flex items-center gap-4 text-muted-foreground">
             <span>{courseData.code}</span>
             <span>•</span>
             <span>{courseData.departments.join(', ')}</span>
@@ -261,36 +261,36 @@ const CourseDetailPage = ({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-blue-600" />
+                  <BookOpen className="h-5 w-5 text-primary" />
                   Course Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">
+                  <Label className="text-sm font-medium text-muted-foreground">
                     Course Name
                   </Label>
-                  <p className="text-sm text-gray-900">{courseData.name}</p>
+                  <p className="text-sm text-foreground">{courseData.name}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">
+                  <Label className="text-sm font-medium text-muted-foreground">
                     Course Code
                   </Label>
-                  <p className="text-sm text-gray-900">{courseData.code}</p>
+                  <p className="text-sm text-foreground">{courseData.code}</p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">
+                  <Label className="text-sm font-medium text-muted-foreground">
                     Departments
                   </Label>
-                  <p className="text-sm text-gray-900">
+                  <p className="text-sm text-foreground">
                     {courseData.departments.join(', ')}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-sm font-medium text-gray-700">
+                  <Label className="text-sm font-medium text-muted-foreground">
                     Description
                   </Label>
-                  <p className="text-sm text-gray-900">
+                  <p className="text-sm text-foreground">
                     {courseData.description}
                   </p>
                 </div>
@@ -300,29 +300,33 @@ const CourseDetailPage = ({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart className="h-5 w-5 text-green-600" />
+                  <BarChart className="h-5 w-5 text-chart-2" />
                   Class Analytics
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <p className="text-2xl font-bold text-blue-600">
+                  <div className="text-center p-3 bg-primary/10 rounded-lg">
+                    <p className="text-2xl font-bold text-primary">
                       {courseData.enrolledCount}
                     </p>
-                    <p className="text-xs text-gray-600">Total Students</p>
+                    <p className="text-xs text-muted-foreground">
+                      Total Students
+                    </p>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">
+                  <div className="text-center p-3 bg-chart-2/10 rounded-lg">
+                    <p className="text-2xl font-bold text-chart-2">
                       {avgAttendance}%
                     </p>
-                    <p className="text-xs text-gray-600">Avg Attendance</p>
+                    <p className="text-xs text-muted-foreground">
+                      Avg Attendance
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-sm">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
+                    <TrendingUp className="h-4 w-4 text-chart-2" />
                     <span className="font-medium">
                       Best: {bestStudent.name}
                     </span>
@@ -332,7 +336,7 @@ const CourseDetailPage = ({
                   </div>
 
                   <div className="flex items-center gap-2 text-sm">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
                     <span className="font-medium">
                       Needs Attention: {worstStudent.name}
                     </span>
@@ -342,7 +346,7 @@ const CourseDetailPage = ({
                   </div>
 
                   <div className="flex items-center gap-2 text-sm">
-                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                    <AlertTriangle className="h-4 w-4 text-chart-5" />
                     <span>
                       {lowAttendanceCount} students below 50% attendance
                     </span>
@@ -356,7 +360,7 @@ const CourseDetailPage = ({
         <TabsContent value="students" className="space-y-6 animate-fade-in">
           {/* Bulk Actions */}
           {selectedStudents.length > 0 && (
-            <Card className="border-blue-200 bg-blue-50 animate-scale-in">
+            <Card className="border-primary/20 bg-primary/5 animate-scale-in">
               <CardContent className="py-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
@@ -415,7 +419,7 @@ const CourseDetailPage = ({
                   {mockStudents.map((student) => (
                     <TableRow
                       key={student.id}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="hover:bg-muted/50 transition-colors cursor-pointer"
                       onClick={() => onStudentClick(student)}
                     >
                       <TableCell onClick={(e) => e.stopPropagation()}>
@@ -492,7 +496,7 @@ const CourseDetailPage = ({
 
           {/* Bulk Actions */}
           {selectedRequests.length > 0 && (
-            <Card className="border-green-200 bg-green-50 animate-scale-in">
+            <Card className="border-chart-2/20 bg-chart-2/5 animate-scale-in">
               <CardContent className="py-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">
@@ -551,7 +555,7 @@ const CourseDetailPage = ({
                   {filteredRequests.map((request) => (
                     <TableRow
                       key={request.id}
-                      className="hover:bg-gray-50 transition-colors"
+                      className="hover:bg-muted/50 transition-colors"
                     >
                       <TableCell>
                         <Checkbox

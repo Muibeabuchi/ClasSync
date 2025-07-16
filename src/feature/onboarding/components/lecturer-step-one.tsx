@@ -189,19 +189,19 @@ export function LecturerStepOne({
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+            <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
               1
             </div>
-            <div className="w-16 h-1 bg-gray-200 dark:bg-gray-700"></div>
-            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 text-gray-500 rounded-full flex items-center justify-center text-sm font-medium">
+            <div className="w-16 h-1 bg-muted"></div>
+            <div className="w-8 h-8 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-sm font-medium">
               2
             </div>
-            <div className="w-16 h-1 bg-gray-200 dark:bg-gray-700"></div>
-            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 text-gray-500 rounded-full flex items-center justify-center text-sm font-medium">
+            <div className="w-16 h-1 bg-muted"></div>
+            <div className="w-8 h-8 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-sm font-medium">
               3
             </div>
           </div>
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-center text-sm text-muted-foreground">
             Step 1 of 3: Personal Information
           </p>
         </div>
@@ -224,7 +224,7 @@ export function LecturerStepOne({
                   placeholder="Enter your full name"
                 />
                 {errors.fullName && (
-                  <p className="text-sm text-red-600 dark:text-red-400">
+                  <p className="text-sm text-destructive">
                     {errors.fullName.message}
                   </p>
                 )}
@@ -250,7 +250,7 @@ export function LecturerStepOne({
                   </SelectContent>
                 </Select>
                 {errors.title && (
-                  <p className="text-sm text-red-600 dark:text-red-400">
+                  <p className="text-sm text-destructive">
                     {errors.title.message}
                   </p>
                 )}

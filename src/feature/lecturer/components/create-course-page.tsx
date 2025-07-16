@@ -126,10 +126,10 @@ const CreateCoursePage = ({
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-foreground">
             Create New Course
           </h1>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Set up a new course and manage student enrollment
           </p>
         </div>

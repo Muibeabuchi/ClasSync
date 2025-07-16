@@ -75,14 +75,14 @@ const StudentCoursesPage = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
-          <p className="text-gray-600">Manage your enrolled courses</p>
+          <h1 className="text-2xl font-bold text-foreground">My Courses</h1>
+          <p className="text-muted-foreground">Manage your enrolled courses</p>
         </div>
       </div>
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <Input
           placeholder="Search courses by name, code, or lecturer..."
           value={searchTerm}
@@ -96,14 +96,14 @@ const StudentCoursesPage = () => {
         <Card>
           <CardContent className="flex items-center p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <BookOpen className="h-6 w-6 text-blue-600" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <BookOpen className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-muted-foreground">
                   Total Courses
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-foreground">
                   {enrolledCourses.length}
                 </p>
               </div>
@@ -114,14 +114,14 @@ const StudentCoursesPage = () => {
         <Card>
           <CardContent className="flex items-center p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <Clock className="h-6 w-6 text-green-600" />
+              <div className="p-2 bg-chart-2/10 rounded-lg">
+                <Clock className="h-6 w-6 text-chart-2" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-muted-foreground">
                   Avg Attendance
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-foreground">
                   {Math.round(
                     enrolledCourses.reduce(
                       (acc, course) => acc + course.attendance,
@@ -138,14 +138,14 @@ const StudentCoursesPage = () => {
         <Card>
           <CardContent className="flex items-center p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="h-6 w-6 text-purple-600" />
+              <div className="p-2 bg-chart-4/10 rounded-lg">
+                <Users className="h-6 w-6 text-chart-4" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">
+                <p className="text-sm font-medium text-muted-foreground">
                   Active Courses
                 </p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-2xl font-bold text-foreground">
                   {
                     enrolledCourses.filter(
                       (course) => course.status === 'active',
@@ -185,34 +185,36 @@ const StudentCoursesPage = () => {
                 </Avatar>
                 <div>
                   <p className="text-sm font-medium">{course.lecturer}</p>
-                  <p className="text-xs text-gray-500">{course.schedule}</p>
+                  <p className="text-xs text-muted-foreground/80">
+                    {course.schedule}
+                  </p>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Attendance</span>
+                  <span className="text-muted-foreground">Attendance</span>
                   <span
                     className={`font-medium ${
                       course.attendance >= 90
-                        ? 'text-green-600'
+                        ? 'text-chart-2'
                         : course.attendance >= 75
-                          ? 'text-yellow-600'
-                          : 'text-red-600'
+                          ? 'text-chart-5'
+                          : 'text-destructive'
                     }`}
                   >
                     {course.attendance}% ({course.attendedSessions}/
                     {course.totalSessions})
                   </span>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-muted rounded-full h-2">
                   <div
                     className={`h-2 rounded-full ${
                       course.attendance >= 90
-                        ? 'bg-green-500'
+                        ? 'bg-chart-2'
                         : course.attendance >= 75
-                          ? 'bg-yellow-500'
-                          : 'bg-red-500'
+                          ? 'bg-chart-5'
+                          : 'bg-destructive'
                     }`}
                     style={{ width: `${course.attendance}%` }}
                   ></div>
@@ -241,11 +243,13 @@ const StudentCoursesPage = () => {
       {filteredCourses.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
-            <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               No courses found
             </h3>
-            <p className="text-gray-600">Try adjusting your search terms</p>
+            <p className="text-muted-foreground">
+              Try adjusting your search terms
+            </p>
           </CardContent>
         </Card>
       )}

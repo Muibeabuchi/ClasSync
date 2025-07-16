@@ -51,7 +51,7 @@ const StudentPreviewTable = ({
             {csvData.slice(0, 5).map((student) => (
               <TableRow
                 key={student.id}
-                className="cursor-pointer hover:bg-blue-50 transition-colors"
+                className="cursor-pointer hover:bg-muted/50 transition-colors"
                 onClick={() => onStudentClick(student)}
               >
                 <TableCell className="font-medium">
@@ -65,7 +65,7 @@ const StudentPreviewTable = ({
           </TableBody>
         </Table>
         {csvData.length > 5 && (
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-muted-foreground mt-2">
             And {csvData.length - 5} more students...
           </p>
         )}

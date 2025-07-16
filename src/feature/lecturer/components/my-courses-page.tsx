@@ -53,8 +53,10 @@ const MyCoursesPage = ({ onCourseClick }: MyCoursesPageProps) => {
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
-        <p className="text-gray-600">Manage and view all your courses</p>
+        <h1 className="text-2xl font-bold text-foreground">My Courses</h1>
+        <p className="text-muted-foreground">
+          Manage and view all your courses
+        </p>
       </div>
 
       {/* Courses Grid */}
@@ -66,14 +68,14 @@ const MyCoursesPage = ({ onCourseClick }: MyCoursesPageProps) => {
           >
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
-                <div className="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
-                  <BookOpen className="h-5 w-5 text-blue-600" />
+                <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                  <BookOpen className="h-5 w-5 text-primary" />
                 </div>
                 <Badge variant="secondary" className="text-xs">
                   {course.semester}
                 </Badge>
               </div>
-              <CardTitle className="text-lg group-hover:text-blue-600 transition-colors">
+              <CardTitle className="text-lg group-hover:text-primary transition-colors">
                 {course.name}
               </CardTitle>
               <CardDescription className="text-sm">
@@ -81,24 +83,24 @@ const MyCoursesPage = ({ onCourseClick }: MyCoursesPageProps) => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <p className="text-sm text-gray-600 line-clamp-2">
+              <p className="text-sm text-muted-foreground line-clamp-2">
                 {course.description}
               </p>
 
               <div className="space-y-2">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Building2 className="h-4 w-4" />
                   <span className="truncate">
                     {course.departments.join(', ')}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Users className="h-4 w-4" />
                   <span>{course.enrolledCount} students enrolled</span>
                 </div>
 
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Calendar className="h-4 w-4" />
                   <span>{course.academicYear}</span>
                 </div>
@@ -118,11 +120,11 @@ const MyCoursesPage = ({ onCourseClick }: MyCoursesPageProps) => {
       {/* Empty State */}
       {mockCourses.length === 0 && (
         <div className="text-center py-12">
-          <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-foreground mb-2">
             No courses yet
           </h3>
-          <p className="text-gray-600 mb-4">
+          <p className="text-muted-foreground mb-4">
             Create your first course to get started
           </p>
           <Button>Create Course</Button>

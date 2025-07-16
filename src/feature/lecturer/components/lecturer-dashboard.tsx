@@ -19,6 +19,8 @@ import EnhancedStudentDetailSection from './enhanced-details-section';
 import LecturerNotifications from './lecturer-notifications';
 import LecturerProfile from './lecturer-profile';
 import LecturerAttendanceSection from './lecturer-attendance-section';
+import { CheckLocation } from '@/components/geoLocation/checkLocation';
+import LecturerClassListsPage from './lecturer-classlist-page';
 
 interface LecturerDashboardProps {
   userData: any;
@@ -29,6 +31,7 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
+  const [selectedClassListId, setSelectedClassListId] = useState<string>('');
 
   const handleStudentClick = (student: any) => {
     setSelectedStudent(student);
@@ -65,6 +68,11 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
   const handleBackToCourses = () => {
     setActivePage('courses');
     setSelectedCourseId('');
+  };
+
+  const handleEditClassList = (classListId: string) => {
+    setSelectedClassListId(classListId);
+    setActivePage('edit-classlist');
   };
 
   const handleBackToStudents = () => {
@@ -135,6 +143,14 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
         return <JoinRequestsLinkingPage onBack={handleBackToDashboard} />;
       case 'notifications':
         return <LecturerNotifications />;
+      case 'classlists':
+        return (
+          <LecturerClassListsPage
+            onEditClassList={handleEditClassList}
+            onBack={handleBackToDashboard}
+          />
+        );
+
       case 'profile':
         return <LecturerProfile userData={userData} />;
       case 'settings':
@@ -169,7 +185,10 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
           <div className="flex items-center gap-2 px-4 py-2 border-b">
             <SidebarTrigger />
           </div>
-          <div className="p-6">{renderContent()}</div>
+          <div className="p-6">
+            <CheckLocation />
+            {renderContent()}
+          </div>
         </SidebarInset>
       </div>
     </SidebarProvider>

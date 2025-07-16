@@ -20,7 +20,7 @@ import {
 } from '@/components/ui/select';
 import {
   lecturerAcademicInfoSchema,
-  LecturerAcademicInfo,
+  type LecturerAcademicInfo,
 } from '../schema/onboarding-schema';
 import {
   getFaculties,
@@ -75,19 +75,19 @@ export function LecturerStepTwo({
         {/* Progress Indicator */}
         <div className="mb-8">
           <div className="flex items-center justify-center space-x-2 mb-4">
-            <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+            <div className="w-8 h-8 bg-chart-2 text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
               ✓
             </div>
-            <div className="w-16 h-1 bg-green-600"></div>
-            <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+            <div className="w-16 h-1 bg-chart-2"></div>
+            <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
               2
             </div>
-            <div className="w-16 h-1 bg-gray-200 dark:bg-gray-700"></div>
-            <div className="w-8 h-8 bg-gray-200 dark:bg-gray-700 text-gray-500 rounded-full flex items-center justify-center text-sm font-medium">
+            <div className="w-16 h-1 bg-muted"></div>
+            <div className="w-8 h-8 bg-muted text-muted-foreground rounded-full flex items-center justify-center text-sm font-medium">
               3
             </div>
           </div>
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-center text-sm text-muted-foreground">
             Step 2 of 3: Academic Information
           </p>
         </div>
@@ -120,7 +120,7 @@ export function LecturerStepTwo({
                   </SelectContent>
                 </Select>
                 {errors.faculty && (
-                  <p className="text-sm text-red-600 dark:text-red-400">
+                  <p className="text-sm text-destructive">
                     {errors.faculty.message}
                   </p>
                 )}
@@ -152,7 +152,7 @@ export function LecturerStepTwo({
                   </SelectContent>
                 </Select>
                 {errors.department && (
-                  <p className="text-sm text-red-600 dark:text-red-400">
+                  <p className="text-sm text-destructive">
                     {errors.department.message}
                   </p>
                 )}

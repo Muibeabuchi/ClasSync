@@ -139,10 +139,10 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
             {/* Welcome Header */}
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-foreground">
                   Welcome back, {userData?.fullName}
                 </h1>
-                <p className="text-gray-600">
+                <p className="text-muted-foreground">
                   {userData?.regNumber} • {userData?.department} •{' '}
                   {userData?.yearLevel} Year
                 </p>
@@ -164,14 +164,14 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
               <Card>
                 <CardContent className="flex items-center p-6">
                   <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <BookOpen className="h-6 w-6 text-blue-600" />
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <BookOpen className="h-6 w-6 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-600">
+                      <p className="text-sm font-medium text-muted-foreground">
                         Enrolled Courses
                       </p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-2xl font-bold text-foreground">
                         {mockStats.totalCourses}
                       </p>
                     </div>
@@ -182,14 +182,14 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
               <Card>
                 <CardContent className="flex items-center p-6">
                   <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <TrendingUp className="h-6 w-6 text-green-600" />
+                    <div className="p-2 bg-chart-2/10 rounded-lg">
+                      <TrendingUp className="h-6 w-6 text-chart-2" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-600">
+                      <p className="text-sm font-medium text-muted-foreground">
                         Avg Attendance
                       </p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-2xl font-bold text-foreground">
                         {mockStats.avgAttendance}%
                       </p>
                     </div>
@@ -200,14 +200,14 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
               <Card>
                 <CardContent className="flex items-center p-6">
                   <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Clock className="h-6 w-6 text-purple-600" />
+                    <div className="p-2 bg-chart-4/10 rounded-lg">
+                      <Clock className="h-6 w-6 text-chart-4" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-600">
+                      <p className="text-sm font-medium text-muted-foreground">
                         Sessions Attended
                       </p>
-                      <p className="text-2xl font-bold text-gray-900">
+                      <p className="text-2xl font-bold text-foreground">
                         {mockStats.attendedSessions}/{mockStats.totalSessions}
                       </p>
                     </div>
@@ -218,14 +218,14 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
               <Card>
                 <CardContent className="flex items-center p-6">
                   <div className="flex items-center space-x-4">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                      <Bell className="h-6 w-6 text-orange-600" />
+                    <div className="p-2 bg-chart-5/10 rounded-lg">
+                      <Bell className="h-6 w-6 text-chart-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-gray-600">
+                      <p className="text-sm font-medium text-muted-foreground">
                         Unread Notifications
                       </p>
-                      <p className="text-2xl font-bold text-gray-900">3</p>
+                      <p className="text-2xl font-bold text-foreground">3</p>
                     </div>
                   </div>
                 </CardContent>
@@ -271,15 +271,15 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
                     {mockCourses.map((course) => (
                       <div
                         key={course.id}
-                        className="p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                        className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
                       >
                         <div className="flex items-center justify-between mb-2">
                           <div>
                             <h3 className="font-semibold">{course.name}</h3>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-muted-foreground">
                               {course.code} • {course.lecturer}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-muted-foreground/80">
                               {course.schedule}
                             </p>
                           </div>
@@ -287,31 +287,31 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
                         </div>
 
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">
+                          <span className="text-muted-foreground">
                             {course.attendedSessions}/{course.totalSessions}{' '}
                             sessions
                           </span>
                           <span
                             className={`font-medium ${
                               course.attendance >= 90
-                                ? 'text-green-600'
+                                ? 'text-chart-2'
                                 : course.attendance >= 75
-                                  ? 'text-yellow-600'
-                                  : 'text-red-600'
+                                  ? 'text-chart-5'
+                                  : 'text-destructive'
                             }`}
                           >
                             {course.attendance}%
                           </span>
                         </div>
 
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div className="w-full bg-muted rounded-full h-2 mt-2">
                           <div
                             className={`h-2 rounded-full ${
                               course.attendance >= 90
-                                ? 'bg-green-500'
+                                ? 'bg-chart-2'
                                 : course.attendance >= 75
-                                  ? 'bg-yellow-500'
-                                  : 'bg-red-500'
+                                  ? 'bg-chart-5'
+                                  : 'bg-destructive'
                             }`}
                             style={{ width: `${course.attendance}%` }}
                           ></div>
@@ -337,7 +337,7 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
                         key={notification.id}
                         className={`p-3 border rounded-lg ${
                           !notification.isRead
-                            ? 'border-l-4 border-l-blue-500 bg-blue-50'
+                            ? 'border-l-4 border-l-primary bg-primary/5'
                             : ''
                         }`}
                       >
@@ -345,18 +345,18 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
                           <div
                             className={`p-1 rounded-full ${
                               notification.type === 'attendance'
-                                ? 'bg-green-100'
+                                ? 'bg-chart-2/10'
                                 : notification.type === 'message'
-                                  ? 'bg-blue-100'
-                                  : 'bg-purple-100'
+                                  ? 'bg-primary/10'
+                                  : 'bg-chart-4/10'
                             }`}
                           >
                             {notification.type === 'attendance' ? (
-                              <Clock className="h-3 w-3 text-green-600" />
+                              <Clock className="h-3 w-3 text-chart-2" />
                             ) : notification.type === 'message' ? (
-                              <Bell className="h-3 w-3 text-blue-600" />
+                              <Bell className="h-3 w-3 text-primary" />
                             ) : (
-                              <CheckCircle className="h-3 w-3 text-purple-600" />
+                              <CheckCircle className="h-3 w-3 text-chart-4" />
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -370,10 +370,10 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-gray-600 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {notification.message}
                             </p>
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-muted-foreground/80 mt-1">
                               {notification.timestamp}
                             </p>
                           </div>

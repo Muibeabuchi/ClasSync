@@ -78,8 +78,8 @@ const StudentSidebar = ({
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-2">
-          <div className="bg-green-600 p-1 rounded-sm">
-            <BookOpen className="h-4 w-4 text-white" />
+          <div className="bg-chart-2 p-1 rounded-sm">
+            <BookOpen className="h-4 w-4 text-primary-foreground" />
           </div>
           {state === 'expanded' && (
             <div className="flex flex-col flex-1">
@@ -174,7 +174,7 @@ const StudentSidebar = ({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}
-                  className="text-red-600"
+                  className="text-destructive"
                 >
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out

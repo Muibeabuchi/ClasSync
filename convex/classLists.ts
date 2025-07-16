@@ -17,7 +17,7 @@ export const createClassList = lecturerMutation({
     faculty: v.string(),
     students: v.array(
       v.object({
-        fullName: v.string(),
+        Name: v.string(),
         registrationNumber: v.string(),
         gender: studentGenderSchema,
       }),
@@ -48,9 +48,9 @@ export const createClassList = lecturerMutation({
         await ctx.db.insert('classListStudents', {
           classListId,
           student: {
-            classlistPosition: ++position,
+            classlistPosition: position++,
             studentGender: student.gender,
-            studentName: student.fullName,
+            studentName: student.Name,
             studentRegistrationNumber: student.registrationNumber,
           },
         });
