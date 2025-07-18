@@ -1,11 +1,13 @@
 import { defineSchema, defineTable } from 'convex/server';
 import { Infer, v } from 'convex/values';
+import { FunctionReturnType } from 'convex/server';
 import {
   // userRoleConstant,
   lecturerTitleConstant,
   studentYearLevelConstants,
   userRoleConstant,
 } from '../src/constants/onboarding';
+import { api } from './_generated/api';
 
 export const lecturerCurrentPlan = {
   LECTURER_BASIC_PLAN: 'BASIC',
@@ -45,8 +47,6 @@ export const lecturerCourseStatusSchema = v.union(
   v.literal('completed'),
 );
 
-export type lecturerCourseStatusType = Infer<typeof lecturerCourseStatusSchema>
-
 export const classListStudentSchema = v.object({
   classlistPosition: v.number(),
   studentName: v.string(),
@@ -54,6 +54,10 @@ export const classListStudentSchema = v.object({
   studentRegistrationNumber: v.string(),
 });
 
+export type lecturerCourseStatusType = Infer<typeof lecturerCourseStatusSchema>;
+export type GetCourseDetailsReturnType = FunctionReturnType<
+  typeof api.courses.getCourseDetails
+>;
 // const lecturerCurrentPlanSchema = v.optional(
 //   v.union(
 //     v.object({
@@ -222,7 +226,8 @@ const applicationTables = {
       'studentId',
     ])
     .index('by_attendanceSessionId', ['attendanceSessionId'])
-    .index('by_studentId', ['studentId']),
+    .index('by_studentId', ['studentId'])
+    .index('by_studentId_by_courseId', ['studentId', 'courseId']),
 
   // ? ==================== WILL LOOK AT THIS LATER ========================  //
 

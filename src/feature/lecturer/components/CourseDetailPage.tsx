@@ -41,7 +41,6 @@ import {
   ClipboardCheck,
 } from 'lucide-react';
 import AttendanceSessionModal from './AttendanceSessionModal';
-// import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,120 +49,59 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 
+import type { GetCourseDetailsReturnType } from 'convex/schema';
 interface CourseDetailPageProps {
   courseId: string;
-  onBack: () => void;
-  onStudentClick: (student: any) => void;
-  onAnalyticsClick: (courseId: string) => void;
-  onAttendanceClick: (courseId: string) => void;
-  onLiveAttendanceClick?: (courseId: string) => void;
-  onAttendanceHistoryClick?: (courseId: string) => void;
+  courseDetails: GetCourseDetailsReturnType;
+  // onAnalyticsClick: (courseId: string) => void;
+  // onAttendanceClick: (courseId: string) => void;
+  // onLiveAttendanceClick?: (courseId: string) => void;
+  // onAttendanceHistoryClick?: (courseId: string) => void;
 }
 
 const CourseDetailPage = ({
   courseId,
-  onBack,
-  onStudentClick,
-  // onAnalyticsClick,
-  // onAttendanceClick,
-  onLiveAttendanceClick,
-  onAttendanceHistoryClick,
+  courseDetails,
+  // onStudentClick,
+  // onLiveAttendanceClick,
+  // onAttendanceHistoryClick,
 }: CourseDetailPageProps) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [requestFilter, setRequestFilter] = useState('pending');
 
-  // Mock course data
-  const courseData = {
+  // Extract data from courseDetails prop
+  const courseData = courseDetails?.course || {
     id: courseId,
-    name: 'Advanced Database Systems',
-    code: 'CS401',
-    departments: ['Computer Science', 'Software Engineering'],
-    semester: 'Harmattan',
-    academicYear: '2024/2025',
-    enrolledCount: 45,
-    description: 'Advanced concepts in database design and management',
+    name: 'Loading...',
+    code: 'Loading...',
+    enrolledCount: 0,
+    description: 'Loading...',
   };
 
-  // Mock students data
-  const mockStudents = [
-    {
-      id: '1',
-      name: 'John Doe',
-      gender: 'Male',
-      regNumber: 'CS/2024/001',
-      email: 'john.doe@university.edu',
-      attendanceRate: 92,
-      department: 'Computer Science',
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      gender: 'Female',
-      regNumber: 'CS/2024/002',
-      email: 'jane.smith@university.edu',
-      attendanceRate: 88,
-      department: 'Software Engineering',
-    },
-    {
-      id: '3',
-      name: 'Mike Johnson',
-      gender: 'Male',
-      regNumber: 'CS/2024/003',
-      email: 'mike.johnson@university.edu',
-      attendanceRate: 45,
-      department: 'Computer Science',
-    },
-  ];
+  const students = courseDetails?.students || [];
+  const requests = courseDetails?.requests || [];
 
-  // Mock join requests
-  const mockRequests = [
-    {
-      id: 'req1',
-      student: {
-        name: 'Alice Wilson',
-        regNumber: 'CS/2024/025',
-        email: 'alice.wilson@university.edu',
-        department: 'Computer Science',
-      },
-      status: 'pending',
-      requestDate: '2024-01-15',
-    },
-    {
-      id: 'req2',
-      student: {
-        name: 'Bob Davis',
-        regNumber: 'CS/2024/026',
-        email: 'bob.davis@university.edu',
-        department: 'Software Engineering',
-      },
-      status: 'approved',
-      requestDate: '2024-01-14',
-    },
-  ];
-
-  const filteredRequests = mockRequests.filter(
+  const filteredRequests = requests.filter(
     (req) => requestFilter === 'all' || req.status === requestFilter,
   );
 
-  // Analytics calculations
-  const avgAttendance = Math.round(
-    mockStudents.reduce((sum, student) => sum + student.attendanceRate, 0) /
-      mockStudents.length,
-  );
-  const bestStudent = mockStudents.reduce((best, student) =>
-    student.attendanceRate > best.attendanceRate ? student : best,
-  );
-  const worstStudent = mockStudents.reduce((worst, student) =>
-    student.attendanceRate < worst.attendanceRate ? student : worst,
-  );
-  const lowAttendanceCount = mockStudents.filter(
-    (s) => s.attendanceRate < 50,
-  ).length;
+  // Analytics calculations - use data from courseDetails.analytics or calculate from students
+  const analytics = courseDetails?.analytics || {
+    avgAttendance: 0,
+    bestStudent: null,
+    worstStudent: null,
+    lowAttendanceCount: 0,
+  };
+
+  const avgAttendance = analytics.avgAttendance;
+  const bestStudent = analytics.bestStudent;
+  const worstStudent = analytics.worstStudent;
+  const lowAttendanceCount = analytics.lowAttendanceCount;
 
   const handleSelectAllStudents = (checked: boolean) => {
-    setSelectedStudents(checked ? mockStudents.map((s) => s.id) : []);
+    setSelectedStudents(checked ? students.map((s) => s.id) : []);
   };
 
   const handleSelectStudent = (studentId: string, checked: boolean) => {
@@ -216,12 +154,6 @@ const CourseDetailPage = ({
     setSelectedStudents([]);
   };
 
-  const handleStartAttendance = (courseId: string) => {
-    if (onLiveAttendanceClick) {
-      onLiveAttendanceClick(courseId);
-    }
-  };
-
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -230,7 +162,7 @@ const CourseDetailPage = ({
           <Button
             variant="ghost"
             size="icon"
-            onClick={onBack}
+            // onClick={onBack}
             className="hover:scale-110 transition-transform flex-shrink-0"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -243,17 +175,7 @@ const CourseDetailPage = ({
               <span className="font-medium">{courseData.code}</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">
-                {courseData.departments.join(', ')}
-              </span>
-              <span className="sm:hidden text-xs">
-                {courseData.departments[0]}
-              </span>
-              <span className="hidden sm:inline">•</span>
-              <span className="hidden md:inline">
-                {courseData.academicYear} ({courseData.semester})
-              </span>
-              <span className="md:hidden text-xs">
-                {courseData.academicYear}
+                Status: {courseData.status}
               </span>
               <span className="hidden sm:inline">•</span>
               <span className="flex items-center gap-1 text-xs sm:text-sm">
@@ -268,7 +190,7 @@ const CourseDetailPage = ({
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <Button
             variant="outline"
-            onClick={() => onAttendanceHistoryClick?.(courseId)}
+            // onClick={() => onAttendanceHistoryClick?.(courseId)}
             className="w-full sm:w-auto text-sm"
           >
             View History
@@ -276,7 +198,7 @@ const CourseDetailPage = ({
           <AttendanceSessionModal
             courseId={courseId}
             courseName={courseData.name}
-            onStartSession={handleStartAttendance}
+            // onStartSession={handleStartAttendance}
           >
             <Button className="w-full sm:w-auto text-sm">
               <ClipboardCheck className="h-4 w-4 mr-2" />
@@ -338,11 +260,9 @@ const CourseDetailPage = ({
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700">
-                    Departments
+                    Status
                   </Label>
-                  <p className="text-sm text-gray-900">
-                    {courseData.departments.join(', ')}
-                  </p>
+                  <p className="text-sm text-gray-900">{courseData.status}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-700">
@@ -379,25 +299,29 @@ const CourseDetailPage = ({
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
-                    <span className="font-medium">
-                      Best: {bestStudent.name}
-                    </span>
-                    <Badge variant="secondary">
-                      {bestStudent.attendanceRate}%
-                    </Badge>
-                  </div>
+                  {bestStudent && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <TrendingUp className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">
+                        Best: {bestStudent.name}
+                      </span>
+                      <Badge variant="secondary">
+                        {bestStudent.attendanceRate}%
+                      </Badge>
+                    </div>
+                  )}
 
-                  <div className="flex items-center gap-2 text-sm">
-                    <AlertTriangle className="h-4 w-4 text-red-600" />
-                    <span className="font-medium">
-                      Needs Attention: {worstStudent.name}
-                    </span>
-                    <Badge variant="destructive">
-                      {worstStudent.attendanceRate}%
-                    </Badge>
-                  </div>
+                  {worstStudent && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <span className="font-medium">
+                        Needs Attention: {worstStudent.name}
+                      </span>
+                      <Badge variant="destructive">
+                        {worstStudent.attendanceRate}%
+                      </Badge>
+                    </div>
+                  )}
 
                   <div className="flex items-center gap-2 text-sm">
                     <AlertTriangle className="h-4 w-4 text-orange-600" />
@@ -462,9 +386,7 @@ const CourseDetailPage = ({
                     <TableRow>
                       <TableHead className="w-12">
                         <Checkbox
-                          checked={
-                            selectedStudents.length === mockStudents.length
-                          }
+                          checked={selectedStudents.length === students.length}
                           onCheckedChange={handleSelectAllStudents}
                         />
                       </TableHead>
@@ -476,11 +398,11 @@ const CourseDetailPage = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {mockStudents.map((student) => (
+                    {students.map((student) => (
                       <TableRow
                         key={student.id}
                         className="hover:bg-gray-50 transition-colors cursor-pointer"
-                        onClick={() => onStudentClick(student)}
+                        // onClick={() => onStudentClick(student)}
                       >
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <Checkbox
@@ -520,7 +442,7 @@ const CourseDetailPage = ({
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                               <DropdownMenuItem
-                                onClick={() => onStudentClick(student)}
+                              // onClick={() => onStudentClick(student)}
                               >
                                 View Details
                               </DropdownMenuItem>
@@ -538,16 +460,16 @@ const CourseDetailPage = ({
               <div className="md:hidden space-y-3">
                 <div className="flex items-center gap-2 mb-4">
                   <Checkbox
-                    checked={selectedStudents.length === mockStudents.length}
+                    checked={selectedStudents.length === students.length}
                     onCheckedChange={handleSelectAllStudents}
                   />
                   <span className="text-sm text-gray-600">Select All</span>
                 </div>
-                {mockStudents.map((student) => (
+                {students.map((student) => (
                   <Card
                     key={student.id}
                     className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => onStudentClick(student)}
+                    // onClick={() => onStudentClick(student)}
                   >
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
@@ -583,7 +505,7 @@ const CourseDetailPage = ({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent>
                             <DropdownMenuItem
-                              onClick={() => onStudentClick(student)}
+                            // onClick={() => onStudentClick(student)}
                             >
                               View Details
                             </DropdownMenuItem>

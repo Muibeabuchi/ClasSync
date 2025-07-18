@@ -481,3 +481,170 @@ export const getLecturerCoursesWithStats = lecturerQuery({
     return coursesWithStats;
   },
 });
+
+export const getCourseDetails = LecturerCourseQuery({
+  args: {},
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
+    const course = ctx.course;
+
+    // Get course attendance list (enrolled students)
+    const courseAttendanceList = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+      .collect();
+
+    // Get student profiles and calculate attendance rates
+    const studentsWithAttendance = await Promise.all(
+      courseAttendanceList.map(async (attendance) => {
+        const studentProfile = await ctx.db.get(attendance.studentId);
+        // if (!studentProfile) return null;
+        if (!studentProfile)
+          throw new ConvexError('studentProfile does not exist');
+
+        // Get classListStudent info for registration number
+        const classListStudent = await ctx.db.get(
+          attendance.classListStudentId,
+        );
+        if (!classListStudent)
+          throw new ConvexError('ClassListStudent does not exist');
+
+        // Calculate attendance rate for this student in this course
+        const totalSessions = await ctx.db
+          .query('attendanceSessions')
+          .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+          .filter((q) => q.neq(q.field('status'), 'pending'))
+          .collect();
+
+        const attendedSessions = await ctx.db
+          .query('attendanceRecords')
+          .withIndex('by_studentId_by_courseId', (q) =>
+            q
+              .eq('studentId', attendance.studentId)
+              .eq('courseId', args.courseId),
+          )
+          .collect();
+
+        const attendanceRate =
+          totalSessions.length > 0
+            ? Math.round((attendedSessions.length / totalSessions.length) * 100)
+            : 0;
+
+        return {
+          id: studentProfile._id,
+          name: studentProfile.fullName,
+          email: studentProfile.email,
+          gender: studentProfile.gender || 'Not specified',
+          regNumber:
+            classListStudent?.student?.studentRegistrationNumber || 'N/A',
+          department: studentProfile.department || 'Not specified',
+          attendanceRate,
+          courseAttendanceListId: attendance._id,
+        };
+      }),
+    );
+
+    const students = studentsWithAttendance.filter(Boolean);
+
+    // Get join requests with student information
+    const joinRequests = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_lecturerId_by_courseId', (q) =>
+        q.eq('lecturerId', lecturerId).eq('courseId', args.courseId),
+      )
+      .collect();
+
+    const requestsWithStudentInfo = await Promise.all(
+      joinRequests.map(async (request) => {
+        const studentProfile = await ctx.db.get(request.studentId);
+        if (!studentProfile)
+          throw new ConvexError('studentProfile does not exist');
+
+        return {
+          id: request._id,
+          student: {
+            name: studentProfile.fullName,
+            email: studentProfile.email,
+            regNumber: studentProfile.registrationNumber || 'N/A',
+            department: studentProfile.department || 'Not specified',
+          },
+          status: request.status,
+          requestDate: new Date(request._creationTime)
+            .toISOString()
+            .split('T')[0],
+        };
+      }),
+    );
+
+    const requests = requestsWithStudentInfo.filter(Boolean);
+
+    // Get class lists information
+    const classLists = await Promise.all(
+      course.classListIds.map(async (classListId) => {
+        const classList = await ctx.db.get(classListId);
+        return classList
+          ? {
+              id: classList._id,
+              name: classList.classListName,
+            }
+          : null;
+      }),
+    );
+
+    // Calculate analytics
+    const attendanceRates = students.map((s) => s.attendanceRate);
+    const avgAttendance =
+      attendanceRates.length > 0
+        ? Math.round(
+            attendanceRates.reduce((sum, rate) => sum + rate, 0) /
+              attendanceRates.length,
+          )
+        : 0;
+
+    const bestStudent =
+      students.length > 0
+        ? students.reduce((best, student) =>
+            student.attendanceRate > best.attendanceRate ? student : best,
+          )
+        : null;
+
+    const worstStudent =
+      students.length > 0
+        ? students.reduce((worst, student) =>
+            student.attendanceRate < worst.attendanceRate ? student : worst,
+          )
+        : null;
+
+    const lowAttendanceCount = students.filter(
+      (s) => s.attendanceRate < 50,
+    ).length;
+
+    // Get attendance sessions count
+    const attendanceSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+      .collect();
+
+    return {
+      course: {
+        id: course._id,
+        name: course.courseName,
+        code: course.courseCode,
+        status: course.status,
+        enrolledCount: students.length,
+        description: `Course managed by ${ctx.user.fullName}`, // You can add a description field to the schema if needed
+      },
+      students,
+      requests,
+      classLists: classLists.filter(Boolean),
+      analytics: {
+        avgAttendance,
+        bestStudent,
+        worstStudent,
+        lowAttendanceCount,
+        totalSessions: attendanceSessions.length,
+        pendingRequests: requests.filter((r) => r.status === 'pending').length,
+      },
+    };
+  },
+});
