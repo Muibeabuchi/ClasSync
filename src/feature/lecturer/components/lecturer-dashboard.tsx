@@ -6,21 +6,33 @@ import {
 } from '@/components/ui/sidebar';
 import LecturerSidebar from './lecturer-sidebar';
 import LecturerDashboardContent from './lecturer-dashboard-content';
-import CreateCoursePage from './create-course-page';
-import MyCoursesPage from './my-courses-page';
-import CourseDetailPage from './course-detail-page';
+import MyCoursesPage from './MyCoursesPage';
 import CourseAnalyticsPage from '@/components/courseDetails/course-analytics-page';
 import LecturerStudentsPage from './lecturer-students-page';
 import JoinRequestsPage from './join-requests-page';
 import JoinRequestsLinkingPage from './join-request-linking-page';
-import LecturerSettingsPage from './lecturer-settings-page';
-import StudentDetailsPage from './student-details-page';
-import EnhancedStudentDetailSection from './enhanced-details-section';
-import LecturerNotifications from './lecturer-notifications';
+// import MyCoursesPage from './my-courses-page';
+// import CourseDetailPage from './course-detail-page';
+// import CreateCoursePage from './create-course-page';
+// import LecturerSettingsPage from './lecturer-settings-page';
+// import EnhancedStudentDetailSection from './enhanced-details-section';
+// import LecturerNotifications from './lecturer-notifications';
+// import LecturerAttendanceSection from './lecturer-attendance-section';
 import LecturerProfile from './lecturer-profile';
-import LecturerAttendanceSection from './lecturer-attendance-section';
+import StudentDetailsPage from './student-details-page';
 import { CheckLocation } from '@/components/geoLocation/checkLocation';
 import LecturerClassListsPage from './lecturer-classlist-page';
+import EnhancedCourseCreation from './EnhancedCourseCreation';
+import ClassListManagement from './ClassListManagement';
+import AttendanceSessionSetup from './AttendanceSessionSetup';
+import LiveAttendancePage from './LiveAttendancePage';
+import AttendanceHistoryPage from './AttendanceHistoryPage';
+import EnhancedSettingsPage from './EnhancedSettingsPage';
+import NotificationInbox from './NotificationInbox';
+import LecturerAttendancePage from './LecturerAttendancePage';
+import EnhancedStudentDetailsPage from './EnhancedStudentDetailsPage';
+import EditClassListPage from './EditClassListPage';
+import CourseDetailPage from './CourseDetailPage';
 
 interface LecturerDashboardProps {
   userData: any;
@@ -80,6 +92,16 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
     setSelectedStudentId('');
   };
 
+  const handleLiveAttendanceClick = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    setActivePage('live-attendance');
+  };
+
+  const handleAttendanceHistoryClick = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    setActivePage('attendance-history');
+  };
+
   const renderContent = () => {
     switch (activePage) {
       case 'dashboard':
@@ -92,6 +114,31 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
         );
       case 'courses':
         return <MyCoursesPage onCourseClick={handleCourseClick} />;
+      case 'create-course':
+        return (
+          <EnhancedCourseCreation
+            onBack={handleBackToDashboard}
+            onSuccess={handleBackToDashboard}
+          />
+        );
+      case 'classlist-management':
+        return <ClassListManagement onBack={handleBackToDashboard} />;
+      case 'attendance-session':
+        return (
+          <AttendanceSessionSetup
+            courseId={selectedCourseId}
+            courseName="Computer Science 101"
+            onBack={handleBackToDashboard}
+          />
+        );
+      case 'live-attendance':
+        return <LiveAttendancePage />;
+      case 'attendance-history':
+        return <AttendanceHistoryPage />;
+      case 'settings':
+        return <EnhancedSettingsPage onBack={handleBackToDashboard} />;
+      case 'notifications':
+        return <NotificationInbox onBack={handleBackToDashboard} />;
       case 'course-detail':
         return (
           <CourseDetailPage
@@ -100,6 +147,8 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
             onStudentClick={handleStudentClick}
             onAnalyticsClick={handleCourseAnalyticsClick}
             onAttendanceClick={handleAttendanceClick}
+            onLiveAttendanceClick={handleLiveAttendanceClick}
+            onAttendanceHistoryClick={handleAttendanceHistoryClick}
           />
         );
       case 'course-analytics':
@@ -111,7 +160,7 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
         );
       case 'course-attendance':
         return (
-          <LecturerAttendanceSection
+          <LecturerAttendancePage
             courseId={selectedCourseId}
             onBack={handleBackToCourses}
           />
@@ -125,24 +174,19 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
         );
       case 'enhanced-student-details':
         return (
-          <EnhancedStudentDetailSection
+          <EnhancedStudentDetailsPage
             studentId={selectedStudentId}
             onBack={handleBackToStudents}
-          />
-        );
-      case 'create-course':
-        return (
-          <CreateCoursePage
-            onBack={handleBackToDashboard}
-            onStudentClick={handleStudentClick}
           />
         );
       case 'join-requests':
         return <JoinRequestsPage onBack={handleBackToDashboard} />;
       case 'join-requests-linking':
         return <JoinRequestsLinkingPage onBack={handleBackToDashboard} />;
-      case 'notifications':
-        return <LecturerNotifications />;
+      case 'profile':
+        return <LecturerProfile userData={userData} />;
+      // case 'billing':
+      //   return <BillingPage onBack={handleBackToDashboard} />;
       case 'classlists':
         return (
           <LecturerClassListsPage
@@ -150,11 +194,13 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
             onBack={handleBackToDashboard}
           />
         );
-
-      case 'profile':
-        return <LecturerProfile userData={userData} />;
-      case 'settings':
-        return <LecturerSettingsPage onBack={handleBackToDashboard} />;
+      case 'edit-classlist':
+        return (
+          <EditClassListPage
+            classListId={selectedClassListId || ''}
+            onBack={() => {}}
+          />
+        );
       case 'student-details':
         return (
           <StudentDetailsPage
