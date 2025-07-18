@@ -23,6 +23,7 @@ export const startAttendanceSession = courseMutation({
   },
   handler: async (ctx, args) => {
     const lecturerId = ctx.user._id;
+    const course = ctx.course;
 
     // const attendanceCode = AttendanceModel.generateAttendanceCode();
 
@@ -54,7 +55,12 @@ export const startAttendanceSession = courseMutation({
       },
     );
 
-    return { sessionId, attendanceCode: args.requireCode, status: 'pending' };
+    return {
+      sessionId,
+      courseId: course._id,
+      attendanceCode: args.requireCode,
+      status: 'pending',
+    };
   },
 });
 
@@ -124,11 +130,10 @@ export const checkInToAttendance = StudentMutationMiddleware({
       throw new ConvexError('You are not within the required location radius');
     }
 
-    //TODO:  Check if the attendanceSession requires a code
-    if(attendanceSession.attendanceCode){
-      if(args.attendanceCode !== attendanceSession.attendanceCode){
-        throw new ConvexError("Attendance code is Needed")
-      } 
+    if (attendanceSession.attendanceCode) {
+      if (args.attendanceCode !== attendanceSession.attendanceCode) {
+        throw new ConvexError('Attendance code is Needed');
+      }
     }
 
     // Check if already the student has already Checked in

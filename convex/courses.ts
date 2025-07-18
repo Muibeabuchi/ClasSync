@@ -81,13 +81,24 @@ export const getLecturerCourses = lecturerQuery({
   },
   handler: async (ctx, args) => {
     const lecturerId = ctx.user._id;
+    console.log({ lecturerId });
 
-    return await filter(
-      ctx.db
-        .query('courses')
-        .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId)),
-      (c) => c.status === args.status,
-    ).collect();
+    if (args.status) {
+      return await filter(
+        ctx.db
+          .query('courses')
+          .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId)),
+        (c) => c.status === args.status,
+      ).collect();
+    }
+
+    return await ctx.db
+      .query('courses')
+      .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId))
+      .collect();
+    // return await  ctx.db
+    //     .query('courses')
+    //     .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId)).collect()),
 
     //   // For students, get approved courses
     //   const approvedRequests = await ctx.db
@@ -407,5 +418,66 @@ export const unLinkStudentFromCourseAttendanceList = courseMutation({
       throw new ConvexError('CourseAttendanceList does not exist');
 
     await ctx.db.delete(courseAttendanceList._id);
+  },
+});
+
+export const getLecturerCoursesWithStats = lecturerQuery({
+  args: {
+    status: v.optional(lecturerCourseStatusSchema),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
+
+    // Get courses
+    let coursesQuery = ctx.db
+      .query('courses')
+      .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId));
+
+    if (args.status) {
+      coursesQuery = filter(coursesQuery, (c) => c.status === args.status);
+    }
+
+    const courses = await coursesQuery.collect();
+
+    // Get statistics for each course
+    const coursesWithStats = await Promise.all(
+      courses.map(async (course) => {
+        // Count classlists
+        const classlistCount = course.classListIds.length;
+
+        // Count total students (approved students in courseAttendanceList)
+        const totalStudents = await ctx.db
+          .query('courseAttendanceList')
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+          .collect();
+
+        // Count attendance sessions
+        const attendanceSessions = await ctx.db
+          .query('attendanceSessions')
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+          .collect();
+
+        // Count pending join requests
+        const pendingRequests = await ctx.db
+          .query('joinRequests')
+          .withIndex('by_lecturerId_by_courseId', (q) =>
+            q.eq('lecturerId', lecturerId).eq('courseId', course._id),
+          )
+          .filter((q) => q.eq(q.field('status'), 'pending'))
+          .collect();
+
+        return {
+          ...course,
+          stats: {
+            classlistCount,
+            totalStudents: totalStudents.length,
+            sessionsHeld: attendanceSessions.length,
+            pendingRequests: pendingRequests.length,
+          },
+        };
+      }),
+    );
+
+    return coursesWithStats;
   },
 });

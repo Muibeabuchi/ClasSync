@@ -17,6 +17,7 @@ import { useCreateAttendanceSession } from '@/feature/attendance/api';
 import type { Id } from 'convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { useGeolocated } from 'react-geolocated';
+import { useNavigate } from '@tanstack/react-router';
 
 interface AttendanceSessionModalProps {
   courseId: string;
@@ -26,15 +27,17 @@ interface AttendanceSessionModalProps {
 }
 
 const AttendanceSessionModal = ({
-  courseId,
+  // courseId,
   courseName,
   children,
-  onStartSession,
+  // onStartSession,
 }: AttendanceSessionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [requireCode, setRequireCode] = useState(false);
   const [attendanceCode, setAttendanceCode] = useState('');
   const [locationRadius, setLocationRadius] = useState(150);
+
+  const navigate = useNavigate();
 
   const { mutateAsync: createAttendanceSession } = useCreateAttendanceSession();
   const { isGeolocationAvailable, isGeolocationEnabled, getPosition } =
@@ -47,7 +50,7 @@ const AttendanceSessionModal = ({
       onSuccess: async ({ coords }) => {
         if (!isGeolocationAvailable && !isGeolocationEnabled) return;
 
-        await createAttendanceSession({
+        const { sessionId, courseId } = await createAttendanceSession({
           courseId: 'mx79gr7y1cf63her34neds24j97kx0p4' as Id<'courses'>,
           requireCode: attendanceCode,
           radiusMeters: locationRadius,
@@ -62,11 +65,18 @@ const AttendanceSessionModal = ({
 
         // Close modal and trigger navigation
         setIsOpen(false);
-
-        // Call the callback to navigate to live attendance page
-        if (onStartSession) {
-          onStartSession(courseId);
-        }
+        navigate({
+          to: '/dashboard/$role/$courseId/$attendanceSession',
+          params: {
+            attendanceSession: sessionId,
+            courseId,
+            role: 'lecturer',
+          },
+        });
+        // // Call the callback to navigate to live attendance page
+        // if (onStartSession) {
+        //   onStartSession(courseId);
+        // }
       },
     });
 

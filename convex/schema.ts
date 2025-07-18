@@ -45,6 +45,8 @@ export const lecturerCourseStatusSchema = v.union(
   v.literal('completed'),
 );
 
+export type lecturerCourseStatusType = Infer<typeof lecturerCourseStatusSchema>
+
 export const classListStudentSchema = v.object({
   classlistPosition: v.number(),
   studentName: v.string(),

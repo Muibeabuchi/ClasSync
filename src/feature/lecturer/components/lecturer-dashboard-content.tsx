@@ -6,8 +6,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
+// import { Badge } from '@/components/ui/badge';
+// import { Progress } from '@/components/ui/progress';
 import {
   BookOpen,
   Users,
@@ -17,50 +17,38 @@ import {
   BarChart3,
   Bell,
   ArrowRight,
-  GraduationCap,
+  // GraduationCap,
   Activity,
 } from 'lucide-react';
+import { useNavigate } from '@tanstack/react-router';
+import { useGetLecturerCourses } from '@/feature/course/api/get-lecturer-courses';
 
 interface LecturerDashboardContentProps {
   userData: any;
-  onCourseClick: (courseId: string) => void;
-  onAttendanceClick: (courseId: string) => void;
+  // onCourseClick: (courseId: string) => void;
+  // onAttendanceClick: (courseId: string) => void;
 }
 
 const LecturerDashboardContent = ({
   userData,
-  onCourseClick,
-  onAttendanceClick,
+  // onCourseClick,
+  // onAttendanceClick,
 }: LecturerDashboardContentProps) => {
-  const recentCourses = [
-    {
-      id: '1',
-      name: 'Advanced React Development',
-      students: 45,
-      progress: 75,
-      color: 'bg-blue-500',
-    },
-    {
-      id: '2',
-      name: 'Data Structures & Algorithms',
-      students: 32,
-      progress: 60,
-      color: 'bg-green-500',
-    },
-    {
-      id: '3',
-      name: 'Web Security Fundamentals',
-      students: 28,
-      progress: 85,
-      color: 'bg-purple-500',
-    },
-  ];
+  const { data: lecturerCourses } = useGetLecturerCourses();
+  const recentCourses = lecturerCourses?.map((course) => ({
+    id: course._id,
+    name: course.courseName,
+  }));
+  const navigate = useNavigate();
 
-  const upcomingClasses = [
-    { id: '1', course: 'Advanced React', time: '10:00 AM', room: 'Lab 204' },
-    { id: '2', course: 'Data Structures', time: '2:00 PM', room: 'Room 301' },
-    { id: '3', course: 'Web Security', time: '4:00 PM', room: 'Lab 105' },
-  ];
+  const handleCourseNavigation = () => {
+    navigate({
+      to: '/dashboard/$role/courses',
+      params: {
+        role: 'lecturer',
+      },
+    });
+  };
 
   return (
     <div className="space-y-8 animate-fade-in-up">
@@ -158,39 +146,40 @@ const LecturerDashboardContent = ({
               variant="ghost"
               size="sm"
               className="text-primary hover:text-primary"
+              onClick={handleCourseNavigation}
             >
               View All <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </CardHeader>
           <CardContent className="space-y-4">
-            {recentCourses.map((course) => (
+            {recentCourses?.map((course) => (
               <button
                 key={course.id}
                 className="space-y-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => onCourseClick(course.id)}
+                // onClick={handleCourseNavigation}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${course.color}`} />
+                    <div className={`w-3 h-3 rounded-full `} />
                     <div>
                       <p className="font-medium text-foreground">
                         {course.name}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      {/* <p className="text-sm text-muted-foreground">
                         {course.students} students
-                      </p>
+                      </p> */}
                     </div>
                   </div>
-                  <Badge variant="secondary">{course.progress}%</Badge>
+                  {/* <Badge variant="secondary">{course.progress}%</Badge> */}
                 </div>
-                <Progress value={course.progress} className="h-2" />
+                {/* <Progress value={course.progress} className="h-2" /> */}
               </button>
             ))}
           </CardContent>
         </Card>
 
         {/* Today's Schedule */}
-        <Card className="glass-card">
+        {/* <Card className="glass-card">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
@@ -241,7 +230,7 @@ const LecturerDashboardContent = ({
               </button>
             ))}
           </CardContent>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Quick Actions */}

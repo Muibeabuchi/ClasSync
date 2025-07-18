@@ -13,5 +13,6 @@ function RouteComponent() {
     // return a loader that mimics the dashboard page
     return <Loader />;
   }
+
   return <Outlet />;
 }

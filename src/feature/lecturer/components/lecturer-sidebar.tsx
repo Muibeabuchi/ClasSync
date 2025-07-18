@@ -14,16 +14,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import {
-  Home,
-  BookOpen,
-  Users,
-  Bell,
-  Plus,
-  LogOut,
-  User,
-  CreditCard,
-} from 'lucide-react';
+import { BookOpen, Bell, LogOut, User } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,65 +22,21 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { navigationItems } from '@/constants/navigation-constants';
+import { Link } from '@tanstack/react-router';
+import { cn } from '@/lib/utils';
 // import { ThemeToggle } from '@/components/theme-toggle';
 
 interface LecturerSidebarProps {
-  activePage: string;
-  onPageChange: (page: any) => void;
   userData: any;
+  handleSidebarState: (value: boolean) => void;
 }
 
 const LecturerSidebar = ({
-  activePage,
-  onPageChange,
   userData,
+  // handleSidebarState,
 }: LecturerSidebarProps) => {
   const { state } = useSidebar();
-
-  const navigationItems = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: Home,
-      badge: null,
-    },
-    {
-      id: 'courses',
-      label: 'My Courses',
-      icon: BookOpen,
-      badge: '3',
-    },
-    {
-      id: 'create-course',
-      label: 'Create Course',
-      icon: Plus,
-      badge: null,
-    },
-    {
-      id: 'join-requests',
-      label: 'Join Requests',
-      icon: Users,
-      badge: '8',
-    },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      icon: Bell,
-      badge: '5',
-    },
-    {
-      id: 'classlists',
-      label: 'ClassLists',
-      icon: Users,
-      badge: null,
-    },
-    {
-      id: 'billing',
-      label: 'Billing',
-      icon: CreditCard,
-      badge: null,
-    },
-  ];
 
   const handleSignOut = () => {
     console.log('Signing out...');
@@ -98,16 +45,22 @@ const LecturerSidebar = ({
   return (
     <Sidebar collapsible="icon" className="border-r">
       <SidebarHeader className="border-b">
-        <div className="flex items-center gap-3 px-3 py-4">
-          <div className="bg-primary p-2 rounded-lg shadow-lg">
-            <BookOpen className="h-5 w-5" />
+        <div className="flex items-center gap-3 px-1 py-0.5">
+          <div
+            className={cn('bg-primary p-3 rounded-md shadow-lg', {
+              'p-1 rounded-sm': state === 'collapsed',
+            })}
+          >
+            <BookOpen
+              className={cn('size-5', {
+                'size-4': state === 'collapsed',
+              })}
+            />
           </div>
           {state === 'expanded' && (
             <div className="flex flex-col flex-1">
-              <h2 className="text-base font-medium tracking-tight">
-                ClassSync
-              </h2>
-              <p className="text-sm font-normal opacity-70">Lecturer Portal</p>
+              <h2 className="text-base font-medium tracking-tight">Classynk</h2>
+              <p className="text-xs font-normal opacity-70">Lecturer Portal</p>
             </div>
           )}
           {/* <ThemeToggle /> */}
@@ -116,41 +69,52 @@ const LecturerSidebar = ({
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-xs font-medium uppercase tracking-wider px-3 py-2 opacity-70">
+          <SidebarGroupLabel className="text-xs font-medium uppercase tracking-wider px-1 py-2 opacity-70">
             Navigation
           </SidebarGroupLabel>
-          <SidebarGroupContent className="px-2">
+          <SidebarGroupContent className="">
             <SidebarMenu className="space-y-1">
               {navigationItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = activePage === item.id;
-
                 return (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => onPageChange(item.id)}
-                      tooltip={state === 'collapsed' ? item.label : undefined}
-                      className={`
-                        h-10 px-3 rounded-lg transition-all duration-200 font-medium text-sm 
+                    <Link
+                      to={`/dashboard/$role/${item.to}`}
+                      activeOptions={{ exact: true }}
+                    >
+                      {({ isActive }) => {
+                        return (
+                          <SidebarMenuButton
+                            isActive={isActive}
+                            // onClick={() => {
+                            //   // handleSidebarState(false);
+                            // }}
+                            tooltip={
+                              state === 'collapsed' ? item.label : undefined
+                            }
+                            className={`
+                        h-10 px-3 rounded-sm transition-all duration-200 font-medium text-sm 
                         ${
                           isActive
-                            ? 'bg-primary/20 text-primary border-l-2 border-primary'
+                            ? 'bg-primary/20 text-primary '
                             : 'hover:bg-accent hover:text-accent-foreground'
                         }
                       `}
-                    >
-                      <Icon className="h-4 w-4 flex-shrink-0" />
-                      <span className="font-normal">{item.label}</span>
-                      {item.badge && state === 'expanded' && (
-                        <Badge
-                          variant="secondary"
-                          className="ml-auto text-xs px-2 py-0.5"
-                        >
-                          {item.badge}
-                        </Badge>
-                      )}
-                    </SidebarMenuButton>
+                          >
+                            <Icon className="h-4 w-4 flex-shrink-0" />
+                            <span className="font-normal">{item.label}</span>
+                            {item.badge && state === 'expanded' && (
+                              <Badge
+                                variant="secondary"
+                                className="ml-auto text-xs px-2 py-0.5"
+                              >
+                                {item.badge}
+                              </Badge>
+                            )}
+                          </SidebarMenuButton>
+                        );
+                      }}
+                    </Link>
                   </SidebarMenuItem>
                 );
               })}
@@ -159,14 +123,14 @@ const LecturerSidebar = ({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t p-2">
+      <SidebarFooter className="border-t ">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="h-12 px-3 rounded-lg hover:bg-accent transition-colors duration-200 data-[state=open]:bg-accent"
+                  className="h-12  rounded-lg hover:bg-accent transition-colors duration-200 data-[state=open]:bg-accent"
                 >
                   <Avatar className="h-8 w-8 rounded-lg border">
                     <AvatarImage src={userData?.profileImage} />
@@ -198,11 +162,13 @@ const LecturerSidebar = ({
                 sideOffset={4}
               >
                 <DropdownMenuItem
-                  onClick={() => onPageChange('profile')}
+                  // onClick={() => onPageChange('profile')}
                   className="cursor-pointer"
                 >
-                  <User className="h-4 w-4 mr-2" />
-                  Profile
+                  <Link to="/">
+                    <User className="h-4 w-4 mr-2" />
+                    Profile
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

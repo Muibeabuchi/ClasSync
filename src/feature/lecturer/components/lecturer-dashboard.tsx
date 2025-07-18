@@ -32,6 +32,7 @@ import LecturerAttendancePage from './LecturerAttendancePage';
 import EnhancedStudentDetailsPage from './EnhancedStudentDetailsPage';
 import EditClassListPage from './EditClassListPage';
 import CourseDetailPage from './CourseDetailPage';
+import { Outlet } from '@tanstack/react-router';
 
 interface LecturerDashboardProps {
   userData: any;
@@ -43,6 +44,11 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
   const [selectedCourseId, setSelectedCourseId] = useState<string>('');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [selectedClassListId, setSelectedClassListId] = useState<string>('');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleSidebarState = (value: boolean) => {
+    setSidebarOpen(value);
+  };
 
   const handleStudentClick = (student: any) => {
     setSelectedStudent(student);
@@ -101,136 +107,149 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
     setActivePage('attendance-history');
   };
 
-  const renderContent = () => {
-    switch (activePage) {
-      case 'dashboard':
-        return (
-          <LecturerDashboardContent
-            userData={userData}
-            onCourseClick={handleCourseClick}
-            onAttendanceClick={handleAttendanceClick}
-          />
-        );
-      case 'courses':
-        return <MyCoursesPage onCourseClick={handleCourseClick} />;
-      case 'create-course':
-        return (
-          <EnhancedCourseCreation
-            onBack={handleBackToDashboard}
-            onSuccess={handleBackToDashboard}
-          />
-        );
-      case 'classlist-management':
-        return <ClassListManagement onBack={handleBackToDashboard} />;
-      case 'attendance-session':
-        return (
-          <AttendanceSessionSetup
-            courseId={selectedCourseId}
-            courseName="Computer Science 101"
-            onBack={handleBackToDashboard}
-          />
-        );
-      case 'live-attendance':
-        return <LiveAttendancePage />;
-      case 'attendance-history':
-        return <AttendanceHistoryPage />;
-      case 'settings':
-        return <EnhancedSettingsPage onBack={handleBackToDashboard} />;
-      case 'notifications':
-        return <NotificationInbox onBack={handleBackToDashboard} />;
-      case 'course-detail':
-        return (
-          <CourseDetailPage
-            courseId={selectedCourseId}
-            onBack={handleBackToCourses}
-            onStudentClick={handleStudentClick}
-            onAnalyticsClick={handleCourseAnalyticsClick}
-            onAttendanceClick={handleAttendanceClick}
-            onLiveAttendanceClick={handleLiveAttendanceClick}
-            onAttendanceHistoryClick={handleAttendanceHistoryClick}
-          />
-        );
-      case 'course-analytics':
-        return (
-          <CourseAnalyticsPage
-            courseId={selectedCourseId}
-            onBack={handleBackToCourses}
-          />
-        );
-      case 'course-attendance':
-        return (
-          <LecturerAttendancePage
-            courseId={selectedCourseId}
-            onBack={handleBackToCourses}
-          />
-        );
-      case 'all-students':
-        return (
-          <LecturerStudentsPage
-            onBack={handleBackToDashboard}
-            onStudentClick={handleStudentDetailsClick}
-          />
-        );
-      case 'enhanced-student-details':
-        return (
-          <EnhancedStudentDetailsPage
-            studentId={selectedStudentId}
-            onBack={handleBackToStudents}
-          />
-        );
-      case 'join-requests':
-        return <JoinRequestsPage onBack={handleBackToDashboard} />;
-      case 'join-requests-linking':
-        return <JoinRequestsLinkingPage onBack={handleBackToDashboard} />;
-      case 'profile':
-        return <LecturerProfile userData={userData} />;
-      // case 'billing':
-      //   return <BillingPage onBack={handleBackToDashboard} />;
-      case 'classlists':
-        return (
-          <LecturerClassListsPage
-            onEditClassList={handleEditClassList}
-            onBack={handleBackToDashboard}
-          />
-        );
-      case 'edit-classlist':
-        return (
-          <EditClassListPage
-            classListId={selectedClassListId || ''}
-            onBack={() => {}}
-          />
-        );
-      case 'student-details':
-        return (
-          <StudentDetailsPage
-            student={selectedStudent}
-            onBack={() => setActivePage('course-detail')}
-          />
-        );
-      default:
-        return (
-          <LecturerDashboardContent
-            userData={userData}
-            onCourseClick={handleCourseClick}
-            onAttendanceClick={handleAttendanceClick}
-          />
-        );
-    }
-  };
+  // const renderContent = () => {
+  //   switch (activePage) {
+  //     case 'dashboard':
+  //       return (
+  //         <LecturerDashboardContent
+  //           userData={userData}
+  //           onCourseClick={handleCourseClick}
+  //           onAttendanceClick={handleAttendanceClick}
+  //         />
+  //       );
+  //     case 'courses':
+  //       return <MyCoursesPage onCourseClick={handleCourseClick} />;
+  //     case 'create-course':
+  //       return (
+  //         <EnhancedCourseCreation
+  //           onBack={handleBackToDashboard}
+  //           onSuccess={handleBackToDashboard}
+  //         />
+  //       );
+  //     case 'classlist-management':
+  //       return <ClassListManagement onBack={handleBackToDashboard} />;
+  //     case 'attendance-session':
+  //       return (
+  //         <AttendanceSessionSetup
+  //           courseId={selectedCourseId}
+  //           courseName="Computer Science 101"
+  //           onBack={handleBackToDashboard}
+  //         />
+  //       );
+  //     case 'live-attendance':
+  //       return <LiveAttendancePage />;
+  //     case 'attendance-history':
+  //       return <AttendanceHistoryPage />;
+  //     case 'settings':
+  //       return <EnhancedSettingsPage onBack={handleBackToDashboard} />;
+  //     case 'notifications':
+  //       return <NotificationInbox onBack={handleBackToDashboard} />;
+  //     case 'course-detail':
+  //       return (
+  //         <CourseDetailPage
+  //           courseId={selectedCourseId}
+  //           onBack={handleBackToCourses}
+  //           onStudentClick={handleStudentClick}
+  //           onAnalyticsClick={handleCourseAnalyticsClick}
+  //           onAttendanceClick={handleAttendanceClick}
+  //           onLiveAttendanceClick={handleLiveAttendanceClick}
+  //           onAttendanceHistoryClick={handleAttendanceHistoryClick}
+  //         />
+  //       );
+  //     case 'course-analytics':
+  //       return (
+  //         <CourseAnalyticsPage
+  //           courseId={selectedCourseId}
+  //           onBack={handleBackToCourses}
+  //         />
+  //       );
+  //     case 'course-attendance':
+  //       return (
+  //         <LecturerAttendancePage
+  //           courseId={selectedCourseId}
+  //           onBack={handleBackToCourses}
+  //         />
+  //       );
+  //     case 'all-students':
+  //       return (
+  //         <LecturerStudentsPage
+  //           onBack={handleBackToDashboard}
+  //           onStudentClick={handleStudentDetailsClick}
+  //         />
+  //       );
+  //     case 'enhanced-student-details':
+  //       return (
+  //         <EnhancedStudentDetailsPage
+  //           studentId={selectedStudentId}
+  //           onBack={handleBackToStudents}
+  //         />
+  //       );
+  //     case 'join-requests':
+  //       return <JoinRequestsPage onBack={handleBackToDashboard} />;
+  //     case 'join-requests-linking':
+  //       return <JoinRequestsLinkingPage onBack={handleBackToDashboard} />;
+  //     case 'profile':
+  //       return <LecturerProfile userData={userData} />;
+  //     // case 'billing':
+  //     //   return <BillingPage onBack={handleBackToDashboard} />;
+  //     case 'classlists':
+  //       return (
+  //         <LecturerClassListsPage
+  //           onEditClassList={handleEditClassList}
+  //           onBack={handleBackToDashboard}
+  //         />
+  //       );
+  //     case 'edit-classlist':
+  //       return (
+  //         <EditClassListPage
+  //           classListId={selectedClassListId || ''}
+  //           onBack={() => {}}
+  //         />
+  //       );
+  //     case 'student-details':
+  //       return (
+  //         <StudentDetailsPage
+  //           student={selectedStudent}
+  //           onBack={() => setActivePage('course-detail')}
+  //         />
+  //       );
+  //     default:
+  //       return (
+  //         <LecturerDashboardContent
+  //           userData={userData}
+  //           onCourseClick={handleCourseClick}
+  //           onAttendanceClick={handleAttendanceClick}
+  //         />
+  //       );
+  //   }
+  // };
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider
+      // defaultOpen={sidebarOpen}
+      open={sidebarOpen}
+      onOpenChange={setSidebarOpen}
+    >
       <div className="min-h-screen flex w-full">
         <LecturerSidebar
-          activePage={activePage}
-          onPageChange={setActivePage}
+          // activePage={activePage}
+          // onPageChange={setActivePage}
           userData={userData}
+          handleSidebarState={handleSidebarState}
         />
         <SidebarInset className="flex-1">
           <div className="flex items-center gap-2 px-4 py-2 border-b">
             <SidebarTrigger />
           </div>
-          <div className="p-6">{renderContent()}</div>
+          <div className="p-6">
+            {/* <LecturerDashboardContent
+              userData={userData}
+              onCourseClick={handleCourseClick}
+              onAttendanceClick={handleAttendanceClick}
+            /> */}
+            <Outlet />
+          </div>
+          {/* <div className="p-6">{renderContent()}</div> */}
         </SidebarInset>
       </div>
     </SidebarProvider>

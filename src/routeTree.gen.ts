@@ -13,10 +13,13 @@ import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as OnboardRouteRouteImport } from './routes/_onboard/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as DashboardRoleRouteImport } from './routes/dashboard/$role'
 import { Route as OnboardRoleRouteImport } from './routes/_onboard/role'
 import { Route as OnboardOnboardRouteImport } from './routes/_onboard/onboard'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as DashboardRoleRouteRouteImport } from './routes/dashboard/$role/route'
+import { Route as DashboardRoleIndexRouteImport } from './routes/dashboard/$role/index'
+import { Route as DashboardRoleCoursesRouteImport } from './routes/dashboard/$role/courses'
+import { Route as DashboardRoleCoursesCourseIdRouteImport } from './routes/dashboard/$role/_courses.$courseId'
 
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
   id: '/dashboard',
@@ -36,11 +39,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoleRoute = DashboardRoleRouteImport.update({
-  id: '/$role',
-  path: '/$role',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const OnboardRoleRoute = OnboardRoleRouteImport.update({
   id: '/role',
   path: '/role',
@@ -56,14 +54,38 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
+const DashboardRoleRouteRoute = DashboardRoleRouteRouteImport.update({
+  id: '/$role',
+  path: '/$role',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardRoleIndexRoute = DashboardRoleIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoleRouteRoute,
+} as any)
+const DashboardRoleCoursesRoute = DashboardRoleCoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => DashboardRoleRouteRoute,
+} as any)
+const DashboardRoleCoursesCourseIdRoute =
+  DashboardRoleCoursesCourseIdRouteImport.update({
+    id: '/_courses/$courseId',
+    path: '/$courseId',
+    getParentRoute: () => DashboardRoleRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/dashboard/$role': typeof DashboardRoleRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
-  '/dashboard/$role': typeof DashboardRoleRoute
+  '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
+  '/dashboard/$role/': typeof DashboardRoleIndexRoute
+  '/dashboard/$role/$courseId': typeof DashboardRoleCoursesCourseIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -71,7 +93,9 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
-  '/dashboard/$role': typeof DashboardRoleRoute
+  '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
+  '/dashboard/$role': typeof DashboardRoleIndexRoute
+  '/dashboard/$role/$courseId': typeof DashboardRoleCoursesCourseIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,32 +103,49 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_onboard': typeof OnboardRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/dashboard/$role': typeof DashboardRoleRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_onboard/onboard': typeof OnboardOnboardRoute
   '/_onboard/role': typeof OnboardRoleRoute
-  '/dashboard/$role': typeof DashboardRoleRoute
+  '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
+  '/dashboard/$role/': typeof DashboardRoleIndexRoute
+  '/dashboard/$role/_courses/$courseId': typeof DashboardRoleCoursesCourseIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/dashboard/$role'
     | '/login'
     | '/onboard'
     | '/role'
-    | '/dashboard/$role'
+    | '/dashboard/$role/courses'
+    | '/dashboard/$role/'
+    | '/dashboard/$role/$courseId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login' | '/onboard' | '/role' | '/dashboard/$role'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/onboard'
+    | '/role'
+    | '/dashboard/$role/courses'
+    | '/dashboard/$role'
+    | '/dashboard/$role/$courseId'
   id:
     | '__root__'
     | '/'
     | '/_auth'
     | '/_onboard'
     | '/dashboard'
+    | '/dashboard/$role'
     | '/_auth/login'
     | '/_onboard/onboard'
     | '/_onboard/role'
-    | '/dashboard/$role'
+    | '/dashboard/$role/courses'
+    | '/dashboard/$role/'
+    | '/dashboard/$role/_courses/$courseId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -144,13 +185,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard/$role': {
-      id: '/dashboard/$role'
-      path: '/$role'
-      fullPath: '/dashboard/$role'
-      preLoaderRoute: typeof DashboardRoleRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/_onboard/role': {
       id: '/_onboard/role'
       path: '/role'
@@ -171,6 +205,34 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
+    }
+    '/dashboard/$role': {
+      id: '/dashboard/$role'
+      path: '/$role'
+      fullPath: '/dashboard/$role'
+      preLoaderRoute: typeof DashboardRoleRouteRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/$role/': {
+      id: '/dashboard/$role/'
+      path: '/'
+      fullPath: '/dashboard/$role/'
+      preLoaderRoute: typeof DashboardRoleIndexRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
+    }
+    '/dashboard/$role/courses': {
+      id: '/dashboard/$role/courses'
+      path: '/courses'
+      fullPath: '/dashboard/$role/courses'
+      preLoaderRoute: typeof DashboardRoleCoursesRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
+    }
+    '/dashboard/$role/_courses/$courseId': {
+      id: '/dashboard/$role/_courses/$courseId'
+      path: '/$courseId'
+      fullPath: '/dashboard/$role/$courseId'
+      preLoaderRoute: typeof DashboardRoleCoursesCourseIdRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
     }
   }
 }
@@ -201,12 +263,27 @@ const OnboardRouteRouteWithChildren = OnboardRouteRoute._addFileChildren(
   OnboardRouteRouteChildren,
 )
 
+interface DashboardRoleRouteRouteChildren {
+  DashboardRoleCoursesRoute: typeof DashboardRoleCoursesRoute
+  DashboardRoleIndexRoute: typeof DashboardRoleIndexRoute
+  DashboardRoleCoursesCourseIdRoute: typeof DashboardRoleCoursesCourseIdRoute
+}
+
+const DashboardRoleRouteRouteChildren: DashboardRoleRouteRouteChildren = {
+  DashboardRoleCoursesRoute: DashboardRoleCoursesRoute,
+  DashboardRoleIndexRoute: DashboardRoleIndexRoute,
+  DashboardRoleCoursesCourseIdRoute: DashboardRoleCoursesCourseIdRoute,
+}
+
+const DashboardRoleRouteRouteWithChildren =
+  DashboardRoleRouteRoute._addFileChildren(DashboardRoleRouteRouteChildren)
+
 interface DashboardRouteRouteChildren {
-  DashboardRoleRoute: typeof DashboardRoleRoute
+  DashboardRoleRouteRoute: typeof DashboardRoleRouteRouteWithChildren
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
-  DashboardRoleRoute: DashboardRoleRoute,
+  DashboardRoleRouteRoute: DashboardRoleRouteRouteWithChildren,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
