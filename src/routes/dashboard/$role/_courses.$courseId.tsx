@@ -1,3 +1,4 @@
+import { useGetCourseAttendanceSession } from '@/feature/attendance/api';
 import { useGetCourseDetails } from '@/feature/course/api/get-course-with-analytics';
 import CourseDetailPage from '@/feature/lecturer/components/CourseDetailPage';
 import CourseDetailPageSkeleton from '@/feature/lecturer/components/CourseDetailPageSkeleton';
@@ -17,6 +18,12 @@ export const Route = createFileRoute('/dashboard/$role/_courses/$courseId')({
   },
   component: RouteComponent,
   loader: async ({ context, params }) => {
+    // Prefetch the data for the attendance Sessions
+    context.queryClient.prefetchQuery(
+      convexQuery(api.attendance.getCourseAttendanceSessions, {
+        courseId: params.courseId,
+      }),
+    );
     await context.queryClient.ensureQueryData(
       convexQuery(api.courses.getCourseDetails, { courseId: params.courseId }),
     );
@@ -28,11 +35,16 @@ function RouteComponent() {
   const { courseId } = Route.useParams();
   // fetch the courseData
   const { data: courseDetails } = useGetCourseDetails({ courseId });
+  const { data: attendanceSessions } = useGetCourseAttendanceSession({
+    courseId,
+  });
+
   return (
     <Suspense fallback={<CourseDetailPageSkeleton />}>
       <CourseDetailPage
         courseId={courseId}
         courseDetails={courseDetails}
+        attendanceSessions={attendanceSessions}
         // onBack={handleBackToCourses}
         // onStudentClick={() => {}}
         // onAnalyticsClick={handleCourseAnalyticsClick}

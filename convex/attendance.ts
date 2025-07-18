@@ -1,6 +1,9 @@
 import { internalMutation } from './_generated/server';
 import { ConvexError, v } from 'convex/values';
-import { courseMutation } from './middlewares/lecturerMiddleware';
+import {
+  LecturerCourseQuery,
+  courseMutation,
+} from './middlewares/lecturerMiddleware';
 import * as AttendanceModel from './models/attendanceModel';
 import {
   AttendanceSessionDuration,
@@ -182,7 +185,14 @@ export const checkInToAttendance = StudentMutationMiddleware({
 //   },
 // });
 
-export const getCourseAttendanceSessions = courseMutation({
+export const getAttendanceSessionById = LecturerCourseQuery({
+  args: { attendanceSession: v.id('attendanceSessions') },
+  async handler(ctx, args) {
+    const attendanceSession = await ctx.db.get(args.attendanceSession);
+  },
+});
+
+export const getCourseAttendanceSessions = LecturerCourseQuery({
   args: {},
   async handler(ctx, args) {
     const lecturerId = ctx.user._id;

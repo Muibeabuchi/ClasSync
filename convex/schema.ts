@@ -58,6 +58,9 @@ export type lecturerCourseStatusType = Infer<typeof lecturerCourseStatusSchema>;
 export type GetCourseDetailsReturnType = FunctionReturnType<
   typeof api.courses.getCourseDetails
 >;
+export type GetAttendanceSessionsReturnType = FunctionReturnType<
+  typeof api.attendance.getCourseAttendanceSessions
+>;
 // const lecturerCurrentPlanSchema = v.optional(
 //   v.union(
 //     v.object({

@@ -49,10 +49,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 
-import type { GetCourseDetailsReturnType } from 'convex/schema';
+import type {
+  GetAttendanceSessionsReturnType,
+  GetCourseDetailsReturnType,
+} from 'convex/schema';
+import type { Id } from 'convex/_generated/dataModel';
+import { Link } from '@tanstack/react-router';
 interface CourseDetailPageProps {
-  courseId: string;
+  courseId: Id<'courses'>;
   courseDetails: GetCourseDetailsReturnType;
+  attendanceSessions: GetAttendanceSessionsReturnType;
   // onAnalyticsClick: (courseId: string) => void;
   // onAttendanceClick: (courseId: string) => void;
   // onLiveAttendanceClick?: (courseId: string) => void;
@@ -62,6 +68,7 @@ interface CourseDetailPageProps {
 const CourseDetailPage = ({
   courseId,
   courseDetails,
+  attendanceSessions,
   // onStudentClick,
   // onLiveAttendanceClick,
   // onAttendanceHistoryClick,
@@ -330,6 +337,66 @@ const CourseDetailPage = ({
                     </span>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardCheck className="h-5 w-5 text-green-600" />
+                  Attendance Sessions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* list out and map the attendnace session for the course ,where clicking on each would navigate to the specific attendnaceSession */}
+
+                {/* <div className="space-y-3"> */}
+                {/* <h3 className="text-sm font-medium text-gray-700">
+                    Recent Attendance Sessions
+                  </h3> */}
+                {attendanceSessions.length === 0 ? (
+                  <p className="text-sm text-gray-500">
+                    No attendance sessions yet
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {attendanceSessions.map((session) => (
+                      <Link
+                        to="/dashboard/$role/$lecturerCourseId/$attendanceSessionId"
+                        params={{
+                          attendanceSessionId: session._id,
+                          role: 'lecturer',
+                          lecturerCourseId: courseId,
+                        }}
+                        key={session._id}
+                        className="p-3 border rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <h4 className="font-medium text-sm">
+                              {'Attendance Session'}
+                            </h4>
+                            <p className="text-xs text-gray-500">
+                              {new Date(
+                                session._creationTime,
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <Badge
+                            variant={
+                              session.status === 'active'
+                                ? 'default'
+                                : 'secondary'
+                            }
+                          >
+                            {session.status}
+                          </Badge>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+                {/* </div> */}
               </CardContent>
             </Card>
           </div>
