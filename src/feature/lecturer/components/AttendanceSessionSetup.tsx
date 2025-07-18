@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -22,9 +22,9 @@ import {
   Copy,
   // Pause,
 } from 'lucide-react';
-// import { toast } from 'sonner';
-
-// import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
+import { useCreateAttendanceSession } from '@/feature/attendance/api';
+import type { Id } from 'convex/_generated/dataModel';
 
 interface AttendanceSessionSetupProps {
   courseId: string;
@@ -32,88 +32,33 @@ interface AttendanceSessionSetupProps {
   onBack: () => void;
 }
 
-type SessionPhase = 'setup' | 'preparation' | 'active' | 'completed';
-
 const AttendanceSessionSetup = ({
   // courseId,
   courseName,
   onBack,
 }: AttendanceSessionSetupProps) => {
-  const [sessionPhase, setSessionPhase] = useState<SessionPhase>('setup');
   const [requireCode, setRequireCode] = useState(false);
   const [attendanceCode, setAttendanceCode] = useState('');
-  const [countdown, setCountdown] = useState(30);
-  const [studentsCheckedIn, setStudentsCheckedIn] = useState(0);
-  // const { toast } = useToast();
-
-  // Mock data
-  const totalStudents = 45;
-  const sessionDuration = 60; // seconds (1 minute default)
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-
-    if (sessionPhase === 'preparation' || sessionPhase === 'active') {
-      interval = setInterval(() => {
-        setCountdown((prev) => {
-          if (prev <= 1) {
-            if (sessionPhase === 'preparation') {
-              setSessionPhase('active');
-              return sessionDuration;
-            } else {
-              setSessionPhase('completed');
-              return 0;
-            }
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-
-    return () => clearInterval(interval);
-  }, [sessionPhase, sessionDuration]);
-
-  // Simulate students checking in
-  useEffect(() => {
-    if (sessionPhase === 'active') {
-      const interval = setInterval(() => {
-        setStudentsCheckedIn((prev) => {
-          const newCount = prev + Math.floor(Math.random() * 3);
-          return Math.min(newCount, totalStudents);
-        });
-      }, 2000);
-
-      return () => clearInterval(interval);
-    }
-  }, [sessionPhase, totalStudents]);
 
   const generateAttendanceCode = () => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     setAttendanceCode(code);
-    // toast({
-    //   title: 'Attendance Code Generated',
-    //   description: `New code: ${code}`,
-    // });
+    toast.success('Attendance Code Generated', {
+      description: `New code: ${code}`,
+      icon: <Key className="h-4 w-4" />,
+    });
   };
 
-  const startAttendanceSession = () => {
+  const startAttendanceSession = async () => {
     if (requireCode && !attendanceCode) {
       generateAttendanceCode();
     }
-    setSessionPhase('preparation');
-    setCountdown(30);
-    // toast({
-    //   title: 'Attendance Session Starting',
-    //   description: '30-second preparation phase has begun.',
-    // });
+   
   };
 
   const copyAttendanceCode = () => {
     navigator.clipboard.writeText(attendanceCode);
-    // toast({
-    //   title: 'Code Copied',
-    //   description: 'Attendance code copied to clipboard.',
-    // });
+   
   };
 
   const formatTime = (seconds: number) => {
@@ -122,35 +67,35 @@ const AttendanceSessionSetup = ({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getPhaseColor = () => {
-    switch (sessionPhase) {
-      case 'setup':
-        return 'text-muted-foreground';
-      case 'preparation':
-        return 'text-yellow-500';
-      case 'active':
-        return 'text-green-500';
-      case 'completed':
-        return 'text-blue-500';
-      default:
-        return 'text-muted-foreground';
-    }
-  };
+  // const getPhaseColor = () => {
+  //   switch (sessionPhase) {
+  //     case 'setup':
+  //       return 'text-muted-foreground';
+  //     case 'preparation':
+  //       return 'text-yellow-500';
+  //     case 'active':
+  //       return 'text-green-500';
+  //     case 'completed':
+  //       return 'text-blue-500';
+  //     default:
+  //       return 'text-muted-foreground';
+  //   }
+  // };
 
-  const getPhaseIcon = () => {
-    switch (sessionPhase) {
-      case 'setup':
-        return <Play className="h-5 w-5" />;
-      case 'preparation':
-        return <Clock className="h-5 w-5 animate-pulse" />;
-      case 'active':
-        return <CheckCircle className="h-5 w-5 animate-pulse" />;
-      case 'completed':
-        return <CheckCircle className="h-5 w-5" />;
-      default:
-        return <Play className="h-5 w-5" />;
-    }
-  };
+  // const getPhaseIcon = () => {
+  //   switch (sessionPhase) {
+  //     case 'setup':
+  //       return <Play className="h-5 w-5" />;
+  //     case 'preparation':
+  //       return <Clock className="h-5 w-5 animate-pulse" />;
+  //     case 'active':
+  //       return <CheckCircle className="h-5 w-5 animate-pulse" />;
+  //     case 'completed':
+  //       return <CheckCircle className="h-5 w-5" />;
+  //     default:
+  //       return <Play className="h-5 w-5" />;
+  //   }
+  // };
 
   return (
     <div className="space-y-6 animate-slide-in-bottom">

@@ -13,7 +13,10 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Copy, RefreshCw, MapPin, Clock, Code } from 'lucide-react';
-// import { useToast } from "@/hooks/use-toast";
+import { useCreateAttendanceSession } from '@/feature/attendance/api';
+import type { Id } from 'convex/_generated/dataModel';
+import { toast } from 'sonner';
+import { useGeolocated } from 'react-geolocated';
 
 interface AttendanceSessionModalProps {
   courseId: string;
@@ -33,6 +36,40 @@ const AttendanceSessionModal = ({
   const [attendanceCode, setAttendanceCode] = useState('');
   const [locationRadius, setLocationRadius] = useState(150);
 
+  const { mutateAsync: createAttendanceSession } = useCreateAttendanceSession();
+  const { isGeolocationAvailable, isGeolocationEnabled, getPosition } =
+    useGeolocated({
+      positionOptions: {
+        enableHighAccuracy: true,
+      },
+      userDecisionTimeout: 5000,
+      suppressLocationOnMount: true,
+      onSuccess: async ({ coords }) => {
+        if (!isGeolocationAvailable && !isGeolocationEnabled) return;
+
+        await createAttendanceSession({
+          courseId: 'mx79gr7y1cf63her34neds24j97kx0p4' as Id<'courses'>,
+          requireCode: attendanceCode,
+          radiusMeters: locationRadius,
+          gpsCoordinates: {
+            lat: coords.latitude,
+            long: coords.longitude,
+          },
+        });
+        toast.success('Attendance Session Starting', {
+          description: '30-second preparation phase has begun.',
+        });
+
+        // Close modal and trigger navigation
+        setIsOpen(false);
+
+        // Call the callback to navigate to live attendance page
+        if (onStartSession) {
+          onStartSession(courseId);
+        }
+      },
+    });
+
   const generateCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
     let result = '';
@@ -44,25 +81,13 @@ const AttendanceSessionModal = ({
 
   const copyCode = () => {
     navigator.clipboard.writeText(attendanceCode);
-    // toast({
-    //   title: "Code Copied!",
-    //   description: "Attendance code copied to clipboard.",
-    // });
+    toast.info('Code Copied', {
+      description: 'Attendance code copied to clipboard.',
+    });
   };
 
   const handleStartSession = () => {
-    // Close modal and trigger navigation
-    setIsOpen(false);
-
-    // toast({
-    //   title: "Attendance Session Starting",
-    //   description: "Redirecting to live attendance page...",
-    // });
-
-    // Call the callback to navigate to live attendance page
-    if (onStartSession) {
-      onStartSession(courseId);
-    }
+    getPosition();
   };
 
   return (

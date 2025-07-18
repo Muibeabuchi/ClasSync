@@ -19,12 +19,12 @@ export const startAttendanceSession = courseMutation({
       long: v.number(),
     }),
     radiusMeters: v.optional(v.number()),
-    requireCode: v.boolean(),
+    requireCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const lecturerId = ctx.user._id;
 
-    const attendanceCode = AttendanceModel.generateAttendanceCode();
+    // const attendanceCode = AttendanceModel.generateAttendanceCode();
 
     const startTime = Date.now();
     const endedAt = startTime + AttendanceSessionDuration;
@@ -32,9 +32,10 @@ export const startAttendanceSession = courseMutation({
     const sessionId = await ctx.db.insert('attendanceSessions', {
       courseId: args.courseId,
       lecturerId,
-      attendanceCode,
+      attendanceCode: args.requireCode,
       location: args.gpsCoordinates,
       status: 'pending',
+      endedAt,
     });
 
     await ctx.scheduler.runAfter(
@@ -53,7 +54,7 @@ export const startAttendanceSession = courseMutation({
       },
     );
 
-    return { sessionId, attendanceCode, status: 'pending' };
+    return { sessionId, attendanceCode: args.requireCode, status: 'pending' };
   },
 });
 
@@ -62,7 +63,6 @@ export const endAttendanceSession = internalMutation({
   async handler(ctx, args) {
     await ctx.db.patch(args.attendanceSessionId, {
       status: 'complete',
-      endedAt: Date.now(),
     });
   },
 });
