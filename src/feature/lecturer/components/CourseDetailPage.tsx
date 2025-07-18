@@ -225,38 +225,51 @@ const CourseDetailPage = ({
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center space-x-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onBack}
-          className="hover:scale-110 transition-transform"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div className="flex-1">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {courseData.name}
-          </h1>
-          <div className="flex items-center gap-4 text-gray-600">
-            <span>{courseData.code}</span>
-            <span>•</span>
-            <span>{courseData.departments.join(', ')}</span>
-            <span>•</span>
-            <span>
-              {courseData.academicYear} ({courseData.semester})
-            </span>
-            <span>•</span>
-            <span className="flex items-center gap-1">
-              <Users className="h-4 w-4" />
-              {courseData.enrolledCount} students
-            </span>
+      <div className="space-y-4">
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="hover:scale-110 transition-transform flex-shrink-0"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+              {courseData.name}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-gray-600 mt-1">
+              <span className="font-medium">{courseData.code}</span>
+              <span className="hidden sm:inline">•</span>
+              <span className="hidden sm:inline">
+                {courseData.departments.join(', ')}
+              </span>
+              <span className="sm:hidden text-xs">
+                {courseData.departments[0]}
+              </span>
+              <span className="hidden sm:inline">•</span>
+              <span className="hidden md:inline">
+                {courseData.academicYear} ({courseData.semester})
+              </span>
+              <span className="md:hidden text-xs">
+                {courseData.academicYear}
+              </span>
+              <span className="hidden sm:inline">•</span>
+              <span className="flex items-center gap-1 text-xs sm:text-sm">
+                <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                {courseData.enrolledCount}
+              </span>
+            </div>
           </div>
         </div>
-        <div className="flex gap-2">
+
+        {/* Action Buttons - Mobile Responsive */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           <Button
             variant="outline"
             onClick={() => onAttendanceHistoryClick?.(courseId)}
+            className="w-full sm:w-auto text-sm"
           >
             View History
           </Button>
@@ -265,7 +278,7 @@ const CourseDetailPage = ({
             courseName={courseData.name}
             onStartSession={handleStartAttendance}
           >
-            <Button>
+            <Button className="w-full sm:w-auto text-sm">
               <ClipboardCheck className="h-4 w-4 mr-2" />
               Take Attendance
             </Button>
@@ -280,14 +293,24 @@ const CourseDetailPage = ({
         className="space-y-6"
       >
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="overview" className="transition-all">
+          <TabsTrigger
+            value="overview"
+            className="transition-all text-xs sm:text-sm"
+          >
             Overview
           </TabsTrigger>
-          <TabsTrigger value="students" className="transition-all">
+          <TabsTrigger
+            value="students"
+            className="transition-all text-xs sm:text-sm"
+          >
             Students
           </TabsTrigger>
-          <TabsTrigger value="requests" className="transition-all">
-            Join Requests
+          <TabsTrigger
+            value="requests"
+            className="transition-all text-xs sm:text-sm"
+          >
+            <span className="hidden sm:inline">Join Requests</span>
+            <span className="sm:hidden">Requests</span>
           </TabsTrigger>
         </TabsList>
 
@@ -393,26 +416,30 @@ const CourseDetailPage = ({
           {selectedStudents.length > 0 && (
             <Card className="border-blue-200 bg-blue-50 animate-scale-in">
               <CardContent className="py-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <span className="text-sm font-medium">
                     {selectedStudents.length} student(s) selected
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={handleBulkMessage}
+                      className="w-full sm:w-auto text-xs sm:text-sm"
                     >
                       <MessageSquare className="h-4 w-4 mr-1" />
-                      Send Message
+                      <span className="hidden sm:inline">Send Message</span>
+                      <span className="sm:hidden">Message</span>
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
                       onClick={handleBulkRemoveStudents}
+                      className="w-full sm:w-auto text-xs sm:text-sm"
                     >
                       <Trash2 className="h-4 w-4 mr-1" />
-                      Remove Selected
+                      <span className="hidden sm:inline">Remove Selected</span>
+                      <span className="sm:hidden">Remove</span>
                     </Button>
                   </div>
                 </div>
@@ -428,61 +455,129 @@ const CourseDetailPage = ({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={
-                          selectedStudents.length === mockStudents.length
-                        }
-                        onCheckedChange={handleSelectAllStudents}
-                      />
-                    </TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Gender</TableHead>
-                    <TableHead>Reg Number</TableHead>
-                    <TableHead>Attendance</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockStudents.map((student) => (
-                    <TableRow
-                      key={student.id}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => onStudentClick(student)}
-                    >
-                      <TableCell onClick={(e) => e.stopPropagation()}>
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
                         <Checkbox
-                          checked={selectedStudents.includes(student.id)}
-                          onCheckedChange={(checked) =>
-                            handleSelectStudent(student.id, checked as boolean)
+                          checked={
+                            selectedStudents.length === mockStudents.length
                           }
+                          onCheckedChange={handleSelectAllStudents}
                         />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {student.name}
-                      </TableCell>
-                      <TableCell>{student.gender}</TableCell>
-                      <TableCell>{student.regNumber}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            student.attendanceRate >= 75
-                              ? 'default'
-                              : student.attendanceRate >= 50
-                                ? 'secondary'
-                                : 'destructive'
-                          }
-                        >
-                          {student.attendanceRate}%
-                        </Badge>
-                      </TableCell>
-                      <TableCell onClick={(e) => e.stopPropagation()}>
+                      </TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Gender</TableHead>
+                      <TableHead>Reg Number</TableHead>
+                      <TableHead>Attendance</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {mockStudents.map((student) => (
+                      <TableRow
+                        key={student.id}
+                        className="hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => onStudentClick(student)}
+                      >
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <Checkbox
+                            checked={selectedStudents.includes(student.id)}
+                            onCheckedChange={(checked) =>
+                              handleSelectStudent(
+                                student.id,
+                                checked as boolean,
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {student.name}
+                        </TableCell>
+                        <TableCell>{student.gender}</TableCell>
+                        <TableCell>{student.regNumber}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              student.attendanceRate >= 75
+                                ? 'default'
+                                : student.attendanceRate >= 50
+                                  ? 'secondary'
+                                  : 'destructive'
+                            }
+                          >
+                            {student.attendanceRate}%
+                          </Badge>
+                        </TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem
+                                onClick={() => onStudentClick(student)}
+                              >
+                                View Details
+                              </DropdownMenuItem>
+                              <DropdownMenuItem>Remove</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                <div className="flex items-center gap-2 mb-4">
+                  <Checkbox
+                    checked={selectedStudents.length === mockStudents.length}
+                    onCheckedChange={handleSelectAllStudents}
+                  />
+                  <span className="text-sm text-gray-600">Select All</span>
+                </div>
+                {mockStudents.map((student) => (
+                  <Card
+                    key={student.id}
+                    className="cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => onStudentClick(student)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={selectedStudents.includes(student.id)}
+                            onCheckedChange={(checked) =>
+                              handleSelectStudent(
+                                student.id,
+                                checked as boolean,
+                              )
+                            }
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                          <div>
+                            <h3 className="font-medium text-gray-900">
+                              {student.name}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {student.regNumber}
+                            </p>
+                          </div>
+                        </div>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -495,11 +590,25 @@ const CourseDetailPage = ({
                             <DropdownMenuItem>Remove</DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-600">{student.gender}</span>
+                        <Badge
+                          variant={
+                            student.attendanceRate >= 75
+                              ? 'default'
+                              : student.attendanceRate >= 50
+                                ? 'secondary'
+                                : 'destructive'
+                          }
+                        >
+                          {student.attendanceRate}%
+                        </Badge>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -529,26 +638,30 @@ const CourseDetailPage = ({
           {selectedRequests.length > 0 && (
             <Card className="border-green-200 bg-green-50 animate-scale-in">
               <CardContent className="py-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <span className="text-sm font-medium">
                     {selectedRequests.length} request(s) selected
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <Button
                       size="sm"
                       variant="default"
                       onClick={handleBulkApprove}
+                      className="w-full sm:w-auto text-xs sm:text-sm"
                     >
                       <Check className="h-4 w-4 mr-1" />
-                      Approve Selected
+                      <span className="hidden sm:inline">Approve Selected</span>
+                      <span className="sm:hidden">Approve</span>
                     </Button>
                     <Button
                       size="sm"
                       variant="destructive"
                       onClick={handleBulkReject}
+                      className="w-full sm:w-auto text-xs sm:text-sm"
                     >
                       <X className="h-4 w-4 mr-1" />
-                      Reject Selected
+                      <span className="hidden sm:inline">Reject Selected</span>
+                      <span className="sm:hidden">Reject</span>
                     </Button>
                   </div>
                 </div>
@@ -564,44 +677,119 @@ const CourseDetailPage = ({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">
-                      <Checkbox
-                        checked={
-                          selectedRequests.length === filteredRequests.length
-                        }
-                        onCheckedChange={handleSelectAllRequests}
-                      />
-                    </TableHead>
-                    <TableHead>Student</TableHead>
-                    <TableHead>Reg Number</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRequests.map((request) => (
-                    <TableRow
-                      key={request.id}
-                      className="hover:bg-gray-50 transition-colors"
-                    >
-                      <TableCell>
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-12">
                         <Checkbox
-                          checked={selectedRequests.includes(request.id)}
-                          onCheckedChange={(checked) =>
-                            handleSelectRequest(request.id, checked as boolean)
+                          checked={
+                            selectedRequests.length === filteredRequests.length
                           }
+                          onCheckedChange={handleSelectAllRequests}
                         />
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {request.student.name}
-                      </TableCell>
-                      <TableCell>{request.student.regNumber}</TableCell>
-                      <TableCell>{request.student.department}</TableCell>
-                      <TableCell>
+                      </TableHead>
+                      <TableHead>Student</TableHead>
+                      <TableHead>Reg Number</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRequests.map((request) => (
+                      <TableRow
+                        key={request.id}
+                        className="hover:bg-gray-50 transition-colors"
+                      >
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedRequests.includes(request.id)}
+                            onCheckedChange={(checked) =>
+                              handleSelectRequest(
+                                request.id,
+                                checked as boolean,
+                              )
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {request.student.name}
+                        </TableCell>
+                        <TableCell>{request.student.regNumber}</TableCell>
+                        <TableCell>{request.student.department}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              request.status === 'approved'
+                                ? 'default'
+                                : request.status === 'rejected'
+                                  ? 'destructive'
+                                  : 'secondary'
+                            }
+                          >
+                            {request.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {request.status === 'pending' && (
+                            <div className="flex gap-1">
+                              <Button size="sm" variant="default">
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="destructive">
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                <div className="flex items-center gap-2 mb-4">
+                  <Checkbox
+                    checked={
+                      selectedRequests.length === filteredRequests.length
+                    }
+                    onCheckedChange={handleSelectAllRequests}
+                  />
+                  <span className="text-sm text-gray-600">Select All</span>
+                </div>
+                {filteredRequests.map((request) => (
+                  <Card
+                    key={request.id}
+                    className="hover:shadow-md transition-shadow"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <Checkbox
+                            checked={selectedRequests.includes(request.id)}
+                            onCheckedChange={(checked) =>
+                              handleSelectRequest(
+                                request.id,
+                                checked as boolean,
+                              )
+                            }
+                          />
+                          <div>
+                            <h3 className="font-medium text-gray-900">
+                              {request.student.name}
+                            </h3>
+                            <p className="text-sm text-gray-600">
+                              {request.student.regNumber}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {request.student.department}
+                            </p>
+                          </div>
+                        </div>
                         <Badge
                           variant={
                             request.status === 'approved'
@@ -613,23 +801,31 @@ const CourseDetailPage = ({
                         >
                           {request.status}
                         </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {request.status === 'pending' && (
-                          <div className="flex gap-1">
-                            <Button size="sm" variant="default">
-                              <Check className="h-4 w-4" />
-                            </Button>
-                            <Button size="sm" variant="destructive">
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </div>
+                      {request.status === 'pending' && (
+                        <div className="flex gap-2 mt-3">
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="flex-1"
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex-1"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
