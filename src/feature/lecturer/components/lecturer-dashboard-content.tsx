@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
 import { useGetLecturerCourses } from '@/feature/course/api/get-lecturer-courses';
+import type { Id } from 'convex/_generated/dataModel';
 
 interface LecturerDashboardContentProps {
   userData: any;
@@ -41,7 +42,16 @@ const LecturerDashboardContent = ({
   }));
   const navigate = useNavigate();
 
-  const handleCourseNavigation = () => {
+  const handleCourseNavigation = (courseId: Id<'courses'>) => {
+    navigate({
+      to: '/dashboard/$role/$courseId',
+      params: {
+        role: 'lecturer',
+        courseId,
+      },
+    });
+  };
+  const handleCoursesNavigation = () => {
     navigate({
       to: '/dashboard/$role/courses',
       params: {
@@ -146,17 +156,17 @@ const LecturerDashboardContent = ({
               variant="ghost"
               size="sm"
               className="text-primary hover:text-primary"
-              onClick={handleCourseNavigation}
+              onClick={handleCoursesNavigation}
             >
               View All <ArrowRight className="h-4 w-4 ml-1" />
             </Button>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 flex flex-col">
             {recentCourses?.map((course) => (
               <button
                 key={course.id}
                 className="space-y-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                // onClick={handleCourseNavigation}
+                onClick={() => handleCourseNavigation(course.id)}
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
