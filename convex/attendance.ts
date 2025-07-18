@@ -125,6 +125,11 @@ export const checkInToAttendance = StudentMutationMiddleware({
     }
 
     //TODO:  Check if the attendanceSession requires a code
+    if(attendanceSession.attendanceCode){
+      if(args.attendanceCode !== attendanceSession.attendanceCode){
+        throw new ConvexError("Attendance code is Needed")
+      } 
+    }
 
     // Check if already the student has already Checked in
     const existingRecord = await ctx.db

@@ -20,7 +20,6 @@ import JoinRequestsLinkingPage from './join-request-linking-page';
 // import LecturerAttendanceSection from './lecturer-attendance-section';
 import LecturerProfile from './lecturer-profile';
 import StudentDetailsPage from './student-details-page';
-import { CheckLocation } from '@/components/geoLocation/checkLocation';
 import LecturerClassListsPage from './lecturer-classlist-page';
 import EnhancedCourseCreation from './EnhancedCourseCreation';
 import ClassListManagement from './ClassListManagement';
@@ -231,10 +230,7 @@ const LecturerDashboard = ({ userData }: LecturerDashboardProps) => {
           <div className="flex items-center gap-2 px-4 py-2 border-b">
             <SidebarTrigger />
           </div>
-          <div className="p-6">
-            <CheckLocation />
-            {renderContent()}
-          </div>
+          <div className="p-6">{renderContent()}</div>
         </SidebarInset>
       </div>
     </SidebarProvider>
