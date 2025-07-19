@@ -293,7 +293,10 @@ export const CreateClassListSheet = ({
             placeholder="e.g., Electrical Engineering 2020 Batch"
             value={formData.classListName}
             onChange={(e) =>
-              setFormData((prev) => ({ ...prev, name: e.target.value }))
+              setFormData((prev) => ({
+                ...prev,
+                classListName: e.target.value,
+              }))
             }
           />
         </div>
