@@ -15,6 +15,7 @@ import type * as classLists from "../classLists.js";
 import type * as constants_attendance from "../constants/attendance.js";
 import type * as courses from "../courses.js";
 import type * as http from "../http.js";
+import type * as joinRequests from "../joinRequests.js";
 import type * as lib_helpers from "../lib/helpers.js";
 import type * as lib_zodHelpers from "../lib/zodHelpers.js";
 import type * as middlewares_authenticatedMiddleware from "../middlewares/authenticatedMiddleware.js";
@@ -53,6 +54,7 @@ declare const fullApi: ApiFromModules<{
   "constants/attendance": typeof constants_attendance;
   courses: typeof courses;
   http: typeof http;
+  joinRequests: typeof joinRequests;
   "lib/helpers": typeof lib_helpers;
   "lib/zodHelpers": typeof lib_zodHelpers;
   "middlewares/authenticatedMiddleware": typeof middlewares_authenticatedMiddleware;

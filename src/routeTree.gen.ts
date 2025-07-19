@@ -18,6 +18,7 @@ import { Route as OnboardOnboardRouteImport } from './routes/_onboard/onboard'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as DashboardRoleRouteRouteImport } from './routes/dashboard/$role/route'
 import { Route as DashboardRoleIndexRouteImport } from './routes/dashboard/$role/index'
+import { Route as DashboardRoleJoinRequestsRouteImport } from './routes/dashboard/$role/joinRequests'
 import { Route as DashboardRoleCoursesRouteImport } from './routes/dashboard/$role/courses'
 import { Route as DashboardRoleClassListsRouteImport } from './routes/dashboard/$role/classLists'
 import { Route as DashboardRoleCoursesCourseIdRouteImport } from './routes/dashboard/$role/_courses.$courseId'
@@ -66,6 +67,12 @@ const DashboardRoleIndexRoute = DashboardRoleIndexRouteImport.update({
   path: '/',
   getParentRoute: () => DashboardRoleRouteRoute,
 } as any)
+const DashboardRoleJoinRequestsRoute =
+  DashboardRoleJoinRequestsRouteImport.update({
+    id: '/joinRequests',
+    path: '/joinRequests',
+    getParentRoute: () => DashboardRoleRouteRoute,
+  } as any)
 const DashboardRoleCoursesRoute = DashboardRoleCoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
@@ -98,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/role': typeof OnboardRoleRoute
   '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
   '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
+  '/dashboard/$role/joinRequests': typeof DashboardRoleJoinRequestsRoute
   '/dashboard/$role/': typeof DashboardRoleIndexRoute
   '/dashboard/$role/$courseId': typeof DashboardRoleCoursesCourseIdRoute
   '/dashboard/$role/$lecturerCourseId/$attendanceSessionId': typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
@@ -110,6 +118,7 @@ export interface FileRoutesByTo {
   '/role': typeof OnboardRoleRoute
   '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
   '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
+  '/dashboard/$role/joinRequests': typeof DashboardRoleJoinRequestsRoute
   '/dashboard/$role': typeof DashboardRoleIndexRoute
   '/dashboard/$role/$courseId': typeof DashboardRoleCoursesCourseIdRoute
   '/dashboard/$role/$lecturerCourseId/$attendanceSessionId': typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
@@ -126,6 +135,7 @@ export interface FileRoutesById {
   '/_onboard/role': typeof OnboardRoleRoute
   '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
   '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
+  '/dashboard/$role/joinRequests': typeof DashboardRoleJoinRequestsRoute
   '/dashboard/$role/': typeof DashboardRoleIndexRoute
   '/dashboard/$role/_courses/$courseId': typeof DashboardRoleCoursesCourseIdRoute
   '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId': typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/role'
     | '/dashboard/$role/classLists'
     | '/dashboard/$role/courses'
+    | '/dashboard/$role/joinRequests'
     | '/dashboard/$role/'
     | '/dashboard/$role/$courseId'
     | '/dashboard/$role/$lecturerCourseId/$attendanceSessionId'
@@ -153,6 +164,7 @@ export interface FileRouteTypes {
     | '/role'
     | '/dashboard/$role/classLists'
     | '/dashboard/$role/courses'
+    | '/dashboard/$role/joinRequests'
     | '/dashboard/$role'
     | '/dashboard/$role/$courseId'
     | '/dashboard/$role/$lecturerCourseId/$attendanceSessionId'
@@ -168,6 +180,7 @@ export interface FileRouteTypes {
     | '/_onboard/role'
     | '/dashboard/$role/classLists'
     | '/dashboard/$role/courses'
+    | '/dashboard/$role/joinRequests'
     | '/dashboard/$role/'
     | '/dashboard/$role/_courses/$courseId'
     | '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId'
@@ -245,6 +258,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRoleIndexRouteImport
       parentRoute: typeof DashboardRoleRouteRoute
     }
+    '/dashboard/$role/joinRequests': {
+      id: '/dashboard/$role/joinRequests'
+      path: '/joinRequests'
+      fullPath: '/dashboard/$role/joinRequests'
+      preLoaderRoute: typeof DashboardRoleJoinRequestsRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
+    }
     '/dashboard/$role/courses': {
       id: '/dashboard/$role/courses'
       path: '/courses'
@@ -305,6 +325,7 @@ const OnboardRouteRouteWithChildren = OnboardRouteRoute._addFileChildren(
 interface DashboardRoleRouteRouteChildren {
   DashboardRoleClassListsRoute: typeof DashboardRoleClassListsRoute
   DashboardRoleCoursesRoute: typeof DashboardRoleCoursesRoute
+  DashboardRoleJoinRequestsRoute: typeof DashboardRoleJoinRequestsRoute
   DashboardRoleIndexRoute: typeof DashboardRoleIndexRoute
   DashboardRoleCoursesCourseIdRoute: typeof DashboardRoleCoursesCourseIdRoute
   DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute: typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
@@ -313,6 +334,7 @@ interface DashboardRoleRouteRouteChildren {
 const DashboardRoleRouteRouteChildren: DashboardRoleRouteRouteChildren = {
   DashboardRoleClassListsRoute: DashboardRoleClassListsRoute,
   DashboardRoleCoursesRoute: DashboardRoleCoursesRoute,
+  DashboardRoleJoinRequestsRoute: DashboardRoleJoinRequestsRoute,
   DashboardRoleIndexRoute: DashboardRoleIndexRoute,
   DashboardRoleCoursesCourseIdRoute: DashboardRoleCoursesCourseIdRoute,
   DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute:

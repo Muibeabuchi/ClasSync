@@ -20,7 +20,7 @@ export const navigationItems = [
     id: 'join-requests',
     label: 'Join Requests',
     icon: Users,
-    to: 'join-requests',
+    to: 'joinRequests',
     badge: '8',
   },
   {

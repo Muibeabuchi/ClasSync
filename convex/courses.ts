@@ -132,13 +132,24 @@ export const searchCourse = AuthenticatedUserQuery({
     // grab the lecturers Info
     const lecturer = await ctx.db.get(course.lecturerId);
     if (!lecturer) return null;
+
+    // check if the student has already been added to the course
+    const isMember = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_courseId_by_studentId', (q) =>
+        q.eq('courseId', course._id).eq('studentId', ctx.user._id),
+      )
+      .first();
+
     return {
       _id: course._id,
       courseName: course.courseName,
       courseCode: course.courseCode,
       lecturer: {
         name: lecturer.fullName,
+        id: lecturer._id,
       },
+      isMember: !!isMember,
     };
   },
 });

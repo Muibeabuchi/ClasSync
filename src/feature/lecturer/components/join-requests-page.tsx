@@ -18,12 +18,14 @@ import {
 } from '@/components/ui/select';
 import {
   ArrowLeft,
-  Clock,
+  // Clock,
   Check,
   X,
   User,
   Mail,
   GraduationCap,
+  Clock,
+  AlertTriangle,
 } from 'lucide-react';
 
 import {
@@ -35,15 +37,31 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import type { GetLecturerJoinRequestsReturnType } from 'convex/schema';
+import type { Doc } from 'convex/_generated/dataModel';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import StudentBindingModal from './StudentBindingModal';
 
 interface JoinRequestsPageProps {
-  onBack: () => void;
+  lecturerJoinRequests: GetLecturerJoinRequestsReturnType;
+  lecturerCourses: Doc<'courses'>[];
+  // onBack: () => void;
 }
 
-const JoinRequestsPage = ({ onBack }: JoinRequestsPageProps) => {
+const JoinRequestsPage = ({
+  lecturerJoinRequests,
+  lecturerCourses,
+}: JoinRequestsPageProps) => {
   const [selectedCourse, setSelectedCourse] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBindingModalOpen, setIsBindingModalOpen] = useState(false);
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  // const [requestStatuses, setRequestStatuses] = useState<
+  //   Record<string, 'pending' | 'approved' | 'rejected'>
+  // >({});
 
   // Mock data
   const mockCourses = [
@@ -53,86 +71,124 @@ const JoinRequestsPage = ({ onBack }: JoinRequestsPageProps) => {
     { id: 3, name: 'Machine Learning', code: 'CS451' },
   ];
 
-  const mockRequests = [
-    {
-      id: 1,
-      courseId: 1,
-      courseName: 'Advanced Database Systems',
-      courseCode: 'CS401',
-      student: {
-        name: 'Alice Johnson',
-        regNumber: 'CS/2024/015',
-        email: 'alice.johnson@university.edu',
-        profileImage: '',
-        faculty: 'Computer Science',
-        department: 'Software Engineering',
-        yearLevel: '4th Year',
-        gender: 'Female',
-      },
-      message:
-        'I am very interested in database systems and would like to join this course to enhance my backend development skills.',
-      timestamp: '2024-01-15T10:30:00Z',
-      status: 'pending',
-    },
-    {
-      id: 2,
-      courseId: 1,
-      courseName: 'Advanced Database Systems',
-      courseCode: 'CS401',
-      student: {
-        name: 'Bob Wilson',
-        regNumber: 'CS/2024/018',
-        email: 'bob.wilson@university.edu',
-        profileImage: '',
-        faculty: 'Computer Science',
-        department: 'Data Science',
-        yearLevel: '3rd Year',
-        gender: 'Male',
-      },
-      message:
-        'This course aligns perfectly with my career goals in data engineering. I have strong SQL fundamentals.',
-      timestamp: '2024-01-15T09:15:00Z',
-      status: 'pending',
-    },
-    {
-      id: 3,
-      courseId: 2,
-      courseName: 'Software Engineering',
-      courseCode: 'CS301',
-      student: {
-        name: 'Carol Martinez',
-        regNumber: 'CS/2024/022',
-        email: 'carol.martinez@university.edu',
-        profileImage: '',
-        faculty: 'Computer Science',
-        department: 'Software Engineering',
-        yearLevel: '3rd Year',
-        gender: 'Female',
-      },
-      message:
-        'I want to improve my software development methodologies and project management skills.',
-      timestamp: '2024-01-14T16:45:00Z',
-      status: 'pending',
-    },
-  ];
+  // const mockRequests = [
+  //   {
+  //     id: 1,
+  //     courseId: 1,
+  //     courseName: 'Advanced Database Systems',
+  //     courseCode: 'CS401',
+  //     student: {
+  //       name: 'Alice Johnson',
+  //       regNumber: 'CS/2024/015',
+  //       email: 'alice.johnson@university.edu',
+  //       profileImage: '',
+  //       faculty: 'Computer Science',
+  //       department: 'Software Engineering',
+  //       yearLevel: '4th Year',
+  //       gender: 'Female',
+  //     },
+  //     message:
+  //       'I am very interested in database systems and would like to join this course to enhance my backend development skills.',
+  //     timestamp: '2024-01-15T10:30:00Z',
+  //     status: 'pending',
+  //   },
+  //   {
+  //     id: 2,
+  //     courseId: 1,
+  //     courseName: 'Advanced Database Systems',
+  //     courseCode: 'CS401',
+  //     student: {
+  //       name: 'Bob Wilson',
+  //       regNumber: 'CS/2024/018',
+  //       email: 'bob.wilson@university.edu',
+  //       profileImage: '',
+  //       faculty: 'Computer Science',
+  //       department: 'Data Science',
+  //       yearLevel: '3rd Year',
+  //       gender: 'Male',
+  //     },
+  //     message:
+  //       'This course aligns perfectly with my career goals in data engineering. I have strong SQL fundamentals.',
+  //     timestamp: '2024-01-15T09:15:00Z',
+  //     status: 'pending',
+  //   },
+  //   {
+  //     id: 3,
+  //     courseId: 2,
+  //     courseName: 'Software Engineering',
+  //     courseCode: 'CS301',
+  //     student: {
+  //       name: 'Carol Martinez',
+  //       regNumber: 'CS/2024/022',
+  //       email: 'carol.martinez@university.edu',
+  //       profileImage: '',
+  //       faculty: 'Computer Science',
+  //       department: 'Software Engineering',
+  //       yearLevel: '3rd Year',
+  //       gender: 'Female',
+  //     },
+  //     message:
+  //       'I want to improve my software development methodologies and project management skills.',
+  //     timestamp: '2024-01-14T16:45:00Z',
+  //     status: 'pending',
+  //   },
+  // ];
 
-  const filteredRequests =
-    selectedCourse === 'all'
-      ? mockRequests
-      : mockRequests.filter(
-          (req) => req.courseId.toString() === selectedCourse,
-        );
+  // const filteredRequests =
+  //   selectedCourse === 'all'
+  //     ? mockRequests
+  //     : mockRequests.filter(
+  //         (req) => req.courseId.toString() === selectedCourse,
+  //       );
 
-  const handleApprove = () => {
-    toast.success(
-      'Request Approved ,Student has been approved to join the course',
-    );
+  // const handleAccept = (request: any) => {
+  //   setSelectedRequest(request);
+  //   setIsBindingModalOpen(true);
+  //   setIsModalOpen(false);
+  // };
+
+  const handleReject = (request: any) => {
+    setSelectedRequest(request);
+    setIsRejectModalOpen(true);
     setIsModalOpen(false);
   };
 
-  const handleReject = () => {
-    toast.error('Request Rejected Join request has been rejected');
-    setIsModalOpen(false);
+  // const handleBindAndApprove = (
+  //   requestId: string,
+  //   selectedStudentId: string,
+  //   classListId: string,
+  // ) => {
+  //   setRequestStatuses((prev) => ({ ...prev, [requestId]: 'approved' }));
+
+  //   toast({
+  //     title: 'Student Successfully Matched',
+  //     description:
+  //       'Student has been bound to the class list and approved for the course.',
+  //   });
+
+  //   setIsBindingModalOpen(false);
+  //   setSelectedRequest(null);
+  // };
+
+  const handleConfirmReject = () => {
+    if (selectedRequest) {
+      setRequestStatuses((prev) => ({
+        ...prev,
+        [selectedRequest.id]: 'rejected',
+      }));
+
+      toast({
+        title: 'Request Rejected',
+        description: rejectReason
+          ? `Rejected: ${rejectReason}`
+          : 'Join request has been rejected',
+        variant: 'destructive',
+      });
+    }
+
+    setIsRejectModalOpen(false);
+    setSelectedRequest(null);
+    setRejectReason('');
   };
 
   const getTimeAgo = (timestamp: string) => {
@@ -158,7 +214,7 @@ const JoinRequestsPage = ({ onBack }: JoinRequestsPageProps) => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={onBack}
+            // onClick={onBack}
             className="hover:scale-110 transition-transform"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -171,10 +227,9 @@ const JoinRequestsPage = ({ onBack }: JoinRequestsPageProps) => {
           </div>
         </div>
         <Badge variant="secondary" className="px-3 py-1">
-          {filteredRequests.length} pending
+          {lecturerJoinRequests.length} pending
         </Badge>
       </div>
-
       {/* Course Filter */}
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
@@ -202,12 +257,11 @@ const JoinRequestsPage = ({ onBack }: JoinRequestsPageProps) => {
           </Select>
         </CardContent>
       </Card>
-
       {/* Requests Grid */}
       <div className="grid gap-4">
-        {filteredRequests.map((request) => (
+        {lecturerJoinRequests.map((request) => (
           <Card
-            key={request.id}
+            key={request._id}
             className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-gradient-to-r from-background to-muted/30"
             onClick={() => openRequestModal(request)}
           >
@@ -215,9 +269,9 @@ const JoinRequestsPage = ({ onBack }: JoinRequestsPageProps) => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <Avatar className="h-10 w-10 ring-2 ring-muted">
-                    <AvatarImage src={request.student.profileImage} />
+                    {/* <AvatarImage src={request.student.profileImage} /> */}
                     <AvatarFallback className="text-xs font-medium">
-                      {request.student.name
+                      {request.student.fullName
                         .split(' ')
                         .map((n) => n[0])
                         .join('')}
@@ -226,18 +280,20 @@ const JoinRequestsPage = ({ onBack }: JoinRequestsPageProps) => {
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       <h3 className="font-medium text-sm">
-                        {request.student.name}
+                        {request.student.fullName}
                       </h3>
                       <Badge variant="outline" className="text-xs px-2 py-0">
-                        {request.student.regNumber}
+                        {request.student.registrationNumber}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{request.courseName}</span>
+                      <span>{request.course.courseName}</span>
                       <span>•</span>
                       <span className="flex items-center gap-1">
                         <Clock className="h-3 w-3" />
-                        {getTimeAgo(request.timestamp)}
+                        {getTimeAgo(
+                          new Date(request._creationTime).toLocaleString(),
+                        )}
                       </span>
                     </div>
                   </div>
@@ -257,7 +313,7 @@ const JoinRequestsPage = ({ onBack }: JoinRequestsPageProps) => {
           </Card>
         ))}
       </div>
-
+      {/* <StudentBindingModal open={isBindingModalOpen} /> */}
       {/* Request Details Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-md">
@@ -361,6 +417,46 @@ const JoinRequestsPage = ({ onBack }: JoinRequestsPageProps) => {
             >
               <Check className="h-4 w-4 mr-1" />
               Approve
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              Reject Join Request
+            </DialogTitle>
+            <DialogDescription>
+              {`Are you sure you want to reject {selectedRequest?.student.name}'s`}
+              request to join {selectedRequest?.courseName}?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium">Reason (Optional)</Label>
+              <Textarea
+                placeholder="e.g., Invalid registration number, course prerequisites not met..."
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                className="mt-1"
+                rows={3}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setIsRejectModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmReject}>
+              <X className="h-4 w-4 mr-1" />
+              Reject Request
             </Button>
           </DialogFooter>
         </DialogContent>
