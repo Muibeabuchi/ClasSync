@@ -6,7 +6,7 @@ import { Outlet, createRootRouteWithContext } from '@tanstack/react-router';
 import { NotFound } from '@/components/NotFound';
 import type { QueryClient } from '@tanstack/react-query';
 import { ConvexQueryClient } from '@convex-dev/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools/production';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { DefaultCatchBoundary } from '@/components/DefaultCatchBoundary';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 
