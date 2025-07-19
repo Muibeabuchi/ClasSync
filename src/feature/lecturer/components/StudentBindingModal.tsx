@@ -1,18 +1,22 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+// import { Input } from '@/components/ui/input';
+import {
+  Avatar,
+  AvatarFallback,
+  // AvatarImage
+} from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import {
-  Search,
+  // Search,
   Users,
   AlertCircle,
-  User,
-  Mail,
+  // User,
+  // Mail,
   GraduationCap,
 } from 'lucide-react';
 // import { useToast } from "@/hooks/use-toast";
@@ -24,80 +28,89 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+// import type { Doc } from 'convex/_generated/dataModel';
+import type {
+  GetLecturerClassListWithStudentsReturnType,
+  GetLecturerJoinRequestsReturnType,
+} from 'convex/schema';
 
-interface Student {
-  id: string;
-  name: string;
-  regNumber: string;
-  gender: 'Male' | 'Female';
-  isBound?: boolean;
-}
+// interface Student {
+//   id: string;
+//   name: string;
+//   regNumber: string;
+//   gender: 'Male' | 'Female';
+//   isBound?: boolean;
+// }
 
-interface ClassList {
-  id: string;
-  name: string;
-  batchYear: string;
-  department: string;
-  faculty: string;
-  students: Student[];
-}
+// interface ClassList {
+//   id: string;
+//   name: string;
+//   batchYear: string;
+//   department: string;
+//   faculty: string;
+//   students: Student[];
+// }
 
-interface JoinRequest {
-  id: string;
-  student: {
-    name: string;
-    regNumber: string;
-    email: string;
-    profileImage?: string;
-    department: string;
-    yearLevel: string;
-    batchYear?: string;
-  };
-  courseId: string;
-  courseName: string;
-}
+// interface JoinRequest {
+//   id: string;
+//   student: {
+//     name: string;
+//     regNumber: string;
+//     email: string;
+//     profileImage?: string;
+//     department: string;
+//     yearLevel: string;
+//     batchYear?: string;
+//   };
+//   courseId: string;
+//   courseName: string;
+// }
 
 interface StudentBindingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  request: JoinRequest | null;
-  classLists: ClassList[];
-  onBindAndApprove: (
-    requestId: string,
-    selectedStudentId: string,
-    classListId: string,
-  ) => void;
+  request: GetLecturerJoinRequestsReturnType[number] | null;
+  classListsWithStudents:
+    | GetLecturerClassListWithStudentsReturnType
+    | undefined
+    | null;
+  onBindAndApprove: (value: {
+    // requestId: string;
+    selectedStudentId: string;
+    classListId: string;
+  }) => void;
 }
 
 const StudentBindingModal = ({
   open,
   onOpenChange,
-  request,
-  classLists,
   onBindAndApprove,
+  request,
+  classListsWithStudents,
+  // classLists,
 }: StudentBindingModalProps) => {
-  const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
+  // const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [selectedClassListId, setSelectedClassListId] = useState<string>('');
 
-  const filteredClassLists = classLists
-    .map((classList) => ({
-      ...classList,
-      students: classList.students.filter((student) => {
-        if (student.isBound) return false; // Hide already bound students
+  // const filteredClassLists = classLists
+  //   .map((classList) => ({
+  //     ...classList,
+  //     students: classList.students.filter((student) => {
+  //       if (student.isBound) return false; // Hide already bound students
 
-        const searchTerm = searchTerms[classList.id]?.toLowerCase() || '';
-        const matchesSearch =
-          student.name.toLowerCase().includes(searchTerm) ||
-          student.regNumber.toLowerCase().includes(searchTerm);
-        return matchesSearch;
-      }),
-    }))
-    .filter((classList) => classList.students.length > 0);
+  //       const searchTerm = searchTerms[classList.id]?.toLowerCase() || '';
+  //       const matchesSearch =
+  //         student.name.toLowerCase().includes(searchTerm) ||
+  //         student.regNumber.toLowerCase().includes(searchTerm);
+  //       return matchesSearch;
+  //     }),
+  //   }))
+  //   .filter((classList) => classList.students.length > 0);
 
-  const handleSearchChange = (classListId: string, value: string) => {
-    setSearchTerms((prev) => ({ ...prev, [classListId]: value }));
-  };
+  // const handleSearchChange = (classListId: string, value: string) => {
+  //   setSearchTerms((prev) => ({ ...prev, [classListId]: value }));
+  // };
 
   const handleStudentSelect = (studentId: string, classListId: string) => {
     setSelectedStudentId(studentId);
@@ -105,7 +118,7 @@ const StudentBindingModal = ({
   };
 
   const handleBindAndApprove = () => {
-    if (!selectedStudentId || !selectedClassListId || !request) {
+    if (!selectedStudentId || !selectedClassListId || !classListsWithStudents) {
       //   toast({
       //     title: "Selection Required",
       //     description: "Please select a student to bind before approving.",
@@ -114,18 +127,22 @@ const StudentBindingModal = ({
       return;
     }
 
-    onBindAndApprove(request.id, selectedStudentId, selectedClassListId);
+    onBindAndApprove({
+      // requestId: request.id,
+      selectedStudentId,
+      classListId: selectedClassListId,
+    });
 
     // Reset selections
     setSelectedStudentId('');
     setSelectedClassListId('');
-    setSearchTerms({});
+    // setSearchTerms({});
   };
 
   const handleCancel = () => {
     setSelectedStudentId('');
     setSelectedClassListId('');
-    setSearchTerms({});
+    // setSearchTerms({});
     onOpenChange(false);
   };
 
@@ -140,7 +157,7 @@ const StudentBindingModal = ({
             Match Student to ClassList
           </DialogTitle>
           <DialogDescription>
-            Bind {request.student.name} to an existing student entry in your
+            Bind {request.student.fullName} to an existing student entry in your
             class lists
           </DialogDescription>
         </DialogHeader>
@@ -156,9 +173,9 @@ const StudentBindingModal = ({
             <CardContent>
               <div className="flex items-start space-x-4">
                 <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                  <AvatarImage src={request.student.profileImage} />
+                  {/* <AvatarImage src={request.student.profileImage} /> */}
                   <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                    {request.student.name
+                    {request.student.fullName
                       .split(' ')
                       .map((n) => n[0])
                       .join('')}
@@ -167,11 +184,11 @@ const StudentBindingModal = ({
                 <div className="flex-1 space-y-2">
                   <div>
                     <h4 className="font-semibold text-foreground">
-                      {request.student.name}
+                      {request.student.fullName}
                     </h4>
                     <p className="text-sm text-muted-foreground flex items-center gap-1">
                       <GraduationCap className="h-3 w-3" />
-                      {request.student.regNumber}
+                      {request.student.registrationNumber}
                     </p>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
@@ -194,7 +211,7 @@ const StudentBindingModal = ({
           <Separator />
 
           {/* ClassList Selection */}
-          {filteredClassLists.length === 0 ? (
+          {classListsWithStudents?.length === 0 ? (
             <Card className="border-destructive/20 bg-destructive/5">
               <CardContent className="pt-6">
                 <div className="text-center space-y-2">
@@ -221,21 +238,21 @@ const StudentBindingModal = ({
                   handleStudentSelect(studentId, classListId);
                 }}
               >
-                {filteredClassLists.map((classList) => (
-                  <Card key={classList.id} className="border-border/50">
+                {classListsWithStudents?.map((classList) => (
+                  <Card key={classList._id} className="border-border/50">
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-base flex items-center gap-2">
-                          📚 {classList.name}
+                          📚 {classList.classListName}
                           <Badge variant="outline" className="text-xs">
-                            {classList.batchYear}
+                            {classList.yearGroup}
                           </Badge>
                         </CardTitle>
-                        <Badge variant="secondary" className="text-xs">
-                          {classList.students.length} available
-                        </Badge>
+                        {/* <Badge variant="secondary" className="text-xs">
+                          {classList.} available
+                        </Badge> */}
                       </div>
-                      <div className="relative">
+                      {/* <div className="relative">
                         <Search className="absolute left-3 top-1/2 h-4 w-4 text-muted-foreground transform -translate-y-1/2" />
                         <Input
                           placeholder="Search by name or reg number..."
@@ -245,41 +262,41 @@ const StudentBindingModal = ({
                           }
                           className="pl-10"
                         />
-                      </div>
+                      </div> */}
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      {classList.students.map((student) => (
+                      {classList.classListStudents.map((student) => (
                         <div
-                          key={student.id}
+                          key={student._id}
                           className="flex items-center space-x-3 p-3 rounded-lg border border-border/30 hover:bg-accent/50 transition-colors"
                         >
                           <RadioGroupItem
-                            value={`${classList.id}-${student.id}`}
-                            id={`${classList.id}-${student.id}`}
+                            value={`${classList._id}-${student._id}`}
+                            id={`${classList._id}-${student._id}`}
                           />
                           <Avatar className="h-8 w-8">
                             <AvatarFallback className="text-xs">
-                              {student.name
+                              {student.student.studentName
                                 .split(' ')
                                 .map((n) => n[0])
                                 .join('')}
                             </AvatarFallback>
                           </Avatar>
                           <Label
-                            htmlFor={`${classList.id}-${student.id}`}
+                            htmlFor={`${classList._id}-${student._id}`}
                             className="flex-1 cursor-pointer"
                           >
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="font-medium text-sm">
-                                  {student.name}
+                                  {student.student.studentName}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  {student.regNumber}
+                                  {student.student.studentRegistrationNumber}
                                 </p>
                               </div>
                               <Badge variant="outline" className="text-xs">
-                                {student.gender}
+                                {student.student.studentGender}
                               </Badge>
                             </div>
                           </Label>
@@ -299,7 +316,9 @@ const StudentBindingModal = ({
           </Button>
           <Button
             onClick={handleBindAndApprove}
-            disabled={!selectedStudentId || filteredClassLists.length === 0}
+            disabled={
+              !selectedStudentId || classListsWithStudents?.length === 0
+            }
             className="bg-primary hover:bg-primary/90"
           >
             Bind & Approve

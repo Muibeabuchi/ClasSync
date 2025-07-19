@@ -198,6 +198,36 @@ export const getMyClassLists = lecturerQuery({
   },
 });
 
+export const getClassListsWithStudents = lecturerQuery({
+  args: {},
+  async handler(ctx) {
+    const lecturerId = ctx.user._id;
+
+    const classLists = await ctx.db
+      .query('classLists')
+      .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId))
+      .order('desc')
+      .collect();
+
+    const listWithStudents = await Promise.all(
+      classLists.map(async (list) => {
+        // grab all the classListStudents for each classList
+        const classListStudents = await ctx.db
+          .query('classListStudents')
+          .withIndex('by_classListId', (q) => q.eq('classListId', list._id))
+          .collect();
+
+        return {
+          ...list,
+          classListStudents,
+        };
+      }),
+    );
+
+    return listWithStudents;
+  },
+});
+
 // Get a specific ClassList
 export const getClassList = classListQuery({
   args: {},

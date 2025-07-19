@@ -12,3 +12,10 @@ export const useRequestToJoinCourseClassList = () =>
   useMutation({
     mutationFn: useConvexMutation(api.joinRequests.createJoinRequest),
   });
+
+export const useAcceptJoinRequest = () =>
+  useMutation({
+    mutationFn: useConvexMutation(
+      api.joinRequests.linkStudentToAttendanceEntry,
+    ),
+  });

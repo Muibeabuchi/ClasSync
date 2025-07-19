@@ -73,6 +73,9 @@ export type GetLecturerClassListsReturnType = FunctionReturnType<
 export type GetLecturerJoinRequestsReturnType = FunctionReturnType<
   typeof api.joinRequests.getAllJoinRequestsForLecturer
 >;
+export type GetLecturerClassListWithStudentsReturnType = FunctionReturnType<
+  typeof api.classLists.getClassListsWithStudents
+>;
 // const lecturerCurrentPlanSchema = v.optional(
 //   v.union(
 //     v.object({

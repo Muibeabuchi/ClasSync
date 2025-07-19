@@ -147,7 +147,7 @@ export const linkStudentToAttendanceEntry = courseMutation({
     if (!request) {
       throw new ConvexError('Join request not found');
     }
-    if (request.lecturerId === lecturerId)
+    if (request.lecturerId !== lecturerId)
       throw new ConvexError('Unauthorized access');
 
     // Update join request

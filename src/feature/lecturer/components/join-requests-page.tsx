@@ -38,30 +38,39 @@ import {
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import type { GetLecturerJoinRequestsReturnType } from 'convex/schema';
-import type { Doc } from 'convex/_generated/dataModel';
+import type { Doc, Id } from 'convex/_generated/dataModel';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import StudentBindingModal from './StudentBindingModal';
+import { useLecturerClassListWithStudentsQuery } from '@/feature/classList/api/get-classList-with-Students';
+import { useAcceptJoinRequest } from '@/feature/joinRequest/api';
 
 interface JoinRequestsPageProps {
   lecturerJoinRequests: GetLecturerJoinRequestsReturnType;
-  lecturerCourses: Doc<'courses'>[];
+  // lecturerCourses: Doc<'courses'>[];
   // onBack: () => void;
 }
 
 const JoinRequestsPage = ({
   lecturerJoinRequests,
-  lecturerCourses,
+  // lecturerCourses,
 }: JoinRequestsPageProps) => {
   const [selectedCourse, setSelectedCourse] = useState('all');
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<
+    GetLecturerJoinRequestsReturnType[number] | null
+  >(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isBindingModalOpen, setIsBindingModalOpen] = useState(false);
+  const [isBindingModalOpen, setIsBindingModalOpen] = useState(true);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   // const [requestStatuses, setRequestStatuses] = useState<
   //   Record<string, 'pending' | 'approved' | 'rejected'>
   // >({});
+
+  const { data: classListWithStudents } =
+    useLecturerClassListWithStudentsQuery();
+
+  const { mutateAsync: acceptJoinRequest } = useAcceptJoinRequest();
 
   // Mock data
   const mockCourses = [
@@ -71,125 +80,64 @@ const JoinRequestsPage = ({
     { id: 3, name: 'Machine Learning', code: 'CS451' },
   ];
 
-  // const mockRequests = [
-  //   {
-  //     id: 1,
-  //     courseId: 1,
-  //     courseName: 'Advanced Database Systems',
-  //     courseCode: 'CS401',
-  //     student: {
-  //       name: 'Alice Johnson',
-  //       regNumber: 'CS/2024/015',
-  //       email: 'alice.johnson@university.edu',
-  //       profileImage: '',
-  //       faculty: 'Computer Science',
-  //       department: 'Software Engineering',
-  //       yearLevel: '4th Year',
-  //       gender: 'Female',
-  //     },
-  //     message:
-  //       'I am very interested in database systems and would like to join this course to enhance my backend development skills.',
-  //     timestamp: '2024-01-15T10:30:00Z',
-  //     status: 'pending',
-  //   },
-  //   {
-  //     id: 2,
-  //     courseId: 1,
-  //     courseName: 'Advanced Database Systems',
-  //     courseCode: 'CS401',
-  //     student: {
-  //       name: 'Bob Wilson',
-  //       regNumber: 'CS/2024/018',
-  //       email: 'bob.wilson@university.edu',
-  //       profileImage: '',
-  //       faculty: 'Computer Science',
-  //       department: 'Data Science',
-  //       yearLevel: '3rd Year',
-  //       gender: 'Male',
-  //     },
-  //     message:
-  //       'This course aligns perfectly with my career goals in data engineering. I have strong SQL fundamentals.',
-  //     timestamp: '2024-01-15T09:15:00Z',
-  //     status: 'pending',
-  //   },
-  //   {
-  //     id: 3,
-  //     courseId: 2,
-  //     courseName: 'Software Engineering',
-  //     courseCode: 'CS301',
-  //     student: {
-  //       name: 'Carol Martinez',
-  //       regNumber: 'CS/2024/022',
-  //       email: 'carol.martinez@university.edu',
-  //       profileImage: '',
-  //       faculty: 'Computer Science',
-  //       department: 'Software Engineering',
-  //       yearLevel: '3rd Year',
-  //       gender: 'Female',
-  //     },
-  //     message:
-  //       'I want to improve my software development methodologies and project management skills.',
-  //     timestamp: '2024-01-14T16:45:00Z',
-  //     status: 'pending',
-  //   },
-  // ];
-
-  // const filteredRequests =
-  //   selectedCourse === 'all'
-  //     ? mockRequests
-  //     : mockRequests.filter(
-  //         (req) => req.courseId.toString() === selectedCourse,
-  //       );
-
-  // const handleAccept = (request: any) => {
-  //   setSelectedRequest(request);
-  //   setIsBindingModalOpen(true);
-  //   setIsModalOpen(false);
-  // };
-
   const handleReject = (request: any) => {
     setSelectedRequest(request);
     setIsRejectModalOpen(true);
     setIsModalOpen(false);
   };
 
-  // const handleBindAndApprove = (
-  //   requestId: string,
-  //   selectedStudentId: string,
-  //   classListId: string,
-  // ) => {
-  //   setRequestStatuses((prev) => ({ ...prev, [requestId]: 'approved' }));
+  const handleBindAndApprove = async ({
+    // requestId,
+    selectedStudentId,
+    classListId,
+  }: {
+    // requestId: string;
+    selectedStudentId: Id<'classListStudents'>;
+    classListId: Id<'classLists'>;
+  }) => {
+    if (!selectedRequest) return;
+    console.log('studentId', { selectedStudentId });
+    console.log('classListId', { classListId });
+    // use the selectedRequest in useState
 
-  //   toast({
-  //     title: 'Student Successfully Matched',
-  //     description:
-  //       'Student has been bound to the class list and approved for the course.',
-  //   });
+    // ? selectedRequest
+    await acceptJoinRequest({
+      classListId,
+      classListStudentId: selectedStudentId,
+      courseId: selectedRequest.courseId,
+      requestId: selectedRequest._id,
+      studentId: selectedRequest.studentId,
+    });
 
-  //   setIsBindingModalOpen(false);
-  //   setSelectedRequest(null);
-  // };
+    toast.success('Student Successfully Matched', {
+      description:
+        'Student has been bound to the class list and approved for the course.',
+    });
 
-  const handleConfirmReject = () => {
-    if (selectedRequest) {
-      setRequestStatuses((prev) => ({
-        ...prev,
-        [selectedRequest.id]: 'rejected',
-      }));
-
-      toast({
-        title: 'Request Rejected',
-        description: rejectReason
-          ? `Rejected: ${rejectReason}`
-          : 'Join request has been rejected',
-        variant: 'destructive',
-      });
-    }
-
-    setIsRejectModalOpen(false);
+    setIsBindingModalOpen(false);
     setSelectedRequest(null);
-    setRejectReason('');
   };
+
+  // const handleConfirmReject = () => {
+  //   if (selectedRequest) {
+  //     setRequestStatuses((prev) => ({
+  //       ...prev,
+  //       [selectedRequest.id]: 'rejected',
+  //     }));
+
+  //     toast({
+  //       title: 'Request Rejected',
+  //       description: rejectReason
+  //         ? `Rejected: ${rejectReason}`
+  //         : 'Join request has been rejected',
+  //       variant: 'destructive',
+  //     });
+  //   }
+
+  //   setIsRejectModalOpen(false);
+  //   setSelectedRequest(null);
+  //   setRejectReason('');
+  // };
 
   const getTimeAgo = (timestamp: string) => {
     const now = new Date();
@@ -263,7 +211,10 @@ const JoinRequestsPage = ({
           <Card
             key={request._id}
             className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-gradient-to-r from-background to-muted/30"
-            onClick={() => openRequestModal(request)}
+            onClick={() => {
+              openRequestModal(request);
+              setIsBindingModalOpen(true);
+            }}
           >
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
@@ -313,156 +264,164 @@ const JoinRequestsPage = ({
           </Card>
         ))}
       </div>
-      {/* <StudentBindingModal open={isBindingModalOpen} /> */}
+
+      <StudentBindingModal
+        open={isBindingModalOpen}
+        classListsWithStudents={classListWithStudents}
+        onBindAndApprove={handleBindAndApprove}
+        onOpenChange={setIsBindingModalOpen}
+        request={selectedRequest}
+      />
       {/* Request Details Modal */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Join Request Details
-            </DialogTitle>
-            <DialogDescription>
-              {`Review the student's request to join ${selectedRequest?.courseName}`}
-            </DialogDescription>
-          </DialogHeader>
-
-          {selectedRequest && (
-            <div className="space-y-4">
-              {/* Student Info */}
-              <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src={selectedRequest.student.profileImage} />
-                  <AvatarFallback>
-                    {selectedRequest.student.name
-                      .split(' ')
-                      // @ts-expect-error: temporary data
-                      .map((n) => n[0])
-                      .join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h4 className="font-medium">
-                    {selectedRequest.student.name}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedRequest.student.regNumber}
-                  </p>
-                </div>
-              </div>
-
-              {/* Student Details */}
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <p className="text-muted-foreground text-xs">Department</p>
-                  <p className="font-medium">
-                    {selectedRequest.student.department}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground text-xs">Year Level</p>
-                  <p className="font-medium">
-                    {selectedRequest.student.yearLevel}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-muted-foreground text-xs flex items-center gap-1 mb-1">
-                  <Mail className="h-3 w-3" />
-                  Email
-                </p>
-                <p className="text-sm">{selectedRequest.student.email}</p>
-              </div>
-
-              {/* Request Message */}
-              <div>
-                <p className="text-muted-foreground text-xs mb-2">Message</p>
-                <div className="p-3 bg-muted/30 rounded-lg">
-                  <p className="text-sm">{selectedRequest.message}</p>
-                </div>
-              </div>
-
-              {/* Course Info */}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                <GraduationCap className="h-3 w-3" />
-                <span>Requesting to join {selectedRequest.courseCode}</span>
-                <span>•</span>
-                <span>{getTimeAgo(selectedRequest.timestamp)}</span>
-              </div>
-            </div>
-          )}
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsModalOpen(false)}
-              className="flex-1"
-            >
-              Close
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => selectedRequest && handleReject()}
-              className="flex-1"
-              size="sm"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Reject
-            </Button>
-            <Button
-              onClick={() => selectedRequest && handleApprove()}
-              className="flex-1"
-              size="sm"
-            >
-              <Check className="h-4 w-4 mr-1" />
-              Approve
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-              Reject Join Request
-            </DialogTitle>
-            <DialogDescription>
-              {`Are you sure you want to reject {selectedRequest?.student.name}'s`}
-              request to join {selectedRequest?.courseName}?
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium">Reason (Optional)</Label>
-              <Textarea
-                placeholder="e.g., Invalid registration number, course prerequisites not met..."
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                className="mt-1"
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsRejectModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleConfirmReject}>
-              <X className="h-4 w-4 mr-1" />
-              Reject Request
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
 
 export default JoinRequestsPage;
+
+// <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+//       <DialogContent className="max-w-md">
+//         <DialogHeader>
+//           <DialogTitle className="flex items-center gap-2">
+//             <User className="h-5 w-5" />
+//             Join Request Details
+//           </DialogTitle>
+//           <DialogDescription>
+//             {`Review the student's request to join ${selectedRequest?.courseName}`}
+//           </DialogDescription>
+//         </DialogHeader>
+
+//         {selectedRequest && (
+//           <div className="space-y-4">
+//             {/* Student Info */}
+//             <div className="flex items-center space-x-3 p-3 bg-muted/50 rounded-lg">
+//               <Avatar className="h-12 w-12">
+//                 <AvatarImage src={selectedRequest.student.profileImage} />
+//                 <AvatarFallback>
+//                   {selectedRequest.student.name
+//                     .split(' ')
+//                     // @ts-expect-error: temporary data
+//                     .map((n) => n[0])
+//                     .join('')}
+//                 </AvatarFallback>
+//               </Avatar>
+//               <div>
+//                 <h4 className="font-medium">
+//                   {selectedRequest.student.name}
+//                 </h4>
+//                 <p className="text-sm text-muted-foreground">
+//                   {selectedRequest.student.regNumber}
+//                 </p>
+//               </div>
+//             </div>
+
+//             {/* Student Details */}
+//             <div className="grid grid-cols-2 gap-3 text-sm">
+//               <div>
+//                 <p className="text-muted-foreground text-xs">Department</p>
+//                 <p className="font-medium">
+//                   {selectedRequest.student.department}
+//                 </p>
+//               </div>
+//               <div>
+//                 <p className="text-muted-foreground text-xs">Year Level</p>
+//                 <p className="font-medium">
+//                   {selectedRequest.student.yearLevel}
+//                 </p>
+//               </div>
+//             </div>
+
+//             <div>
+//               <p className="text-muted-foreground text-xs flex items-center gap-1 mb-1">
+//                 <Mail className="h-3 w-3" />
+//                 Email
+//               </p>
+//               <p className="text-sm">{selectedRequest.student.email}</p>
+//             </div>
+
+//             {/* Request Message */}
+//             <div>
+//               <p className="text-muted-foreground text-xs mb-2">Message</p>
+//               <div className="p-3 bg-muted/30 rounded-lg">
+//                 <p className="text-sm">{selectedRequest.message}</p>
+//               </div>
+//             </div>
+
+//             {/* Course Info */}
+//             <div className="flex items-center gap-2 text-xs text-muted-foreground">
+//               <GraduationCap className="h-3 w-3" />
+//               <span>Requesting to join {selectedRequest.courseCode}</span>
+//               <span>•</span>
+//               <span>{getTimeAgo(selectedRequest.timestamp)}</span>
+//             </div>
+//           </div>
+//         )}
+
+//         <DialogFooter className="gap-2">
+//           <Button
+//             variant="outline"
+//             onClick={() => setIsModalOpen(false)}
+//             className="flex-1"
+//           >
+//             Close
+//           </Button>
+//           <Button
+//             variant="destructive"
+//             onClick={() => selectedRequest && handleReject()}
+//             className="flex-1"
+//             size="sm"
+//           >
+//             <X className="h-4 w-4 mr-1" />
+//             Reject
+//           </Button>
+//           <Button
+//             onClick={() => selectedRequest && handleApprove()}
+//             className="flex-1"
+//             size="sm"
+//           >
+//             <Check className="h-4 w-4 mr-1" />
+//             Approve
+//           </Button>
+//         </DialogFooter>
+//       </DialogContent>
+//     </Dialog>
+//     <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
+//       <DialogContent className="max-w-md">
+//         <DialogHeader>
+//           <DialogTitle className="flex items-center gap-2">
+//             <AlertTriangle className="h-5 w-5 text-destructive" />
+//             Reject Join Request
+//           </DialogTitle>
+//           <DialogDescription>
+//             {`Are you sure you want to reject {selectedRequest?.student.name}'s`}
+//             request to join {selectedRequest?.courseName}?
+//           </DialogDescription>
+//         </DialogHeader>
+
+//         <div className="space-y-4">
+//           <div>
+//             <Label className="text-sm font-medium">Reason (Optional)</Label>
+//             <Textarea
+//               placeholder="e.g., Invalid registration number, course prerequisites not met..."
+//               value={rejectReason}
+//               onChange={(e) => setRejectReason(e.target.value)}
+//               className="mt-1"
+//               rows={3}
+//             />
+//           </div>
+//         </div>
+
+//         <DialogFooter className="gap-2">
+//           <Button
+//             variant="outline"
+//             onClick={() => setIsRejectModalOpen(false)}
+//           >
+//             Cancel
+//           </Button>
+//           <Button variant="destructive" onClick={handleConfirmReject}>
+//             <X className="h-4 w-4 mr-1" />
+//             Reject Request
+//           </Button>
+//         </DialogFooter>
+//       </DialogContent>
+//     </Dialog>

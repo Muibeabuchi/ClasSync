@@ -83,19 +83,20 @@ export const getLecturerCourses = lecturerQuery({
     const lecturerId = ctx.user._id;
     console.log({ lecturerId });
 
-    if (args.status) {
-      return await filter(
-        ctx.db
-          .query('courses')
-          .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId)),
-        (c) => c.status === args.status,
-      ).collect();
-    }
+    // if (args.status) {
+    //   return await filter(
+    //     ctx.db
+    //       .query('courses')
+    //       .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId)),
+    //     (c) => c.status === args.status,
+    //   ).collect();
+    // }
 
-    return await ctx.db
+    const courses = await ctx.db
       .query('courses')
       .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId))
       .collect();
+
     // return await  ctx.db
     //     .query('courses')
     //     .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId)).collect()),
