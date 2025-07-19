@@ -19,6 +19,7 @@ import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as DashboardRoleRouteRouteImport } from './routes/dashboard/$role/route'
 import { Route as DashboardRoleIndexRouteImport } from './routes/dashboard/$role/index'
 import { Route as DashboardRoleCoursesRouteImport } from './routes/dashboard/$role/courses'
+import { Route as DashboardRoleClassListsRouteImport } from './routes/dashboard/$role/classLists'
 import { Route as DashboardRoleCoursesCourseIdRouteImport } from './routes/dashboard/$role/_courses.$courseId'
 import { Route as DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRouteImport } from './routes/dashboard/$role/_courses.$lecturerCourseId.$attendanceSessionId'
 
@@ -70,6 +71,11 @@ const DashboardRoleCoursesRoute = DashboardRoleCoursesRouteImport.update({
   path: '/courses',
   getParentRoute: () => DashboardRoleRouteRoute,
 } as any)
+const DashboardRoleClassListsRoute = DashboardRoleClassListsRouteImport.update({
+  id: '/classLists',
+  path: '/classLists',
+  getParentRoute: () => DashboardRoleRouteRoute,
+} as any)
 const DashboardRoleCoursesCourseIdRoute =
   DashboardRoleCoursesCourseIdRouteImport.update({
     id: '/_courses/$courseId',
@@ -90,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof AuthLoginRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
+  '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
   '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
   '/dashboard/$role/': typeof DashboardRoleIndexRoute
   '/dashboard/$role/$courseId': typeof DashboardRoleCoursesCourseIdRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/login': typeof AuthLoginRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
+  '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
   '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
   '/dashboard/$role': typeof DashboardRoleIndexRoute
   '/dashboard/$role/$courseId': typeof DashboardRoleCoursesCourseIdRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/_auth/login': typeof AuthLoginRoute
   '/_onboard/onboard': typeof OnboardOnboardRoute
   '/_onboard/role': typeof OnboardRoleRoute
+  '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
   '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
   '/dashboard/$role/': typeof DashboardRoleIndexRoute
   '/dashboard/$role/_courses/$courseId': typeof DashboardRoleCoursesCourseIdRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboard'
     | '/role'
+    | '/dashboard/$role/classLists'
     | '/dashboard/$role/courses'
     | '/dashboard/$role/'
     | '/dashboard/$role/$courseId'
@@ -141,6 +151,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/onboard'
     | '/role'
+    | '/dashboard/$role/classLists'
     | '/dashboard/$role/courses'
     | '/dashboard/$role'
     | '/dashboard/$role/$courseId'
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/_auth/login'
     | '/_onboard/onboard'
     | '/_onboard/role'
+    | '/dashboard/$role/classLists'
     | '/dashboard/$role/courses'
     | '/dashboard/$role/'
     | '/dashboard/$role/_courses/$courseId'
@@ -240,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRoleCoursesRouteImport
       parentRoute: typeof DashboardRoleRouteRoute
     }
+    '/dashboard/$role/classLists': {
+      id: '/dashboard/$role/classLists'
+      path: '/classLists'
+      fullPath: '/dashboard/$role/classLists'
+      preLoaderRoute: typeof DashboardRoleClassListsRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
+    }
     '/dashboard/$role/_courses/$courseId': {
       id: '/dashboard/$role/_courses/$courseId'
       path: '/$courseId'
@@ -284,6 +303,7 @@ const OnboardRouteRouteWithChildren = OnboardRouteRoute._addFileChildren(
 )
 
 interface DashboardRoleRouteRouteChildren {
+  DashboardRoleClassListsRoute: typeof DashboardRoleClassListsRoute
   DashboardRoleCoursesRoute: typeof DashboardRoleCoursesRoute
   DashboardRoleIndexRoute: typeof DashboardRoleIndexRoute
   DashboardRoleCoursesCourseIdRoute: typeof DashboardRoleCoursesCourseIdRoute
@@ -291,6 +311,7 @@ interface DashboardRoleRouteRouteChildren {
 }
 
 const DashboardRoleRouteRouteChildren: DashboardRoleRouteRouteChildren = {
+  DashboardRoleClassListsRoute: DashboardRoleClassListsRoute,
   DashboardRoleCoursesRoute: DashboardRoleCoursesRoute,
   DashboardRoleIndexRoute: DashboardRoleIndexRoute,
   DashboardRoleCoursesCourseIdRoute: DashboardRoleCoursesCourseIdRoute,

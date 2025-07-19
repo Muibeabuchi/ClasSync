@@ -61,6 +61,15 @@ export type GetCourseDetailsReturnType = FunctionReturnType<
 export type GetAttendanceSessionsReturnType = FunctionReturnType<
   typeof api.attendance.getCourseAttendanceSessions
 >;
+export type GetAttendanceSessionReturnType = FunctionReturnType<
+  typeof api.attendance.getAttendanceSessionById
+>;
+export type GetAttendanceSessionRecordsReturnType = FunctionReturnType<
+  typeof api.attendance.getAttendanceSessionRecords
+>;
+export type GetLecturerClassListsReturnType = FunctionReturnType<
+  typeof api.classLists.getMyClassLists
+>;
 // const lecturerCurrentPlanSchema = v.optional(
 //   v.union(
 //     v.object({
@@ -203,6 +212,8 @@ const applicationTables = {
       v.literal('pending'),
       v.literal('complete'),
     ),
+    radius: v.optional(v.number()),
+
     //  This will be the time the attendance session ends. It will be automatically set by a cron_job
     endedAt: v.optional(v.number()),
   })
@@ -217,6 +228,7 @@ const applicationTables = {
     attendanceSessionId: v.id('attendanceSessions'),
     studentId: v.id('userProfiles'),
     courseId: v.id('courses'),
+    distance: v.optional(v.number()),
     // This will be the ISO 8601 timestamp of when the student takes the attendance
     checkedInAt: v.string(),
     location: v.object({

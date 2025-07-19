@@ -17,3 +17,31 @@ export const useGetCourseAttendanceSession = ({
   useSuspenseQuery(
     convexQuery(api.attendance.getCourseAttendanceSessions, { courseId }),
   );
+
+export const useAttendanceSessionById = ({
+  attendanceSessionId,
+  courseId,
+}: {
+  attendanceSessionId: Id<'attendanceSessions'>;
+  courseId: Id<'courses'>;
+}) =>
+  useSuspenseQuery(
+    convexQuery(api.attendance.getAttendanceSessionById, {
+      attendanceSessionId,
+      courseId,
+    }),
+  );
+
+export const useGetAttendanceSessionRecords = ({
+  attendanceSessionId,
+  courseId,
+}: {
+  attendanceSessionId: Id<'attendanceSessions'>;
+  courseId: Id<'courses'>;
+}) =>
+  useSuspenseQuery(
+    convexQuery(api.attendance.getAttendanceSessionRecords, {
+      attendanceSessionId,
+      courseId,
+    }),
+  );

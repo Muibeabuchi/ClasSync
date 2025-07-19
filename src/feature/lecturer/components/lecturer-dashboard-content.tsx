@@ -14,8 +14,8 @@ import {
   TrendingUp,
   Calendar,
   Clock,
-  BarChart3,
-  Bell,
+  // BarChart3,
+  // Bell,
   ArrowRight,
   // GraduationCap,
   Activity,
@@ -244,7 +244,7 @@ const LecturerDashboardContent = ({
       </div>
 
       {/* Quick Actions */}
-      <Card className="glass-card">
+      {/* <Card className="glass-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5 text-primary" />
@@ -284,7 +284,7 @@ const LecturerDashboardContent = ({
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 };

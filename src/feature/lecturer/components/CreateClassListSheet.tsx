@@ -23,7 +23,13 @@ import {
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Upload, Plus, Trash2, FileSpreadsheet, Users } from 'lucide-react';
+import {
+  Upload,
+  Plus,
+  // Trash2,
+  FileSpreadsheet,
+  Users,
+} from 'lucide-react';
 // import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
@@ -31,20 +37,20 @@ import { toast } from 'sonner';
 interface Student {
   Name: string;
   registrationNumber: string;
-  gender: string;
+  gender: 'male' | 'female';
+}
+interface newClassList {
+  department: string;
+  faculty: string;
+  batchYear: string;
+  classListName: string;
+  students: Student[];
 }
 
 interface CreateClassListSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateClassList: (classListData: {
-    name: string;
-    faculty: string;
-    department: string;
-    batchYear: string;
-    totalStudents: number;
-    students: Student[];
-  }) => void;
+  onCreateClassList: (newClassList: newClassList) => Promise<void>;
 }
 
 export const CreateClassListSheet = ({
@@ -54,7 +60,7 @@ export const CreateClassListSheet = ({
 }: CreateClassListSheetProps) => {
   const isMobile = useIsMobile();
   const [formData, setFormData] = useState({
-    name: '',
+    classListName: '',
     faculty: '',
     department: '',
     batchYear: '',
@@ -62,10 +68,20 @@ export const CreateClassListSheet = ({
 
   const [uploadMethod, setUploadMethod] = useState<'csv' | 'manual'>('csv');
   const [csvFile, setCsvFile] = useState<File | null>(null);
-  const [parsedStudents, setParsedStudents] = useState<Student[]>([]);
-  const [manualStudents, setManualStudents] = useState<Student[]>([
-    { Name: '', registrationNumber: '', gender: '' },
-  ]);
+  const [parsedStudents, setParsedStudents] = useState<
+    {
+      gender: 'male' | 'female';
+      registrationNumber: string;
+      Name: string;
+    }[]
+  >([]);
+  // const [manualStudents, setManualStudents] = useState<
+  //   {
+  //     gender: 'male' | 'female';
+  //     registrationNumber: string;
+  //     Name: string;
+  //   }[]
+  // >([]);
   const [showPreview, setShowPreview] = useState(false);
   // const { toast } = useToast();
 
@@ -161,7 +177,9 @@ export const CreateClassListSheet = ({
           Name: values[headerMapping['name']] || '',
           registrationNumber:
             values[headerMapping['registration number']] || '',
-          gender: values[headerMapping['gender']].toLowerCase() || '',
+          gender: values[headerMapping['gender']].toLowerCase() as
+            | 'male'
+            | 'female',
         };
 
         const errors = validateStudent(student);
@@ -190,33 +208,33 @@ export const CreateClassListSheet = ({
     }
   };
 
-  const addManualStudent = () => {
-    setManualStudents((prev) => [
-      ...prev,
-      { Name: '', registrationNumber: '', gender: '' },
-    ]);
-  };
+  // const addManualStudent = () => {
+  //   setManualStudents((prev) => [
+  //     ...prev,
+  //     { name: '', registrationNumber: '', gender: '' },
+  //   ]);
+  // };
 
-  const removeManualStudent = (index: number) => {
-    setManualStudents((prev) => prev.filter((_, i) => i !== index));
-  };
+  // const removeManualStudent = (index: number) => {
+  //   setManualStudents((prev) => prev.filter((_, i) => i !== index));
+  // };
 
-  const updateManualStudent = (
-    index: number,
-    field: keyof Student,
-    value: string,
-  ) => {
-    setManualStudents((prev) =>
-      prev.map((student, i) =>
-        i === index ? { ...student, [field]: value } : student,
-      ),
-    );
-  };
+  // const updateManualStudent = (
+  //   index: number,
+  //   field: keyof Student,
+  //   value: string,
+  // ) => {
+  //   setManualStudents((prev) =>
+  //     prev.map((student, i) =>
+  //       i === index ? { ...student, [field]: value } : student,
+  //     ),
+  //   );
+  // };
 
   const handleSubmit = () => {
     // Validate form data
     if (
-      !formData.name ||
+      !formData.classListName ||
       !formData.faculty ||
       !formData.department ||
       !formData.batchYear
@@ -225,12 +243,10 @@ export const CreateClassListSheet = ({
       return;
     }
 
-    const students =
-      uploadMethod === 'csv'
-        ? parsedStudents
-        : manualStudents.filter(
-            (s) => s.Name && s.registrationNumber && s.gender,
-          );
+    const students = parsedStudents;
+    // : manualStudents.filter(
+    //     (s) => s.Name && s.registrationNumber && s.gender,
+    //   );
 
     if (students.length === 0) {
       toast.info('No students');
@@ -250,14 +266,18 @@ export const CreateClassListSheet = ({
 
     onCreateClassList({
       ...formData,
-      totalStudents: students.length,
       students,
     });
 
     // Reset form
-    setFormData({ name: '', faculty: '', department: '', batchYear: '' });
+    setFormData({
+      classListName: '',
+      faculty: '',
+      department: '',
+      batchYear: '',
+    });
     setParsedStudents([]);
-    setManualStudents([{ Name: '', registrationNumber: '', gender: '' }]);
+    // setManualStudents([{ Name: '', registrationNumber: '', gender: '' }]);
     setCsvFile(null);
     setShowPreview(false);
   };
@@ -271,7 +291,7 @@ export const CreateClassListSheet = ({
           <Input
             id="name"
             placeholder="e.g., Electrical Engineering 2020 Batch"
-            value={formData.name}
+            value={formData.classListName}
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, name: e.target.value }))
             }
@@ -443,7 +463,7 @@ export const CreateClassListSheet = ({
             </Card>
           </TabsContent>
 
-          <TabsContent value="manual" className="space-y-4">
+          {/* <TabsContent value="manual" className="space-y-4">
             <Card>
               <CardContent className="p-6">
                 <div className="space-y-4">
@@ -524,7 +544,7 @@ export const CreateClassListSheet = ({
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
         </Tabs>
       </div>
 

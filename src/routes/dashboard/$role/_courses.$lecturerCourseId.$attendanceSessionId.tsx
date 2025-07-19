@@ -1,8 +1,14 @@
-import { useGetCourseDetails } from '@/feature/course/api/get-course-with-analytics';
-import CourseDetailPage from '@/feature/lecturer/components/CourseDetailPage';
-import CourseDetailPageSkeleton from '@/feature/lecturer/components/CourseDetailPageSkeleton';
-import LecturerAttendancePage from '@/feature/lecturer/components/LecturerAttendancePage';
-import LiveAttendancePage from '@/feature/lecturer/components/LiveAttendancePage';
+import {
+  useAttendanceSessionById,
+  useGetAttendanceSessionRecords,
+} from '@/feature/attendance/api';
+// import { useGetCourseDetails } from '@/feature/course/api/get-course-with-analytics';
+// import CourseDetailPage from '@/feature/lecturer/components/CourseDetailPage';
+// import CourseDetailPageSkeleton from '@/feature/lecturer/components/CourseDetailPageSkeleton';
+// import LecturerAttendancePage from '@/feature/lecturer/components/LecturerAttendancePage';
+import LiveAttendancePage, {
+  LiveAttendancePageSkeleton,
+} from '@/feature/lecturer/components/LiveAttendancePage';
 import { convexQuery } from '@convex-dev/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { api } from 'convex/_generated/api';
@@ -23,20 +29,44 @@ export const Route = createFileRoute(
   },
   component: RouteComponent,
   loader: async ({ context, params }) => {
-    // await context.queryClient.ensureQueryData(
-    //   convexQuery(api.courses.getCourseDetails, {
-    //     courseId: params.lecturerCourseId,
-    //   }),
-    // );
+    // prefetch the checkedIn students ahead of time
+    context.queryClient.prefetchQuery(
+      convexQuery(api.attendance.getAttendanceSessionRecords, {
+        attendanceSessionId: params.attendanceSessionId,
+        courseId: params.lecturerCourseId,
+      }),
+    );
+
+    await context.queryClient.ensureQueryData(
+      convexQuery(api.attendance.getAttendanceSessionById, {
+        courseId: params.lecturerCourseId,
+        attendanceSessionId: params.attendanceSessionId,
+      }),
+    );
   },
-  pendingComponent: CourseDetailPageSkeleton,
+  pendingComponent: LiveAttendancePageSkeleton,
 });
 
 function RouteComponent() {
-  const { lecturerCourseId } = Route.useParams();
-
+  const { lecturerCourseId, attendanceSessionId } = Route.useParams();
 
   // fetch the attendanceSessionData
-  
-  return <LiveAttendancePage />;
+  const { data: attendanceSession } = useAttendanceSessionById({
+    attendanceSessionId,
+    courseId: lecturerCourseId,
+  });
+  const { data: attendanceSessionRecords } = useGetAttendanceSessionRecords({
+    attendanceSessionId,
+    courseId: lecturerCourseId,
+  });
+
+  return (
+    <Suspense fallback={<LiveAttendancePageSkeleton />}>
+      <LiveAttendancePage
+        attendanceSession={attendanceSession}
+        attendanceSessionRecords={attendanceSessionRecords}
+      />
+      ;
+    </Suspense>
+  );
 }

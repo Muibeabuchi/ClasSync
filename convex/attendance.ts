@@ -40,6 +40,7 @@ export const startAttendanceSession = courseMutation({
       location: args.gpsCoordinates,
       status: 'pending',
       endedAt,
+      radius: args.radiusMeters,
     });
 
     await ctx.scheduler.runAfter(
@@ -121,6 +122,20 @@ export const checkInToAttendance = StudentMutationMiddleware({
     if (!studentCourseAttendanceId)
       throw new ConvexError(' Student is not Enrolled in the course');
 
+    // Check if already the student has already Checked in
+    const existingRecord = await ctx.db
+      .query('attendanceRecords')
+      .withIndex('by_attendanceSessionId_by_StudentId', (q) =>
+        q
+          .eq('attendanceSessionId', attendanceSession._id)
+          .eq('studentId', studentId),
+      )
+      .unique();
+
+    if (existingRecord) {
+      throw new Error('Student has already checked in for this session');
+    }
+
     // Check GPS proximity
     const distance = AttendanceModel.calculateDistance({
       lat1: attendanceSession.location.lat,
@@ -139,19 +154,6 @@ export const checkInToAttendance = StudentMutationMiddleware({
       }
     }
 
-    // Check if already the student has already Checked in
-    const existingRecord = await ctx.db
-      .query('attendanceRecords')
-      .withIndex('by_attendanceSessionId_by_StudentId', (q) =>
-        q
-          .eq('attendanceSessionId', attendanceSession._id)
-          .eq('studentId', studentId),
-      )
-      .unique();
-
-    if (existingRecord) {
-      throw new Error('Student has already checked in for this session');
-    }
     const checkedInAt = new Date().toISOString();
 
     // Create attendance record
@@ -186,9 +188,24 @@ export const checkInToAttendance = StudentMutationMiddleware({
 // });
 
 export const getAttendanceSessionById = LecturerCourseQuery({
-  args: { attendanceSession: v.id('attendanceSessions') },
+  args: { attendanceSessionId: v.id('attendanceSessions') },
   async handler(ctx, args) {
-    const attendanceSession = await ctx.db.get(args.attendanceSession);
+    const lecturerId = ctx.user._id;
+    const course = ctx.course;
+    const attendanceSession = await ctx.db.get(args.attendanceSessionId);
+    if (!attendanceSession)
+      throw new ConvexError('Attendance Session does not exist');
+    // check if the attendanceSession belongs to the lecturer
+    if (attendanceSession.lecturerId !== lecturerId)
+      throw new ConvexError(
+        'Attendance Session does not belong to the lecturer ',
+      );
+
+    return {
+      ...attendanceSession,
+      courseName: course.courseName,
+      courseCode: course.courseCode,
+    };
   },
 });
 
@@ -225,7 +242,7 @@ export const getCourseAttendanceSessions = LecturerCourseQuery({
   },
 });
 
-export const getAttendanceSessionRecords = courseMutation({
+export const getAttendanceSessionRecords = LecturerCourseQuery({
   args: { attendanceSessionId: v.id('attendanceSessions') },
   handler: async (ctx, args) => {
     const records = await ctx.db
