@@ -9,6 +9,7 @@ import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import jsxA11yPlugin from 'eslint-plugin-jsx-a11y';
 import importPlugin from 'eslint-plugin-import';
+import pluginRouter from '@tanstack/eslint-plugin-router';
 import tanstackQueryPlugin from '@tanstack/eslint-plugin-query';
 import prettierPlugin from 'eslint-plugin-prettier';
 
@@ -82,6 +83,7 @@ export default [
       'jsx-a11y': jsxA11yPlugin,
       import: importPlugin,
       '@tanstack/query': tanstackQueryPlugin,
+      '@tanstack/router': pluginRouter,
     },
     rules: {
       // --- React Specific Rules (Overrides) ---
@@ -91,6 +93,7 @@ export default [
       // --- TypeScript Specific Rules (Overrides) ---
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'off',
+      '@tanstack/router/create-route-property-order': 'error',
 
       // Add other custom rules or overrides here as needed
     },

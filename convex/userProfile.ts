@@ -1,7 +1,7 @@
 import { ConvexError, v } from 'convex/values';
 import {
   AuthenticatedUserMutation,
-  AuthenticatedUserQuery,
+  // AuthenticatedUserQuery,
 } from './middlewares/authenticatedMiddleware';
 import {
   lecturerTitleSchema,
@@ -10,7 +10,7 @@ import {
   userRoleSchema,
 } from './schema';
 import { query } from './_generated/server';
-import { getCurrentUser, getUserProfileId } from './models/userprofileModel';
+import { getCurrentUser } from './models/userprofileModel';
 // import { createAuth } from './auth';
 
 // ? ====================QUERIES====================
@@ -18,7 +18,8 @@ import { getCurrentUser, getUserProfileId } from './models/userprofileModel';
 export const getAuthenticatedUser = query({
   args: {},
   async handler(ctx) {
-    return await getUserProfileId(ctx);
+    const user = getCurrentUser({ ctx });
+    return user;
   },
 });
 
@@ -34,13 +35,18 @@ export const getUserRole = query({
   },
 });
 
-export const getUserOnboardedStatus = AuthenticatedUserQuery({
-  returns: v.object({
-    isOnboarded: v.union(v.boolean(), v.null()),
-    role: v.optional(userRoleSchema),
-  }),
+export const getUserOnboardedStatus = query({
+  returns: v.union(
+    v.object({
+      isOnboarded: v.union(v.boolean(), v.null()),
+      role: v.optional(userRoleSchema),
+    }),
+    v.null(),
+  ),
   handler: async (ctx) => {
-    return { isOnboarded: ctx.user.isOnboarded, role: ctx.user.role };
+    const user = await getCurrentUser({ ctx });
+    if (!user) return null;
+    return { isOnboarded: user.isOnboarded, role: user.role };
   },
 });
 
@@ -121,6 +127,14 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
         faculty: args.faculty,
         department: args.department,
       };
+
+      // create a lecturerPlan
+      await ctx.db.insert('lecturerConsumption', {
+        lecturerId: ctx.userId,
+        attendanceSessionCount: 0,
+        createdCourseCount: 0,
+        registeredStudentCount: 0,
+      });
 
       await ctx.db.patch(ctx.userId, {
         ...onboardingData,

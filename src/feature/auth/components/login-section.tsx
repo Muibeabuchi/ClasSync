@@ -17,13 +17,13 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10 dark:from-background dark:via-muted/20 dark:to-background">
       {/* Theme Toggle - Fixed position */}
       {/* <div className="fixed top-4 right-4 z-10"><ThemeToggle /></div> */}
 
       <div className="min-h-screen flex flex-col lg:flex-row">
         {/* Left Panel - Branding (Hidden on mobile) */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-indigo-600 via-blue-600 to-purple-700 text-white p-12 flex-col justify-center relative overflow-hidden">
+        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary via-primary/90 to-primary/80 text-primary-foreground p-12 flex-col justify-center relative overflow-hidden">
           {/* Background decoration */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-20 left-20 w-32 h-32 rounded-full bg-white/20"></div>
@@ -34,7 +34,7 @@ const LoginPage = () => {
           <div className="relative z-10">
             {/* Logo and App Name */}
             <div className="flex items-center space-x-3 mb-8">
-              <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+              <div className="w-12 h-12 bg-primary-foreground/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <GraduationCap className="w-7 h-7" />
               </div>
               <h1 className="text-3xl font-bold">Class Sync</h1>
@@ -44,10 +44,12 @@ const LoginPage = () => {
             <h2 className="text-4xl font-bold mb-6 leading-tight">
               Smart, Secure
               <br />
-              <span className="text-blue-200">Attendance Management</span>
+              <span className="text-primary-foreground/80">
+                Attendance Management
+              </span>
             </h2>
 
-            <p className="text-xl text-blue-100 mb-12 leading-relaxed">
+            <p className="text-xl text-primary-foreground/70 mb-12 leading-relaxed">
               Streamline your classroom experience with intelligent attendance
               tracking, real-time insights, and seamless integration with your
               university systems.
@@ -56,18 +58,20 @@ const LoginPage = () => {
             {/* Feature highlights */}
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
-                <Shield className="w-5 h-5 text-blue-200" />
-                <span className="text-blue-100">University-grade security</span>
+                <Shield className="w-5 h-5 text-primary-foreground/80" />
+                <span className="text-primary-foreground/70">
+                  University-grade security
+                </span>
               </div>
               <div className="flex items-center space-x-3">
-                <Clock className="w-5 h-5 text-blue-200" />
-                <span className="text-blue-100">
+                <Clock className="w-5 h-5 text-primary-foreground/80" />
+                <span className="text-primary-foreground/70">
                   Real-time attendance tracking
                 </span>
               </div>
               <div className="flex items-center space-x-3">
-                <Users className="w-5 h-5 text-blue-200" />
-                <span className="text-blue-100">
+                <Users className="w-5 h-5 text-primary-foreground/80" />
+                <span className="text-primary-foreground/70">
                   Collaborative classroom tools
                 </span>
               </div>
@@ -81,25 +85,25 @@ const LoginPage = () => {
             {/* Mobile branding (visible only on mobile) */}
             <div className="lg:hidden text-center mb-8">
               <div className="flex items-center justify-center space-x-3 mb-4">
-                <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center">
-                  <GraduationCap className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                  <GraduationCap className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-2xl font-bold text-foreground">
                   Class Sync
                 </h1>
               </div>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-muted-foreground">
                 Smart, Secure Attendance Management
               </p>
             </div>
 
             {/* Login Card */}
-            <Card className="shadow-xl border-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+            <Card className="shadow-xl border-0 bg-card/80 backdrop-blur-sm">
               <CardHeader className="text-center space-y-2 pb-6">
-                <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                <CardTitle className="text-2xl font-bold text-foreground">
                   Welcome Back to Class Sync
                 </CardTitle>
-                <CardDescription className="text-gray-600 dark:text-gray-400">
+                <CardDescription className="text-muted-foreground">
                   Sign in with your university Google account to continue.
                 </CardDescription>
               </CardHeader>
@@ -108,7 +112,7 @@ const LoginPage = () => {
                 {/* Google Login Button */}
                 <Button
                   onClick={handleGoogleLogin}
-                  className="w-full h-12 bg-white hover:bg-gray-50 text-gray-900 border border-gray-300 shadow-sm hover:shadow-md transition-all duration-200 font-medium"
+                  className="w-full h-12 bg-card hover:bg-muted text-foreground border shadow-sm hover:shadow-md transition-all duration-200 font-medium"
                   variant="outline"
                 >
                   <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
@@ -135,10 +139,10 @@ const LoginPage = () => {
                 {/* Divider */}
                 <div className="relative">
                   <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200 dark:border-gray-700"></div>
+                    <div className="w-full border-t border-border"></div>
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                    <span className="px-2 bg-card text-muted-foreground">
                       Secure university access
                     </span>
                   </div>
@@ -146,7 +150,7 @@ const LoginPage = () => {
 
                 {/* Security note */}
                 <div className="text-center">
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="text-xs text-muted-foreground">
                     Protected by your {`university's`} authentication system
                   </p>
                 </div>
@@ -155,18 +159,18 @@ const LoginPage = () => {
 
             {/* Footer */}
             <div className="mt-8 text-center">
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 By continuing, you agree to our{' '}
                 <div
                   //   href="#"
-                  className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                  className="text-primary hover:text-primary/80"
                 >
                   Terms of Service
                 </div>{' '}
                 and{' '}
                 <div
                   //   href="#"
-                  className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                  className="text-primary hover:text-primary/80"
                 >
                   Privacy Policy
                 </div>

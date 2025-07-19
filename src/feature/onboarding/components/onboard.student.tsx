@@ -23,11 +23,11 @@ import {
   getDepartmentsByFaculty,
 } from '@/constants/faculty-department';
 import {
-  GenderType,
-  OnboardingDataType,
-  yearLevelType,
+  type GenderType,
+  type OnboardingDataType,
+  type yearLevelType,
 } from '../schema/onboarding-schema';
-import { yearLevelArrayConstant } from '@/constants/constants';
+import { yearLevelArrayConstant } from '@/constants/onboarding';
 
 export default function StudentOnboardingSection({
   handleConfirmCancel,
@@ -104,10 +104,10 @@ export default function StudentOnboardingSection({
       <div className="max-w-2xl mx-auto pt-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
             Student Registration
           </h1>
-          <p className="text-gray-600 dark:text-gray-300">
+          <p className="text-muted-foreground">
             Complete your profile to start using ClassSync
           </p>
         </div>
@@ -140,12 +140,12 @@ export default function StudentOnboardingSection({
                 onChange={(e) => setRegistrationNumber(e.target.value)}
                 placeholder="e.g. 2021123456"
               />
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Registration number must start with 202 and be 10 digits
               </p>
               {registrationNumber &&
                 !isValidRegistrationNumber(registrationNumber) && (
-                  <p className="text-sm text-red-600 dark:text-red-400">
+                  <p className="text-sm text-destructive">
                     Registration number must start with 202 and be 10 digits
                   </p>
                 )}
@@ -248,11 +248,11 @@ export default function StudentOnboardingSection({
             {/* Passport Photo Upload */}
             <div className="space-y-2">
               <Label htmlFor="passportPhoto">Passport Photo (Optional)</Label>
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
-                <Upload className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <div className="text-sm text-gray-600 dark:text-gray-300">
+              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-border/80 transition-colors">
+                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <div className="text-sm text-muted-foreground">
                   <label htmlFor="passportPhoto" className="cursor-pointer">
-                    <span className="text-blue-600 hover:text-blue-500">
+                    <span className="text-primary hover:text-primary/80">
                       Click to upload
                     </span>
                     <span> or drag and drop</span>
@@ -264,7 +264,7 @@ export default function StudentOnboardingSection({
                     accept="image/*"
                   />
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                <p className="text-xs text-muted-foreground mt-2">
                   PNG, JPG, GIF up to 10MB
                 </p>
               </div>

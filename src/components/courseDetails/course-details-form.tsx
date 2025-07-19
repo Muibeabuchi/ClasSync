@@ -45,7 +45,7 @@ const CourseDetailsForm = ({
     <Card className="hover:shadow-md transition-shadow animate-slide-in-right">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-blue-600" />
+          <BookOpen className="h-5 w-5 text-primary" />
           Course Details
         </CardTitle>
         <CardDescription>
@@ -61,7 +61,7 @@ const CourseDetailsForm = ({
               value={formData.courseName}
               onChange={(e) => onInputChange('courseName', e.target.value)}
               placeholder="e.g., Advanced Database Systems"
-              className="transition-all duration-200 hover:border-blue-300 focus:border-blue-500"
+              className="transition-all duration-200 hover:border-primary/50 focus:border-primary"
             />
           </div>
 
@@ -72,7 +72,7 @@ const CourseDetailsForm = ({
               value={formData.courseCode}
               onChange={(e) => onInputChange('courseCode', e.target.value)}
               placeholder="e.g., CS401"
-              className="transition-all duration-200 hover:border-blue-300 focus:border-blue-500"
+              className="transition-all duration-200 hover:border-primary/50 focus:border-primary"
             />
           </div>
         </div>
@@ -85,7 +85,7 @@ const CourseDetailsForm = ({
             onChange={(e) => onInputChange('description', e.target.value)}
             placeholder="Brief description of the course..."
             rows={3}
-            className="transition-all duration-200 hover:border-blue-300 focus:border-blue-500"
+            className="transition-all duration-200 hover:border-primary/50 focus:border-primary"
           />
         </div>
 
@@ -96,7 +96,7 @@ const CourseDetailsForm = ({
               value={formData.academicYear}
               onValueChange={(value) => onInputChange('academicYear', value)}
             >
-              <SelectTrigger className="transition-all duration-200 hover:border-blue-300">
+              <SelectTrigger className="transition-all duration-200 hover:border-primary/50">
                 <SelectValue placeholder="Select academic year" />
               </SelectTrigger>
               <SelectContent className="animate-scale-in">
@@ -115,7 +115,7 @@ const CourseDetailsForm = ({
               value={formData.semester}
               onValueChange={(value) => onInputChange('semester', value)}
             >
-              <SelectTrigger className="transition-all duration-200 hover:border-blue-300">
+              <SelectTrigger className="transition-all duration-200 hover:border-primary/50">
                 <SelectValue placeholder="Select semester" />
               </SelectTrigger>
               <SelectContent className="animate-scale-in">
@@ -132,7 +132,7 @@ const CourseDetailsForm = ({
             value={formData.department}
             onValueChange={(value) => onInputChange('department', value)}
           >
-            <SelectTrigger className="transition-all duration-200 hover:border-blue-300">
+            <SelectTrigger className="transition-all duration-200 hover:border-primary/50">
               <SelectValue placeholder="Select department" />
             </SelectTrigger>
             <SelectContent className="animate-scale-in">

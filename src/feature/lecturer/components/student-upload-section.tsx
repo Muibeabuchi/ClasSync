@@ -27,14 +27,14 @@ const StudentUploadSection = ({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors animate-slide-in-right">
-          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-4" />
+        <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-primary/50 transition-colors animate-slide-in-right">
+          <Upload className="h-8 w-8 text-muted-foreground mx-auto mb-4" />
           <Label htmlFor="csv-upload">
             <div className="cursor-pointer">
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium text-foreground">
                 Upload Student CSV
               </p>
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 CSV should contain: reg_number, full_name, email, gender
               </p>
             </div>
@@ -63,7 +63,7 @@ const StudentUploadSection = ({
                 Template
               </Button>
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-muted-foreground">
               Students will be able to join using the course link after
               creation.
             </div>

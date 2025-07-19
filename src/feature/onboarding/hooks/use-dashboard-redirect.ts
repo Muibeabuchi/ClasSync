@@ -22,17 +22,25 @@ export function useDashboardRedirect() {
 
   useEffect(() => {
     // Only proceed with redirection logic if data has been fetched and is not loading
-    if (!isLoading) {
-      if (onboardStatus && onboardStatus.isOnboarded === null) {
+    if (!isLoading || onboardStatus !== undefined) {
+      if (onboardStatus && onboardStatus.isOnboarded === false) {
+        navigate({
+          to: '/onboard',
+          replace: true,
+        });
+      }
+      if (onboardStatus && onboardStatus.role) {
+        navigate({
+          to: '/dashboard/$role',
+          params: { role: onboardStatus.role },
+          replace: true,
+        });
+      }
+      if (onboardStatus === null) {
         navigate({
           to: '/login',
+          replace: true,
         });
-      } else if (onboardStatus && onboardStatus.isOnboarded !== null) {
-        if (onboardStatus.isOnboarded === false) {
-          navigate({
-            to: '/onboard',
-          });
-        }
       }
     }
 

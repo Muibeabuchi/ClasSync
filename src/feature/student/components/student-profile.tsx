@@ -58,8 +58,8 @@ const StudentProfile = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
+          <p className="text-muted-foreground">
             Manage your personal information and academic details
           </p>
         </div>
@@ -90,29 +90,33 @@ const StudentProfile = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="text-center">
-              <p className="text-sm text-gray-600">{studentData.department}</p>
-              <p className="text-xs text-gray-500">{studentData.faculty}</p>
+              <p className="text-sm text-muted-foreground">
+                {studentData.department}
+              </p>
+              <p className="text-xs text-muted-foreground/80">
+                {studentData.faculty}
+              </p>
             </div>
 
             {/* Quick Stats */}
             <div className="grid grid-cols-2 gap-4 pt-4 border-t">
               <div className="text-center">
                 <div className="flex items-center justify-center mb-1">
-                  <BookOpen className="h-4 w-4 text-blue-600" />
+                  <BookOpen className="h-4 w-4 text-primary" />
                 </div>
-                <p className="text-lg font-bold text-gray-900">
+                <p className="text-lg font-bold text-foreground">
                   {academicInfo.totalCourses}
                 </p>
-                <p className="text-xs text-gray-600">Courses</p>
+                <p className="text-xs text-muted-foreground">Courses</p>
               </div>
               <div className="text-center">
                 <div className="flex items-center justify-center mb-1">
-                  <TrendingUp className="h-4 w-4 text-green-600" />
+                  <TrendingUp className="h-4 w-4 text-chart-2" />
                 </div>
-                <p className="text-lg font-bold text-gray-900">
+                <p className="text-lg font-bold text-foreground">
                   {academicInfo.averageAttendance}%
                 </p>
-                <p className="text-xs text-gray-600">Attendance</p>
+                <p className="text-xs text-muted-foreground">Attendance</p>
               </div>
             </div>
           </CardContent>
@@ -129,7 +133,7 @@ const StudentProfile = () => {
               <div className="space-y-2">
                 <Label htmlFor="fullName">Full Name</Label>
                 <div className="flex items-center space-x-2">
-                  <User className="h-4 w-4 text-gray-400" />
+                  <User className="h-4 w-4 text-muted-foreground" />
                   <Input
                     id="fullName"
                     value={studentData.fullName}
@@ -150,14 +154,14 @@ const StudentProfile = () => {
                   id="regNumber"
                   value={studentData.regNumber}
                   disabled
-                  className="bg-gray-50"
+                  className="bg-muted"
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <div className="flex items-center space-x-2">
-                  <Mail className="h-4 w-4 text-gray-400" />
+                  <Mail className="h-4 w-4 text-muted-foreground" />
                   <Input
                     id="email"
                     type="email"
@@ -173,7 +177,7 @@ const StudentProfile = () => {
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <div className="flex items-center space-x-2">
-                  <Phone className="h-4 w-4 text-gray-400" />
+                  <Phone className="h-4 w-4 text-muted-foreground" />
                   <Input
                     id="phone"
                     value={studentData.phone}
@@ -188,7 +192,7 @@ const StudentProfile = () => {
               <div className="space-y-2">
                 <Label htmlFor="dateOfBirth">Date of Birth</Label>
                 <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-gray-400" />
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
                   <Input
                     id="dateOfBirth"
                     type="date"
@@ -220,7 +224,7 @@ const StudentProfile = () => {
             <div className="space-y-2">
               <Label htmlFor="address">Address</Label>
               <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-gray-400" />
+                <MapPin className="h-4 w-4 text-muted-foreground" />
                 <Input
                   id="address"
                   value={studentData.address}
@@ -245,27 +249,31 @@ const StudentProfile = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-blue-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Academic Year</p>
-              <p className="text-lg font-bold text-blue-600">
+            <div className="text-center p-4 bg-primary/10 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">
+                Academic Year
+              </p>
+              <p className="text-lg font-bold text-primary">
                 {academicInfo.academicYear}
               </p>
             </div>
-            <div className="text-center p-4 bg-green-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Current Semester</p>
-              <p className="text-lg font-bold text-green-600">
+            <div className="text-center p-4 bg-chart-2/10 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">
+                Current Semester
+              </p>
+              <p className="text-lg font-bold text-chart-2">
                 {academicInfo.semester}
               </p>
             </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Current GPA</p>
-              <p className="text-lg font-bold text-purple-600">
+            <div className="text-center p-4 bg-chart-4/10 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">Current GPA</p>
+              <p className="text-lg font-bold text-chart-4">
                 {academicInfo.currentGPA}
               </p>
             </div>
-            <div className="text-center p-4 bg-orange-50 rounded-lg">
-              <p className="text-sm text-gray-600 mb-1">Year Level</p>
-              <p className="text-lg font-bold text-orange-600">
+            <div className="text-center p-4 bg-chart-5/10 rounded-lg">
+              <p className="text-sm text-muted-foreground mb-1">Year Level</p>
+              <p className="text-lg font-bold text-chart-5">
                 {studentData.yearLevel} Level
               </p>
             </div>

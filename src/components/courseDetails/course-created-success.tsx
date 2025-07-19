@@ -34,18 +34,18 @@ const CourseCreatedSuccess = ({
   if (!courseCreated) return null;
 
   return (
-    <Card className="border-green-200 bg-green-50 animate-scale-in hover:shadow-md transition-shadow">
+    <Card className="border-chart-2/20 bg-chart-2/5 animate-scale-in hover:shadow-md transition-shadow">
       <CardHeader>
-        <CardTitle className="text-green-800">
+        <CardTitle className="text-chart-2">
           Course Created Successfully!
         </CardTitle>
-        <CardDescription className="text-green-600">
+        <CardDescription className="text-chart-2/80">
           Your course is now active and ready for student enrollment
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="p-4 bg-white rounded-lg border">
-          <Label className="text-sm font-medium text-gray-700">
+        <div className="p-4 bg-card rounded-lg border">
+          <Label className="text-sm font-medium text-foreground">
             Course Join Link
           </Label>
           <div className="flex items-center space-x-2 mt-2">
@@ -58,7 +58,7 @@ const CourseCreatedSuccess = ({
               Copy
             </Button>
           </div>
-          <p className="text-xs text-gray-500 mt-2">
+          <p className="text-xs text-muted-foreground mt-2">
             Share this link with students to allow them to join your course
           </p>
         </div>

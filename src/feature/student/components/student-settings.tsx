@@ -78,8 +78,10 @@ const StudentSettings = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-600">Customize your ClassSync experience</p>
+          <h1 className="text-2xl font-bold text-foreground">Settings</h1>
+          <p className="text-muted-foreground">
+            Customize your ClassSync experience
+          </p>
         </div>
         <Button onClick={handleSave}>Save Changes</Button>
       </div>
@@ -88,7 +90,7 @@ const StudentSettings = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center space-x-2">
-            <Bell className="h-5 w-5 text-blue-600" />
+            <Bell className="h-5 w-5 text-primary" />
             <CardTitle>Notification Preferences</CardTitle>
           </div>
           <CardDescription>
@@ -99,7 +101,7 @@ const StudentSettings = () => {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="attendance-reminders">Attendance Reminders</Label>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Get notified when attendance sessions are active
               </p>
             </div>
@@ -115,7 +117,7 @@ const StudentSettings = () => {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="course-updates">Course Updates</Label>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Receive updates about your enrolled courses
               </p>
             </div>
@@ -131,7 +133,7 @@ const StudentSettings = () => {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="join-requests">Join Request Updates</Label>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Get notified about join request status changes
               </p>
             </div>
@@ -147,7 +149,7 @@ const StudentSettings = () => {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="announcements">General Announcements</Label>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Receive general announcements from the system
               </p>
             </div>
@@ -166,7 +168,7 @@ const StudentSettings = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center space-x-2">
-            <Smartphone className="h-5 w-5 text-green-600" />
+            <Smartphone className="h-5 w-5 text-chart-2" />
             <CardTitle>App Preferences</CardTitle>
           </div>
           <CardDescription>
@@ -239,7 +241,7 @@ const StudentSettings = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center space-x-2">
-            <Shield className="h-5 w-5 text-purple-600" />
+            <Shield className="h-5 w-5 text-chart-4" />
             <CardTitle>Privacy & Security</CardTitle>
           </div>
           <CardDescription>
@@ -269,7 +271,7 @@ const StudentSettings = () => {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="show-stats">Show Attendance Statistics</Label>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Allow others to see your attendance statistics
               </p>
             </div>
@@ -285,7 +287,7 @@ const StudentSettings = () => {
           <div className="flex items-center justify-between">
             <div>
               <Label htmlFor="allow-messages">Allow Messages</Label>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Allow lecturers and students to message you
               </p>
             </div>

@@ -97,31 +97,31 @@ const StudentNotifications = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'attendance':
-        return <Clock className="h-4 w-4 text-green-600" />;
+        return <Clock className="h-4 w-4 text-chart-2" />;
       case 'join_approved':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
+        return <CheckCircle className="h-4 w-4 text-chart-2" />;
       case 'join_rejected':
-        return <AlertTriangle className="h-4 w-4 text-red-600" />;
+        return <AlertTriangle className="h-4 w-4 text-destructive" />;
       case 'message':
       case 'course_update':
-        return <MessageSquare className="h-4 w-4 text-blue-600" />;
+        return <MessageSquare className="h-4 w-4 text-primary" />;
       case 'attendance_reminder':
-        return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+        return <AlertTriangle className="h-4 w-4 text-chart-5" />;
       default:
-        return <Bell className="h-4 w-4 text-gray-600" />;
+        return <Bell className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return 'border-l-red-500 bg-red-50';
+        return 'border-l-destructive bg-destructive/5';
       case 'medium':
-        return 'border-l-yellow-500 bg-yellow-50';
+        return 'border-l-chart-5 bg-chart-5/5';
       case 'low':
-        return 'border-l-blue-500 bg-blue-50';
+        return 'border-l-primary bg-primary/5';
       default:
-        return 'border-l-gray-500 bg-gray-50';
+        return 'border-l-muted-foreground bg-muted/50';
     }
   };
 
@@ -139,8 +139,8 @@ const StudentNotifications = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-gray-600">
+          <h1 className="text-2xl font-bold text-foreground">Notifications</h1>
+          <p className="text-muted-foreground">
             Stay updated with your courses and activities
           </p>
         </div>
@@ -197,7 +197,7 @@ const StudentNotifications = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-sm font-medium text-gray-900">
+                    <h3 className="text-sm font-medium text-foreground">
                       {notification.title}
                     </h3>
                     <div className="flex items-center gap-2">
@@ -213,10 +213,10 @@ const StudentNotifications = () => {
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-600 mb-2">
+                  <p className="text-sm text-muted-foreground mb-2">
                     {notification.message}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-muted-foreground/80">
                     {notification.timestamp}
                   </p>
                 </div>
@@ -229,11 +229,13 @@ const StudentNotifications = () => {
       {filteredNotifications.length === 0 && (
         <Card>
           <CardContent className="text-center py-8">
-            <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <Bell className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-foreground mb-2">
               No notifications found
             </h3>
-            <p className="text-gray-600">Try adjusting your filter settings</p>
+            <p className="text-muted-foreground">
+              Try adjusting your filter settings
+            </p>
           </CardContent>
         </Card>
       )}

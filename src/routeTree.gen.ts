@@ -8,21 +8,27 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { createServerRootRoute } from '@tanstack/react-start/server'
-
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as OnboardRouteRouteImport } from './routes/_onboard/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardRoleRouteImport } from './routes/_onboard/role'
 import { Route as OnboardOnboardRouteImport } from './routes/_onboard/onboard'
-import { Route as DashboardDashboardRouteImport } from './routes/_dashboard/dashboard'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as DashboardDashboardRoleRouteImport } from './routes/_dashboard/dashboard.$role'
-import { ServerRoute as ApiAuthSplatServerRouteImport } from './routes/api/auth/$'
+import { Route as DashboardRoleRouteRouteImport } from './routes/dashboard/$role/route'
+import { Route as DashboardRoleIndexRouteImport } from './routes/dashboard/$role/index'
+import { Route as DashboardRoleJoinRequestsRouteImport } from './routes/dashboard/$role/joinRequests'
+import { Route as DashboardRoleCoursesRouteImport } from './routes/dashboard/$role/courses'
+import { Route as DashboardRoleClassListsRouteImport } from './routes/dashboard/$role/classLists'
+import { Route as DashboardRoleCoursesCourseIdRouteImport } from './routes/dashboard/$role/_courses.$courseId'
+import { Route as DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRouteImport } from './routes/dashboard/$role/_courses.$lecturerCourseId.$attendanceSessionId'
 
-const rootServerRouteImport = createServerRootRoute()
-
+const DashboardRouteRoute = DashboardRouteRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OnboardRouteRoute = OnboardRouteRouteImport.update({
   id: '/_onboard',
   getParentRoute: () => rootRouteImport,
@@ -46,107 +52,156 @@ const OnboardOnboardRoute = OnboardOnboardRouteImport.update({
   path: '/onboard',
   getParentRoute: () => OnboardRouteRoute,
 } as any)
-const DashboardDashboardRoute = DashboardDashboardRouteImport.update({
-  id: '/_dashboard/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => AuthRouteRoute,
 } as any)
-const DashboardDashboardRoleRoute = DashboardDashboardRoleRouteImport.update({
+const DashboardRoleRouteRoute = DashboardRoleRouteRouteImport.update({
   id: '/$role',
   path: '/$role',
-  getParentRoute: () => DashboardDashboardRoute,
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
-const ApiAuthSplatServerRoute = ApiAuthSplatServerRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootServerRouteImport,
+const DashboardRoleIndexRoute = DashboardRoleIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardRoleRouteRoute,
 } as any)
+const DashboardRoleJoinRequestsRoute =
+  DashboardRoleJoinRequestsRouteImport.update({
+    id: '/joinRequests',
+    path: '/joinRequests',
+    getParentRoute: () => DashboardRoleRouteRoute,
+  } as any)
+const DashboardRoleCoursesRoute = DashboardRoleCoursesRouteImport.update({
+  id: '/courses',
+  path: '/courses',
+  getParentRoute: () => DashboardRoleRouteRoute,
+} as any)
+const DashboardRoleClassListsRoute = DashboardRoleClassListsRouteImport.update({
+  id: '/classLists',
+  path: '/classLists',
+  getParentRoute: () => DashboardRoleRouteRoute,
+} as any)
+const DashboardRoleCoursesCourseIdRoute =
+  DashboardRoleCoursesCourseIdRouteImport.update({
+    id: '/_courses/$courseId',
+    path: '/$courseId',
+    getParentRoute: () => DashboardRoleRouteRoute,
+  } as any)
+const DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute =
+  DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRouteImport.update({
+    id: '/_courses/$lecturerCourseId/$attendanceSessionId',
+    path: '/$lecturerCourseId/$attendanceSessionId',
+    getParentRoute: () => DashboardRoleRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/dashboard/$role': typeof DashboardRoleRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
-  '/dashboard': typeof DashboardDashboardRouteWithChildren
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
-  '/dashboard/$role': typeof DashboardDashboardRoleRoute
+  '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
+  '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
+  '/dashboard/$role/joinRequests': typeof DashboardRoleJoinRequestsRoute
+  '/dashboard/$role/': typeof DashboardRoleIndexRoute
+  '/dashboard/$role/$courseId': typeof DashboardRoleCoursesCourseIdRoute
+  '/dashboard/$role/$lecturerCourseId/$attendanceSessionId': typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
-  '/dashboard': typeof DashboardDashboardRouteWithChildren
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
-  '/dashboard/$role': typeof DashboardDashboardRoleRoute
+  '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
+  '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
+  '/dashboard/$role/joinRequests': typeof DashboardRoleJoinRequestsRoute
+  '/dashboard/$role': typeof DashboardRoleIndexRoute
+  '/dashboard/$role/$courseId': typeof DashboardRoleCoursesCourseIdRoute
+  '/dashboard/$role/$lecturerCourseId/$attendanceSessionId': typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_onboard': typeof OnboardRouteRouteWithChildren
+  '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/dashboard/$role': typeof DashboardRoleRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
-  '/_dashboard/dashboard': typeof DashboardDashboardRouteWithChildren
   '/_onboard/onboard': typeof OnboardOnboardRoute
   '/_onboard/role': typeof OnboardRoleRoute
-  '/_dashboard/dashboard/$role': typeof DashboardDashboardRoleRoute
+  '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
+  '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
+  '/dashboard/$role/joinRequests': typeof DashboardRoleJoinRequestsRoute
+  '/dashboard/$role/': typeof DashboardRoleIndexRoute
+  '/dashboard/$role/_courses/$courseId': typeof DashboardRoleCoursesCourseIdRoute
+  '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId': typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/login'
     | '/dashboard'
+    | '/dashboard/$role'
+    | '/login'
     | '/onboard'
     | '/role'
-    | '/dashboard/$role'
+    | '/dashboard/$role/classLists'
+    | '/dashboard/$role/courses'
+    | '/dashboard/$role/joinRequests'
+    | '/dashboard/$role/'
+    | '/dashboard/$role/$courseId'
+    | '/dashboard/$role/$lecturerCourseId/$attendanceSessionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/login' | '/dashboard' | '/onboard' | '/role' | '/dashboard/$role'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login'
+    | '/onboard'
+    | '/role'
+    | '/dashboard/$role/classLists'
+    | '/dashboard/$role/courses'
+    | '/dashboard/$role/joinRequests'
+    | '/dashboard/$role'
+    | '/dashboard/$role/$courseId'
+    | '/dashboard/$role/$lecturerCourseId/$attendanceSessionId'
   id:
     | '__root__'
     | '/'
     | '/_auth'
     | '/_onboard'
+    | '/dashboard'
+    | '/dashboard/$role'
     | '/_auth/login'
-    | '/_dashboard/dashboard'
     | '/_onboard/onboard'
     | '/_onboard/role'
-    | '/_dashboard/dashboard/$role'
+    | '/dashboard/$role/classLists'
+    | '/dashboard/$role/courses'
+    | '/dashboard/$role/joinRequests'
+    | '/dashboard/$role/'
+    | '/dashboard/$role/_courses/$courseId'
+    | '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   OnboardRouteRoute: typeof OnboardRouteRouteWithChildren
-  DashboardDashboardRoute: typeof DashboardDashboardRouteWithChildren
-}
-export interface FileServerRoutesByFullPath {
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-}
-export interface FileServerRoutesByTo {
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-}
-export interface FileServerRoutesById {
-  __root__: typeof rootServerRouteImport
-  '/api/auth/$': typeof ApiAuthSplatServerRoute
-}
-export interface FileServerRouteTypes {
-  fileServerRoutesByFullPath: FileServerRoutesByFullPath
-  fullPaths: '/api/auth/$'
-  fileServerRoutesByTo: FileServerRoutesByTo
-  to: '/api/auth/$'
-  id: '__root__' | '/api/auth/$'
-  fileServerRoutesById: FileServerRoutesById
-}
-export interface RootServerRouteChildren {
-  ApiAuthSplatServerRoute: typeof ApiAuthSplatServerRoute
+  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_onboard': {
       id: '/_onboard'
       path: ''
@@ -182,13 +237,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardOnboardRouteImport
       parentRoute: typeof OnboardRouteRoute
     }
-    '/_dashboard/dashboard': {
-      id: '/_dashboard/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardDashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_auth/login': {
       id: '/_auth/login'
       path: '/login'
@@ -196,23 +244,54 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRouteRoute
     }
-    '/_dashboard/dashboard/$role': {
-      id: '/_dashboard/dashboard/$role'
+    '/dashboard/$role': {
+      id: '/dashboard/$role'
       path: '/$role'
       fullPath: '/dashboard/$role'
-      preLoaderRoute: typeof DashboardDashboardRoleRouteImport
-      parentRoute: typeof DashboardDashboardRoute
+      preLoaderRoute: typeof DashboardRoleRouteRouteImport
+      parentRoute: typeof DashboardRouteRoute
     }
-  }
-}
-declare module '@tanstack/react-start/server' {
-  interface ServerFileRoutesByPath {
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatServerRouteImport
-      parentRoute: typeof rootServerRouteImport
+    '/dashboard/$role/': {
+      id: '/dashboard/$role/'
+      path: '/'
+      fullPath: '/dashboard/$role/'
+      preLoaderRoute: typeof DashboardRoleIndexRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
+    }
+    '/dashboard/$role/joinRequests': {
+      id: '/dashboard/$role/joinRequests'
+      path: '/joinRequests'
+      fullPath: '/dashboard/$role/joinRequests'
+      preLoaderRoute: typeof DashboardRoleJoinRequestsRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
+    }
+    '/dashboard/$role/courses': {
+      id: '/dashboard/$role/courses'
+      path: '/courses'
+      fullPath: '/dashboard/$role/courses'
+      preLoaderRoute: typeof DashboardRoleCoursesRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
+    }
+    '/dashboard/$role/classLists': {
+      id: '/dashboard/$role/classLists'
+      path: '/classLists'
+      fullPath: '/dashboard/$role/classLists'
+      preLoaderRoute: typeof DashboardRoleClassListsRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
+    }
+    '/dashboard/$role/_courses/$courseId': {
+      id: '/dashboard/$role/_courses/$courseId'
+      path: '/$courseId'
+      fullPath: '/dashboard/$role/$courseId'
+      preLoaderRoute: typeof DashboardRoleCoursesCourseIdRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
+    }
+    '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId': {
+      id: '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId'
+      path: '/$lecturerCourseId/$attendanceSessionId'
+      fullPath: '/dashboard/$role/$lecturerCourseId/$attendanceSessionId'
+      preLoaderRoute: typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRouteImport
+      parentRoute: typeof DashboardRoleRouteRoute
     }
   }
 }
@@ -243,29 +322,46 @@ const OnboardRouteRouteWithChildren = OnboardRouteRoute._addFileChildren(
   OnboardRouteRouteChildren,
 )
 
-interface DashboardDashboardRouteChildren {
-  DashboardDashboardRoleRoute: typeof DashboardDashboardRoleRoute
+interface DashboardRoleRouteRouteChildren {
+  DashboardRoleClassListsRoute: typeof DashboardRoleClassListsRoute
+  DashboardRoleCoursesRoute: typeof DashboardRoleCoursesRoute
+  DashboardRoleJoinRequestsRoute: typeof DashboardRoleJoinRequestsRoute
+  DashboardRoleIndexRoute: typeof DashboardRoleIndexRoute
+  DashboardRoleCoursesCourseIdRoute: typeof DashboardRoleCoursesCourseIdRoute
+  DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute: typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 
-const DashboardDashboardRouteChildren: DashboardDashboardRouteChildren = {
-  DashboardDashboardRoleRoute: DashboardDashboardRoleRoute,
+const DashboardRoleRouteRouteChildren: DashboardRoleRouteRouteChildren = {
+  DashboardRoleClassListsRoute: DashboardRoleClassListsRoute,
+  DashboardRoleCoursesRoute: DashboardRoleCoursesRoute,
+  DashboardRoleJoinRequestsRoute: DashboardRoleJoinRequestsRoute,
+  DashboardRoleIndexRoute: DashboardRoleIndexRoute,
+  DashboardRoleCoursesCourseIdRoute: DashboardRoleCoursesCourseIdRoute,
+  DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute:
+    DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute,
 }
 
-const DashboardDashboardRouteWithChildren =
-  DashboardDashboardRoute._addFileChildren(DashboardDashboardRouteChildren)
+const DashboardRoleRouteRouteWithChildren =
+  DashboardRoleRouteRoute._addFileChildren(DashboardRoleRouteRouteChildren)
+
+interface DashboardRouteRouteChildren {
+  DashboardRoleRouteRoute: typeof DashboardRoleRouteRouteWithChildren
+}
+
+const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardRoleRouteRoute: DashboardRoleRouteRouteWithChildren,
+}
+
+const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
+  DashboardRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRouteRoute: AuthRouteRouteWithChildren,
   OnboardRouteRoute: OnboardRouteRouteWithChildren,
-  DashboardDashboardRoute: DashboardDashboardRouteWithChildren,
+  DashboardRouteRoute: DashboardRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-const rootServerRouteChildren: RootServerRouteChildren = {
-  ApiAuthSplatServerRoute: ApiAuthSplatServerRoute,
-}
-export const serverRouteTree = rootServerRouteImport
-  ._addFileChildren(rootServerRouteChildren)
-  ._addFileTypes<FileServerRouteTypes>()

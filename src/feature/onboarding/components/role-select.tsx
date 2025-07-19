@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { GraduationCap, Users, BookOpen, X } from 'lucide-react';
 import { CancelModal } from './cancel-modal';
-import { UserRoleType } from '../schema/onboarding-schema';
+import { type UserRoleType } from '../schema/onboarding-schema';
 import { useUpdateUserRole } from '../api/api-hooks';
 // import { UserRoleType } from '../schema/onboarding-schema';
 
@@ -41,22 +41,20 @@ export const RoleSelect = ({
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-primary/10">
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center">
-              <GraduationCap className="w-7 h-7 text-white" />
+            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center">
+              <GraduationCap className="w-7 h-7 text-primary-foreground" />
             </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              ClassSync
-            </h1>
+            <h1 className="text-3xl font-bold text-foreground">ClassSync</h1>
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-2xl font-semibold text-foreground mb-2">
             Welcome to ClassSync
           </h2>
-          <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+          <p className="text-muted-foreground max-w-md mx-auto">
             Choose your role to get started with smart attendance management
           </p>
         </div>
@@ -66,12 +64,12 @@ export const RoleSelect = ({
           <div className="grid md:grid-cols-2 gap-8 mb-8">
             {/* Lecturer Card */}
             <Card
-              className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-2 hover:border-indigo-300 dark:hover:border-indigo-600"
+              className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-2 hover:border-primary/50"
               onClick={() => handleRoleSelect('lecturer')}
             >
               <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-primary" />
                 </div>
                 <CardTitle className="text-xl">👨‍🏫 Lecturer</CardTitle>
                 <CardDescription className="text-base">
@@ -79,17 +77,17 @@ export const RoleSelect = ({
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2 mb-6">
+                <ul className="text-sm text-muted-foreground space-y-2 mb-6">
                   <li className="flex items-center">
-                    <BookOpen className="w-4 h-4 mr-2 text-indigo-500" />
+                    <BookOpen className="w-4 h-4 mr-2 text-primary" />
                     Create and manage courses
                   </li>
                   <li className="flex items-center">
-                    <BookOpen className="w-4 h-4 mr-2 text-indigo-500" />
+                    <BookOpen className="w-4 h-4 mr-2 text-primary" />
                     Track student attendance
                   </li>
                   <li className="flex items-center">
-                    <BookOpen className="w-4 h-4 mr-2 text-indigo-500" />
+                    <BookOpen className="w-4 h-4 mr-2 text-primary" />
                     Generate reports and analytics
                   </li>
                 </ul>
@@ -105,12 +103,12 @@ export const RoleSelect = ({
 
             {/* Student Card */}
             <Card
-              className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-2 hover:border-green-300 dark:hover:border-green-600"
+              className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105 border-2 hover:border-chart-2/50"
               onClick={() => handleRoleSelect('student')}
             >
               <CardHeader className="text-center pb-4">
-                <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <GraduationCap className="w-8 h-8 text-green-600 dark:text-green-400" />
+                <div className="w-16 h-16 bg-chart-2/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <GraduationCap className="w-8 h-8 text-chart-2" />
                 </div>
                 <CardTitle className="text-xl">🎓 Student</CardTitle>
                 <CardDescription className="text-base">
@@ -118,22 +116,22 @@ export const RoleSelect = ({
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
-                <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-2 mb-6">
+                <ul className="text-sm text-muted-foreground space-y-2 mb-6">
                   <li className="flex items-center">
-                    <BookOpen className="w-4 h-4 mr-2 text-green-500" />
+                    <BookOpen className="w-4 h-4 mr-2 text-chart-2" />
                     Join courses with unique codes
                   </li>
                   <li className="flex items-center">
-                    <BookOpen className="w-4 h-4 mr-2 text-green-500" />
+                    <BookOpen className="w-4 h-4 mr-2 text-chart-2" />
                     Mark your attendance
                   </li>
                   <li className="flex items-center">
-                    <BookOpen className="w-4 h-4 mr-2 text-green-500" />
+                    <BookOpen className="w-4 h-4 mr-2 text-chart-2" />
                     View attendance history
                   </li>
                 </ul>
                 <Button
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="w-full bg-chart-2 hover:bg-chart-2/90"
                   size="lg"
                   disabled={updatingUserRole}
                 >
@@ -148,7 +146,7 @@ export const RoleSelect = ({
             <Button
               variant="ghost"
               onClick={handleCancel}
-              className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              className="text-muted-foreground hover:text-foreground"
             >
               <X className="w-4 h-4 mr-2" />
               Cancel Setup

@@ -2,6 +2,7 @@
   "include": ["**/*.ts", "**/*.tsx", "src/routes/_auth/onboard.role.$roletsx"],
   "compilerOptions": {
     "strict": true,
+    "verbatimModuleSyntax": true,
     "esModuleInterop": true,
     "jsx": "react-jsx",
     "module": "ESNext",
@@ -20,3 +21,32 @@
     "noEmit": true
   }
 }
+
+// {
+//   "include": ["**/*.ts", "**/*.tsx"],
+//   "compilerOptions": {
+//     "target": "ES2022",
+//     "jsx": "react-jsx",
+//     "module": "ESNext",
+//     "lib": ["ES2022", "DOM", "DOM.Iterable"],
+//     "types": ["vite/client"],
+
+//     /* Bundler mode */
+//     "moduleResolution": "bundler",
+//     "allowImportingTsExtensions": true,
+//     "verbatimModuleSyntax": true,
+//     "noEmit": true,
+
+//     /* Linting */
+//     "skipLibCheck": true,
+//     "strict": true,
+//     "noUnusedLocals": true,
+//     "noUnusedParameters": true,
+//     "noFallthroughCasesInSwitch": true,
+//     "noUncheckedSideEffectImports": true,
+//     "baseUrl": ".",
+//     "paths": {
+//       "@/*": ["./src/*"],
+//     }
+//   }
+// }
