@@ -45,3 +45,8 @@ export const useGetAttendanceSessionRecords = ({
       courseId,
     }),
   );
+
+export const useStudentTakeAttendance = () =>
+  useMutation({
+    mutationFn: useConvexMutation(api.attendance.checkInToAttendance),
+  });

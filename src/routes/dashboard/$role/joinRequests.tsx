@@ -1,4 +1,4 @@
-import { useGetLecturerCourses } from '@/feature/course/api/get-lecturer-courses';
+// import { useGetLecturerCourses } from '@/feature/course/api/get-lecturer-courses';
 import { useGetLecturerJoinRequests } from '@/feature/joinRequest/api';
 import JoinRequestsPage from '@/feature/lecturer/components/join-requests-page';
 import { convexQuery } from '@convex-dev/react-query';
@@ -20,14 +20,14 @@ export const Route = createFileRoute('/dashboard/$role/joinRequests')({
 
 function RouteComponent() {
   const { data: lecturerJoinRequests } = useGetLecturerJoinRequests();
-  const { data: lecturerCourses } = useGetLecturerCourses();
+  // const { data: lecturerCourses } = useGetLecturerCourses();
 
   return (
     <div>
       <Suspense fallback={<p>Loading...</p>}>
         <JoinRequestsPage
           lecturerJoinRequests={lecturerJoinRequests}
-          lecturerCourses={lecturerCourses}
+          // lecturerCourses={lecturerCourses}
         />
       </Suspense>
     </div>

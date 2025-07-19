@@ -8,23 +8,29 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
-import { Search, BookOpen, Users, Clock, Send } from 'lucide-react';
+// import { Badge } from '@/components/ui/badge';
+// import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+// import { Textarea } from '@/components/ui/textarea';
+import {
+  Search,
+  BookOpen,
+  // Users,
+  //  Clock,
+  Send,
+} from 'lucide-react';
 // import { useToast } from "@/hooks/use-toast";
 // toast
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle,
+//   DialogTrigger,
+// } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Label } from '@/components/ui/label';
+// import { Label } from '@/components/ui/label';
 import { useConvex } from 'convex/react';
 import { api } from 'convex/_generated/api';
 import type { Id } from 'convex/_generated/dataModel';
@@ -36,9 +42,9 @@ import { useRequestToJoinCourseClassList } from '@/feature/joinRequest/api';
 
 const JoinCoursePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
-  const [requestMessage, setRequestMessage] = useState('');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedCourse] = useState<any>(null);
+  const [requestMessage] = useState('');
+  // const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchResult, setSearchResult] = useState<
     | {
         _id: Id<'courses'>;
@@ -155,11 +161,19 @@ const JoinCoursePage = () => {
 
   const handleSendRequest = async () => {
     if (!searchResult) return;
-    if (!searchResult.isMember) return;
+    if (searchResult.isMember) return;
     await requestToJoin({
       courseId: searchResult._id,
       lecturerId: searchResult.lecturer.id,
       message: requestMessage,
+    });
+
+    setSearchResult((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        isMember: !!prev.isMember,
+      };
     });
 
     toast.success(
@@ -340,7 +354,7 @@ const JoinCoursePage = () => {
           </CardContent> */}
             <Button
               className="w-fit text-center"
-              disabled={!searchResult?.isMember}
+              disabled={searchResult?.isMember}
               onClick={handleSendRequest}
             >
               <Send className="h-4 w-4 mr-2" />

@@ -1,4 +1,10 @@
-import { Home, BookOpen, Users, Bell, CreditCard } from 'lucide-react';
+import {
+  Home,
+  BookOpen,
+  Users,
+  // Bell,
+  //  CreditCard
+} from 'lucide-react';
 
 export const navigationItems = [
   {
@@ -23,25 +29,25 @@ export const navigationItems = [
     to: 'joinRequests',
     badge: '8',
   },
-  {
-    id: 'notifications',
-    label: 'Notifications',
-    icon: Bell,
-    to: 'notifications',
-    badge: '5',
-  },
-  {
-    id: 'classlists',
-    label: 'ClassLists',
-    icon: Users,
-    to: 'classLists',
-    badge: null,
-  },
-  {
-    id: 'billing',
-    label: 'Billing',
-    icon: CreditCard,
-    to: 'billing',
-    badge: null,
-  },
+  // {
+  //   id: 'notifications',
+  //   label: 'Notifications',
+  //   icon: Bell,
+  //   to: 'notifications',
+  //   badge: '5',
+  // },
+  // {
+  //   id: 'classlists',
+  //   label: 'ClassLists',
+  //   icon: Users,
+  //   to: 'classLists',
+  //   badge: null,
+  // },
+  // {
+  //   id: 'billing',
+  //   label: 'Billing',
+  //   icon: CreditCard,
+  //   to: 'billing',
+  //   badge: null,
+  // },
 ];

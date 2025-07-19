@@ -33,6 +33,7 @@ import type {
   GetLecturerClassListWithStudentsReturnType,
   GetLecturerJoinRequestsReturnType,
 } from 'convex/schema';
+import type { Id } from 'convex/_generated/dataModel';
 
 // interface Student {
 //   id: string;
@@ -76,8 +77,8 @@ interface StudentBindingModalProps {
     | null;
   onBindAndApprove: (value: {
     // requestId: string;
-    selectedStudentId: string;
-    classListId: string;
+    selectedStudentId: Id<'classListStudents'>;
+    classListId: Id<'classLists'>;
   }) => void;
 }
 
@@ -90,8 +91,10 @@ const StudentBindingModal = ({
   // classLists,
 }: StudentBindingModalProps) => {
   // const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
-  const [selectedStudentId, setSelectedStudentId] = useState<string>('');
-  const [selectedClassListId, setSelectedClassListId] = useState<string>('');
+  const [selectedStudentId, setSelectedStudentId] =
+    useState<Id<'classListStudents'> | null>(null);
+  const [selectedClassListId, setSelectedClassListId] =
+    useState<Id<'classLists'> | null>(null);
 
   // const filteredClassLists = classLists
   //   .map((classList) => ({
@@ -112,7 +115,10 @@ const StudentBindingModal = ({
   //   setSearchTerms((prev) => ({ ...prev, [classListId]: value }));
   // };
 
-  const handleStudentSelect = (studentId: string, classListId: string) => {
+  const handleStudentSelect = (
+    studentId: Id<'classListStudents'>,
+    classListId: Id<'classLists'>,
+  ) => {
     setSelectedStudentId(studentId);
     setSelectedClassListId(classListId);
   };
@@ -134,14 +140,14 @@ const StudentBindingModal = ({
     });
 
     // Reset selections
-    setSelectedStudentId('');
-    setSelectedClassListId('');
+    setSelectedStudentId(null);
+    setSelectedClassListId(null);
     // setSearchTerms({});
   };
 
   const handleCancel = () => {
-    setSelectedStudentId('');
-    setSelectedClassListId('');
+    setSelectedStudentId(null);
+    setSelectedClassListId(null);
     // setSearchTerms({});
     onOpenChange(false);
   };
@@ -234,8 +240,11 @@ const StudentBindingModal = ({
               <RadioGroup
                 value={`${selectedClassListId}-${selectedStudentId}`}
                 onValueChange={(value) => {
-                  const [classListId, studentId] = value.split('-');
-                  handleStudentSelect(studentId, classListId);
+                  const [classListId, classListStudentId] = value.split('-');
+                  handleStudentSelect(
+                    classListStudentId as Id<'classListStudents'>,
+                    classListId as Id<'classLists'>,
+                  );
                 }}
               >
                 {classListsWithStudents?.map((classList) => (

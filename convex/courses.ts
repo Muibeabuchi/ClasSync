@@ -9,7 +9,10 @@ import { filter } from 'convex-helpers/server/filter';
 import { lecturerCourseStatusSchema } from './schema';
 import * as CoursesModel from './models/coursesModel';
 import { AuthenticatedUserQuery } from './middlewares/authenticatedMiddleware';
-import { StudentMutationMiddleware } from './middlewares/studentMiddleware';
+import {
+  StudentMutationMiddleware,
+  StudentQueryMiddleware,
+} from './middlewares/studentMiddleware';
 import * as ClassListModel from './models/classListModel';
 import * as ClassListStudentModel from './models/classListStudentModel';
 import * as joinRequestModel from './models/joinRequestModel';
@@ -79,7 +82,7 @@ export const getLecturerCourses = lecturerQuery({
   args: {
     status: v.optional(lecturerCourseStatusSchema),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const lecturerId = ctx.user._id;
     console.log({ lecturerId });
 
@@ -92,7 +95,7 @@ export const getLecturerCourses = lecturerQuery({
     //   ).collect();
     // }
 
-    const courses = await ctx.db
+    return await ctx.db
       .query('courses')
       .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId))
       .collect();
@@ -491,6 +494,79 @@ export const getLecturerCoursesWithStats = lecturerQuery({
     );
 
     return coursesWithStats;
+  },
+});
+
+export const getCoursesWithActiveAttendance = StudentQueryMiddleware({
+  args: {},
+  handler: async (ctx) => {
+    const studentId = ctx.user._id;
+
+    // Get all courses the student is enrolled in
+    const enrolledCourses = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_studentId', (q) => q.eq('studentId', studentId))
+      .collect();
+
+    if (enrolledCourses.length === 0) {
+      return [];
+    }
+
+    // Get courses with active attendance sessions
+    const coursesWithActiveAttendance = await Promise.all(
+      enrolledCourses.map(async (enrollment) => {
+        const course = await ctx.db.get(enrollment.courseId);
+        if (!course) throw new ConvexError('Course does not Exist');
+        if (course.status !== 'active') {
+          return null;
+        }
+
+        // Check for active attendance sessions
+        const activeSession = await ctx.db
+          .query('attendanceSessions')
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+          .filter((q) =>
+            q.or(
+              q.eq(q.field('status'), 'active'),
+              q.eq(q.field('status'), 'pending'),
+            ),
+          )
+          .first();
+
+        if (!activeSession) {
+          return null;
+        }
+
+        // filter out the courses with active sesion which you have already taken attendnace in
+        const hasTakenAttendance = await ctx.db
+          .query('attendanceRecords')
+          .withIndex('by_attendanceSessionId', (q) =>
+            q.eq('attendanceSessionId', activeSession._id),
+          )
+          .first();
+        if (hasTakenAttendance) return null;
+
+        // Get lecturer info
+        const lecturer = await ctx.db.get(course.lecturerId);
+        if (!lecturer) throw new ConvexError('Lecturer does not exist');
+
+        return {
+          // sessionStatus: active,
+          courseId: course._id,
+          courseName: course.courseName,
+          courseCode: course.courseCode,
+          lecturer: {
+            name: lecturer.fullName,
+            id: lecturer._id,
+          },
+          session: activeSession,
+        };
+      }),
+    );
+
+    // Filter out null results and only return courses with active sessions
+    return coursesWithActiveAttendance.filter(Boolean);
+    // .filter((course) => course?.session?.status !== 'pending');
   },
 });
 

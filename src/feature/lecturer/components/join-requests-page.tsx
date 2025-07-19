@@ -7,7 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
@@ -19,28 +19,28 @@ import {
 import {
   ArrowLeft,
   // Clock,
-  Check,
-  X,
-  User,
-  Mail,
-  GraduationCap,
+  // Check,
+  // X,
+  // User,
+  // Mail,
+  // GraduationCap,
   Clock,
-  AlertTriangle,
+  // AlertTriangle,
 } from 'lucide-react';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+// import {
+//   Dialog,
+//   DialogContent,
+//   DialogDescription,
+//   DialogFooter,
+//   DialogHeader,
+//   DialogTitle,
+// } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import type { GetLecturerJoinRequestsReturnType } from 'convex/schema';
-import type { Doc, Id } from 'convex/_generated/dataModel';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import type { Id } from 'convex/_generated/dataModel';
+// import { Label } from '@/components/ui/label';
+// import { Textarea } from '@/components/ui/textarea';
 import StudentBindingModal from './StudentBindingModal';
 import { useLecturerClassListWithStudentsQuery } from '@/feature/classList/api/get-classList-with-Students';
 import { useAcceptJoinRequest } from '@/feature/joinRequest/api';
@@ -59,10 +59,16 @@ const JoinRequestsPage = ({
   const [selectedRequest, setSelectedRequest] = useState<
     GetLecturerJoinRequestsReturnType[number] | null
   >(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // const [
+  //   // isModalOpen,
+  //   // setIsModalOpen,
+  // ] = useState(false);
   const [isBindingModalOpen, setIsBindingModalOpen] = useState(true);
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
+  // const [
+  //   // isRejectModalOpen,
+  //   // setIsRejectModalOpen,
+  // ] = useState(false);
+  // const [rejectReason, setRejectReason] = useState('');
   // const [requestStatuses, setRequestStatuses] = useState<
   //   Record<string, 'pending' | 'approved' | 'rejected'>
   // >({});
@@ -80,11 +86,11 @@ const JoinRequestsPage = ({
     { id: 3, name: 'Machine Learning', code: 'CS451' },
   ];
 
-  const handleReject = (request: any) => {
-    setSelectedRequest(request);
-    setIsRejectModalOpen(true);
-    setIsModalOpen(false);
-  };
+  // const handleReject = (request: any) => {
+  //   setSelectedRequest(request);
+  //   setIsRejectModalOpen(true);
+  //   setIsModalOpen(false);
+  // };
 
   const handleBindAndApprove = async ({
     // requestId,
@@ -151,7 +157,7 @@ const JoinRequestsPage = ({
 
   const openRequestModal = (request: any) => {
     setSelectedRequest(request);
-    setIsModalOpen(true);
+    // setIsModalOpen(true);
   };
 
   return (

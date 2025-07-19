@@ -1,0 +1,1 @@
+import{c as o,a as u,b as t}from"./index-CecvFVSM.js";import{u as c}from"./useSuspenseQuery-xIfQJBxe.js";const m=s=>{const e=o.c(2);let r;return e[0]!==s?(r=u(t.courses.getLecturerCourses,{status:s}),e[0]=s,e[1]=r):r=e[1],c(r)};export{m as u};

@@ -1,0 +1,1 @@
+import{c as a,j as s}from"./index-CecvFVSM.js";function o(){const r=a.c(1);let e;return r[0]===Symbol.for("react.memo_cache_sentinel")?(e=s.jsx("div",{className:"flex h-full",children:s.jsx("div",{className:"m-auto border-gray-300 h-20 max-h-full aspect-square animate-spin rounded-full border-8 border-t-slate-900"})}),r[0]=e):e=r[0],e}export{o as L};

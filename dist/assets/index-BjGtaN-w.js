@@ -1,0 +1,1 @@
+import{c as n,j as t,L as s}from"./index-CecvFVSM.js";const i=function(){const o=n.c(1);let e;return o[0]===Symbol.for("react.memo_cache_sentinel")?(e=t.jsxs("div",{className:"w-full",children:["Hello !",t.jsx("button",{className:"ml-auto bg-destructive p-3",children:t.jsx(s,{to:"/login",children:"Log in"})})]}),o[0]=e):e=o[0],e};export{i as component};

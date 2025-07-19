@@ -76,6 +76,8 @@ export type GetLecturerJoinRequestsReturnType = FunctionReturnType<
 export type GetLecturerClassListWithStudentsReturnType = FunctionReturnType<
   typeof api.classLists.getClassListsWithStudents
 >;
+export type GetStudentsCoursesWithActiveAttendanceReturnType =
+  FunctionReturnType<typeof api.courses.getCoursesWithActiveAttendance>;
 // const lecturerCurrentPlanSchema = v.optional(
 //   v.union(
 //     v.object({
@@ -182,6 +184,7 @@ const applicationTables = {
       'lecturerId',
     ])
     .index('by_courseId', ['courseId'])
+    .index('by_studentId', ['studentId'])
     .index('by_lecturerId', ['lecturerId'])
     .index('by_courseId_by_lecturerId', ['courseId', 'lecturerId'])
     .index('by_courseId_by_studentId', ['courseId', 'studentId'])
