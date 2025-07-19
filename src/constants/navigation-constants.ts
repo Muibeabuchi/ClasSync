@@ -23,6 +23,13 @@ export const navigationItems = [
   },
 
   {
+    id: 'classlists',
+    label: 'ClassLists',
+    icon: Users,
+    to: 'classLists',
+    badge: null,
+  },
+  {
     id: 'join-requests',
     label: 'Join Requests',
     icon: Users,
@@ -35,13 +42,6 @@ export const navigationItems = [
   //   icon: Bell,
   //   to: 'notifications',
   //   badge: '5',
-  // },
-  // {
-  //   id: 'classlists',
-  //   label: 'ClassLists',
-  //   icon: Users,
-  //   to: 'classLists',
-  //   badge: null,
   // },
   // {
   //   id: 'billing',
