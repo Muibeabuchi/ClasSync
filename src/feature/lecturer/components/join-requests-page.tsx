@@ -4,18 +4,18 @@ import {
   Card,
   CardContent,
   //   CardDescription,
-  CardHeader,
-  CardTitle,
+  // CardHeader,
+  // CardTitle,
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+// import {
+//   Select,
+//   SelectContent,
+//   SelectItem,
+//   SelectTrigger,
+//   SelectValue,
+// } from '@/components/ui/select';
 import {
   ArrowLeft,
   // Clock,
@@ -56,7 +56,7 @@ const JoinRequestsPage = ({
   lecturerJoinRequests,
   // lecturerCourses,
 }: JoinRequestsPageProps) => {
-  const [selectedCourse, setSelectedCourse] = useState('all');
+  // const [selectedCourse, setSelectedCourse] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<
     GetLecturerJoinRequestsReturnType[number] | null
   >(null);
@@ -83,13 +83,13 @@ const JoinRequestsPage = ({
 
   const { mutateAsync: acceptJoinRequest } = useAcceptJoinRequest();
 
-  // Mock data
-  const mockCourses = [
-    { id: 'all', name: 'All Courses', code: '' },
-    { id: 1, name: 'Advanced Database Systems', code: 'CS401' },
-    { id: 2, name: 'Software Engineering', code: 'CS301' },
-    { id: 3, name: 'Machine Learning', code: 'CS451' },
-  ];
+  // // Mock data
+  // const mockCourses = [
+  //   { id: 'all', name: 'All Courses', code: '' },
+  //   { id: 1, name: 'Advanced Database Systems', code: 'CS401' },
+  //   { id: 2, name: 'Software Engineering', code: 'CS301' },
+  //   { id: 3, name: 'Machine Learning', code: 'CS451' },
+  // ];
 
   // const handleReject = (request: any) => {
   //   setSelectedRequest(request);
@@ -190,7 +190,7 @@ const JoinRequestsPage = ({
         </Badge>
       </div>
       {/* Course Filter */}
-      <Card className="border-0 shadow-sm">
+      {/* <Card className="border-0 shadow-sm">
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Filter by Course</CardTitle>
         </CardHeader>
@@ -215,7 +215,7 @@ const JoinRequestsPage = ({
             </SelectContent>
           </Select>
         </CardContent>
-      </Card>
+      </Card> */}
       {/* Requests Grid */}
       <div className="grid gap-4">
         {lecturerJoinRequests.map((request) => (

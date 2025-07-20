@@ -9,9 +9,6 @@ import { Suspense } from 'react';
 export const Route = createFileRoute('/dashboard/$role/joinRequests')({
   component: RouteComponent,
   loader: async ({ context }) => {
-    context.queryClient.prefetchQuery(
-      convexQuery(api.courses.getLecturerCourses, {}),
-    );
     await context.queryClient.ensureQueryData(
       convexQuery(api.joinRequests.getAllJoinRequestsForLecturer, {}),
     );
