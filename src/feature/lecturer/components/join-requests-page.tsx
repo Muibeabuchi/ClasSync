@@ -42,8 +42,9 @@ import type { Id } from 'convex/_generated/dataModel';
 // import { Label } from '@/components/ui/label';
 // import { Textarea } from '@/components/ui/textarea';
 import StudentBindingModal from './StudentBindingModal';
-import { useLecturerClassListWithStudentsQuery } from '@/feature/classList/api/get-classList-with-Students';
+// import { useLecturerClassListWithStudentsQuery } from '@/feature/classList/api/get-classList-with-Students';
 import { useAcceptJoinRequest } from '@/feature/joinRequest/api';
+import { useGetClassListWithAvailableStudents } from '@/feature/classList/api/get-classlist-with-available-students';
 
 interface JoinRequestsPageProps {
   lecturerJoinRequests: GetLecturerJoinRequestsReturnType;
@@ -73,8 +74,12 @@ const JoinRequestsPage = ({
   //   Record<string, 'pending' | 'approved' | 'rejected'>
   // >({});
 
-  const { data: classListWithStudents } =
-    useLecturerClassListWithStudentsQuery();
+  const {
+    data: classListWithStudents,
+    isLoading: loadingClassListWithAvailableStudents,
+  } = useGetClassListWithAvailableStudents({
+    courseId: selectedRequest ? selectedRequest.courseId : null,
+  });
 
   const { mutateAsync: acceptJoinRequest } = useAcceptJoinRequest();
 
@@ -274,6 +279,9 @@ const JoinRequestsPage = ({
       <StudentBindingModal
         open={isBindingModalOpen}
         classListsWithStudents={classListWithStudents}
+        loadingClassListWithAvailableStudents={
+          loadingClassListWithAvailableStudents
+        }
         onBindAndApprove={handleBindAndApprove}
         onOpenChange={setIsBindingModalOpen}
         request={selectedRequest}

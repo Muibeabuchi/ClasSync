@@ -11,6 +11,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   // Search,
   Users,
@@ -80,6 +81,7 @@ interface StudentBindingModalProps {
     selectedStudentId: Id<'classListStudents'>;
     classListId: Id<'classLists'>;
   }) => void;
+  loadingClassListWithAvailableStudents: boolean;
 }
 
 const StudentBindingModal = ({
@@ -88,6 +90,7 @@ const StudentBindingModal = ({
   onBindAndApprove,
   request,
   classListsWithStudents,
+  loadingClassListWithAvailableStudents,
   // classLists,
 }: StudentBindingModalProps) => {
   // const [searchTerms, setSearchTerms] = useState<Record<string, string>>({});
@@ -152,6 +155,11 @@ const StudentBindingModal = ({
     onOpenChange(false);
   };
 
+  // Show loading skeleton while data is being fetched
+  if (loadingClassListWithAvailableStudents || request === undefined) {
+    return <StudentBindingModalSkeleton />;
+  }
+
   if (!request) return null;
 
   return (
@@ -168,7 +176,7 @@ const StudentBindingModal = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 overflow-y-auto max-h-[60vh]">
+        <div className="space-y-6 overflow-y-auto max-h-[60vh] px-6">
           {/* Student Request Details */}
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader className="pb-3">
@@ -179,7 +187,6 @@ const StudentBindingModal = ({
             <CardContent>
               <div className="flex items-start space-x-4">
                 <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                  {/* <AvatarImage src={request.student.profileImage} /> */}
                   <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                     {request.student.fullName
                       .split(' ')
@@ -257,21 +264,10 @@ const StudentBindingModal = ({
                             {classList.yearGroup}
                           </Badge>
                         </CardTitle>
-                        {/* <Badge variant="secondary" className="text-xs">
-                          {classList.} available
-                        </Badge> */}
+                        <Badge variant="secondary" className="text-xs">
+                          {classList.classListStudents.length} available
+                        </Badge>
                       </div>
-                      {/* <div className="relative">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 text-muted-foreground transform -translate-y-1/2" />
-                        <Input
-                          placeholder="Search by name or reg number..."
-                          value={searchTerms[classList.id] || ''}
-                          onChange={(e) =>
-                            handleSearchChange(classList.id, e.target.value)
-                          }
-                          className="pl-10"
-                        />
-                      </div> */}
                     </CardHeader>
                     <CardContent className="space-y-2">
                       {classList.classListStudents.map((student) => (
@@ -328,10 +324,113 @@ const StudentBindingModal = ({
             disabled={
               !selectedStudentId || classListsWithStudents?.length === 0
             }
-            className="bg-primary hover:bg-primary/90"
           >
             Bind & Approve
           </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+// Loading Skeleton Component
+export const StudentBindingModalSkeleton = () => {
+  return (
+    <Dialog>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Skeleton className="h-5 w-5 rounded" />
+            <Skeleton className="h-6 w-48" />
+          </DialogTitle>
+          <DialogDescription>
+            <Skeleton className="h-4 w-80" />
+          </DialogDescription>
+        </DialogHeader>
+
+        <DialogContent>
+          <div className="space-y-6 overflow-y-auto max-h-[60vh]">
+            {/* Student Request Details Skeleton */}
+            <Card className="border-border/50">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium">
+                  <Skeleton className="h-4 w-32" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-start space-x-4">
+                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <div className="flex-1 space-y-2">
+                    <div className="space-y-1">
+                      <Skeleton className="h-5 w-40" />
+                      <div className="flex items-center gap-1">
+                        <Skeleton className="h-3 w-3 rounded" />
+                        <Skeleton className="h-4 w-24" />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <Skeleton className="h-3 w-12" />
+                        <Skeleton className="h-4 w-32" />
+                      </div>
+                      <div className="space-y-1">
+                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-4 w-28" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Separator />
+
+            {/* ClassList Selection Skeleton */}
+            <div className="space-y-4">
+              <Skeleton className="h-6 w-52" />
+
+              {/* Multiple ClassList Cards */}
+              {Array.from({ length: 2 }).map((_, index) => (
+                <Card key={index} className="border-border/50">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-6" />
+                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-5 w-16 rounded-full" />
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {/* Student entries skeleton */}
+                    {Array.from({ length: 3 }).map((_, studentIndex) => (
+                      <div
+                        key={studentIndex}
+                        className="flex items-center space-x-3 p-3 rounded-lg border border-border/30"
+                      >
+                        <Skeleton className="h-4 w-4 rounded-full" />
+                        <Skeleton className="h-8 w-8 rounded-full" />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div className="space-y-1">
+                              <Skeleton className="h-4 w-28" />
+                              <Skeleton className="h-3 w-20" />
+                            </div>
+                            <Skeleton className="h-5 w-12 rounded-full" />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+
+        <DialogFooter className="gap-2">
+          <Skeleton className="h-10 w-20" />
+          <Skeleton className="h-10 w-32" />
         </DialogFooter>
       </DialogContent>
     </Dialog>
