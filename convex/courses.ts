@@ -26,10 +26,7 @@ export const createCourse = lecturerMutation({
   handler: async (ctx, { courseName, initialCourseCode, classListIds }) => {
     const lecturerId = ctx.user._id;
 
-    const courseCode = CoursesModel.generateCourseCode(
-      initialCourseCode,
-      lecturerId,
-    );
+    const courseCode = CoursesModel.generateCourseCode(initialCourseCode);
 
     const courseId = await ctx.db.insert('courses', {
       lecturerId,

@@ -2,6 +2,7 @@ import {
   Home,
   BookOpen,
   Users,
+  ClipboardList,
   // Bell,
   //  CreditCard
 } from 'lucide-react';
@@ -25,7 +26,7 @@ export const navigationItems = [
   {
     id: 'classlists',
     label: 'ClassLists',
-    icon: Users,
+    icon: ClipboardList,
     to: 'classLists',
     badge: null,
   },

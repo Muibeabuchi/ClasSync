@@ -39,7 +39,7 @@ const CourseCard = ({
   handleCourseNavigate,
 }: {
   course: Doc<'courses'> & {
-    stats: {
+    stats?: {
       classlistCount: number;
       totalStudents: number;
       sessionsHeld: number;
@@ -48,24 +48,21 @@ const CourseCard = ({
   };
   handleCourseNavigate: (value: Id<'courses'>) => void;
 }) => {
-  // const navigate = useNavigate();
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
         return (
-          <Badge className="bg-green-100 text-green-800 border-green-200">
+          <Badge
+            variant="secondary"
+            className="bg-emerald-100 text-emerald-800"
+          >
             Active
           </Badge>
         );
       case 'archived':
         return <Badge variant="secondary">Archived</Badge>;
       case 'completed':
-        return (
-          <Badge className="bg-blue-100 text-blue-800 border-blue-200">
-            Completed
-          </Badge>
-        );
+        return <Badge>Completed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -76,19 +73,19 @@ const CourseCard = ({
   };
 
   return (
-    <Card className="group relative overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 bg-white dark:bg-gray-900">
+    <Card className="group relative overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
       {/* Header */}
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-xl group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
-              <BookOpen className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            <div className="p-2.5 bg-primary/10 rounded-xl group-hover:bg-primary/20 transition-colors">
+              <BookOpen className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
+              <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors truncate">
                 {course.courseName}
               </CardTitle>
-              <CardDescription className="text-sm font-medium text-gray-600 dark:text-gray-400 mt-0.5">
+              <CardDescription className="text-sm font-medium mt-0.5">
                 {course.courseCode}
               </CardDescription>
             </div>
@@ -131,58 +128,50 @@ const CourseCard = ({
         {/* Statistics Grid */}
         <div className="grid grid-cols-3 gap-4 mb-4">
           <div className="text-center">
-            <div className="flex items-center justify-center w-8 h-8 bg-purple-50 dark:bg-purple-900/20 rounded-lg mx-auto mb-1">
-              <FileText className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+            <div className="flex items-center justify-center w-8 h-8 bg-secondary/20 rounded-lg mx-auto mb-1">
+              <FileText className="h-4 w-4 text-secondary" />
             </div>
-            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="text-lg font-semibold">
               {course.stats?.classlistCount || 0}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              Classlists
-            </div>
+            <div className="text-xs text-muted-foreground">Classlists</div>
           </div>
 
           <div className="text-center">
-            <div className="flex items-center justify-center w-8 h-8 bg-green-50 dark:bg-green-900/20 rounded-lg mx-auto mb-1">
-              <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
+            <div className="flex items-center justify-center w-8 h-8 bg-primary/20 rounded-lg mx-auto mb-1">
+              <Users className="h-4 w-4 text-primary" />
             </div>
-            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="text-lg font-semibold">
               {course.stats?.totalStudents || 0}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              Students
-            </div>
+            <div className="text-xs text-muted-foreground">Students</div>
           </div>
 
           <div className="text-center">
-            <div className="flex items-center justify-center w-8 h-8 bg-orange-50 dark:bg-orange-900/20 rounded-lg mx-auto mb-1">
-              <Clock className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+            <div className="flex items-center justify-center w-8 h-8 bg-accent/20 rounded-lg mx-auto mb-1">
+              <Clock className="h-4 w-4 text-accent" />
             </div>
-            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+            <div className="text-lg font-semibold">
               {course.stats?.sessionsHeld || 0}
             </div>
-            <div className="text-xs text-gray-500 dark:text-gray-400">
-              Sessions
-            </div>
+            <div className="text-xs text-muted-foreground">Sessions</div>
           </div>
         </div>
 
         {/* Pending Requests Alert */}
-        {course.stats?.pendingRequests > 0 && (
-          <div className="flex items-center gap-2 p-2 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg mb-4">
-            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-            <span className="text-sm text-amber-800 dark:text-amber-200">
-              {course.stats.pendingRequests} pending request
-              {course.stats.pendingRequests !== 1 ? 's' : ''}
-            </span>
-          </div>
-        )}
+        {course?.stats?.pendingRequests &&
+          course?.stats?.pendingRequests > 0 && (
+            <div className="flex items-center gap-2 p-2 bg-warning/20 border border-warning/30 rounded-lg mb-4">
+              <AlertCircle className="h-4 w-4 text-warning" />
+              <span className="text-sm">
+                {course.stats.pendingRequests} pending request
+                {course.stats.pendingRequests !== 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
 
         {/* Action Button */}
-        <Button
-          onClick={handleViewCourse}
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-        >
+        <Button onClick={handleViewCourse} className="w-full" variant="default">
           <Eye className="h-4 w-4 mr-2" />
           View Course
         </Button>
