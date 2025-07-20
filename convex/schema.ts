@@ -199,7 +199,7 @@ const applicationTables = {
       v.literal('approved'),
       v.literal('rejected'),
     ),
-    message: v.optional(v.string()),
+    rejectionReason: v.optional(v.string()),
   })
     .index('by_student_by_courseId', ['studentId', 'courseId'])
     .index('by_lecturerId_by_courseId', ['lecturerId', 'courseId'])

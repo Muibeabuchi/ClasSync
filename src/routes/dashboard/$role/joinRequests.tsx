@@ -1,6 +1,7 @@
 // import { useGetLecturerCourses } from '@/feature/course/api/get-lecturer-courses';
 import { useGetLecturerJoinRequests } from '@/feature/joinRequest/api';
 import JoinRequestsPage from '@/feature/lecturer/components/join-requests-page';
+import JoinRequestsSkeleton from '@/feature/lecturer/components/join-requests-skeleton';
 import { convexQuery } from '@convex-dev/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { api } from 'convex/_generated/api';
@@ -14,15 +15,15 @@ export const Route = createFileRoute('/dashboard/$role/joinRequests')({
       convexQuery(api.joinRequests.getAllJoinRequestsForLecturer, {}),
     );
   },
+  pendingComponent: JoinRequestsSkeleton,
 });
 
 function RouteComponent() {
   const { data: lecturerJoinRequests } = useGetLecturerJoinRequests();
-  // const { data: lecturerCourses } = useGetLecturerCourses();
 
   return (
     <div>
-      <Suspense fallback={<p>Loading...</p>}>
+      <Suspense fallback={<JoinRequestsSkeleton />}>
         <JoinRequestsPage
           lecturerJoinRequests={lecturerJoinRequests}
           // lecturerCourses={lecturerCourses}

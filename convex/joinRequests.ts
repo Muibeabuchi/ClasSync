@@ -2,48 +2,48 @@ import { ConvexError, v } from 'convex/values';
 import {
   courseMutation,
   lecturerQuery,
+  lecturerMutation,
 } from './middlewares/lecturerMiddleware';
 import { StudentMutationMiddleware } from './middlewares/studentMiddleware';
-// import { getAuthUserId } from "@convex-dev/auth/server";
 
-// export const rejectJoinRequest = mutation({
-//   args: {
-//     requestId: v.id('joinRequests'),
-//     reason: v.optional(v.string()),
-//   },
-//   handler: async (ctx, args) => {
-//     const userId = await getAuthUserId(ctx);
-//     if (!userId) {
-//       throw new Error('Not authenticated');
-//     }
+export const rejectJoinRequest = lecturerMutation({
+  args: {
+    joinRequestId: v.id('joinRequests'),
+    rejectionReason: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
 
-//     const request = await ctx.db.get(args.requestId);
-//     if (!request) {
-//       throw new Error('Request not found');
-//     }
+    // Get the join request
+    const request = await ctx.db.get(args.joinRequestId);
+    if (!request) {
+      throw new ConvexError('Join request not found');
+    }
 
-//     const course = await ctx.db.get(request.courseId);
-//     if (!course || course.lecturerId !== userId) {
-//       throw new Error('Unauthorized');
-//     }
+    // Verify the lecturer owns this request
+    if (request.lecturerId !== lecturerId) {
+      throw new ConvexError(
+        'Unauthorized: You can only reject your own course join requests',
+      );
+    }
 
-//     await ctx.db.patch(args.requestId, {
-//       status: 'rejected',
-//       rejectionReason: args.reason,
-//     });
+    // Verify the request is still pending
+    if (request.status !== 'pending') {
+      throw new ConvexError('Only pending join requests can be rejected');
+    }
 
-//     return true;
-//   },
-// });
+    // Update the request status to rejected
+    await ctx.db.patch(args.joinRequestId, {
+      status: 'rejected',
+      rejectionReason: args.rejectionReason,
+    });
 
-// export const acceptStudentJoinRequest = courseMutation({
-//   args: {},
-//   async handler(ctx, args) {
-//     const course = ctx.course;
-
-//     return await ctx.db.
-//   },
-// });
+    return {
+      success: true,
+      message: 'Join request rejected successfully',
+    };
+  },
+});
 
 export const getAllJoinRequestsForLecturer = lecturerQuery({
   args: {},
@@ -124,7 +124,7 @@ export const createJoinRequest = StudentMutationMiddleware({
       studentId,
       courseId: args.courseId,
       status: 'pending',
-      message: args.message,
+      rejectionReason: args.message,
       lecturerId: args.lecturerId,
     });
 
