@@ -380,6 +380,8 @@ export const acceptAndLinkJoinRequest = lecturerMutation({
     //   throw new ConvexError('Student Registration Number does not Match');
     // }
 
+    // Check if there is an attendanceListStudent for classListStudent already has already been used
+
     // check if  the student has already been added to the attendanceList
     const linkedStudent = await ctx.db
       .query('courseAttendanceList')

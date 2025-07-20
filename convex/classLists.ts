@@ -1,5 +1,6 @@
 import { v } from 'convex/values';
 import {
+  LecturerCourseQuery,
   classListQuery,
   lecturerMutation,
   lecturerQuery,
@@ -245,59 +246,64 @@ export const getClassList = classListQuery({
   },
 });
 
-// Get ClassList statistics
-// export const getClassListStats = query({
-//   args: { classListId: v.id('classLists') },
-//   handler: async (ctx, args) => {
-//     const userId = await getAuthUserId(ctx);
-//     if (!userId) {
-//       throw new Error('Not authenticated');
-//     }
+// Get ClassLists with students not yet added to a specific course
+export const getClassListsWithAvailableStudents = LecturerCourseQuery({
+  args: {
+    courseId: v.id('courses'),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
 
-//     const classList = await ctx.db.get(args.classListId);
-//     if (!classList) {
-//       throw new Error('ClassList not found');
-//     }
+    // Get all class lists for the lecturer
+    const classLists = await ctx.db
+      .query('classLists')
+      .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId))
+      .order('desc')
+      .collect();
 
-//     if (classList.lecturerId !== userId) {
-//       throw new Error('Access denied');
-//     }
+    // Get all students already in the course attendance list
+    const existingCourseAttendees = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_courseId_by_lecturerId', (q) =>
+        q.eq('courseId', args.courseId).eq('lecturerId', lecturerId),
+      )
+      .collect();
 
-//     // Get courses using this ClassList
-//     const courses = await ctx.db
-//       .query('courses')
-//       .withIndex('by_lecturer', (q) => q.eq('lecturerId', userId))
-//       .collect();
+    // Create a set of classListStudentIds that are already in the course
+    const existingStudentIds = new Set(
+      existingCourseAttendees.map((attendee) => attendee.classListStudentId),
+    );
 
-//     const coursesUsingClassList = courses.filter((course) =>
-//       course.classListIds.includes(args.classListId),
-//     );
+    // Process each class list and filter out students already in the course
+    const classListsWithAvailableStudents = await Promise.all(
+      classLists.map(async (classList) => {
+        // Get all students in this class list
+        const allClassListStudents = await ctx.db
+          .query('classListStudents')
+          .withIndex('by_classListId', (q) =>
+            q.eq('classListId', classList._id),
+          )
+          .collect();
 
-//     // Calculate gender distribution
-//     const genderStats = classList.students.reduce(
-//       (acc, student) => {
-//         acc[student.gender] = (acc[student.gender] || 0) + 1;
-//         return acc;
-//       },
-//       {} as Record<string, number>,
-//     );
+        // Filter out students who are already in the course
+        const availableStudents = allClassListStudents.filter(
+          (student) => !existingStudentIds.has(student._id),
+        );
 
-//     // Calculate year level distribution
-//     const yearLevelStats = classList.students.reduce(
-//       (acc, student) => {
-//         acc[student.yearLevel] = (acc[student.yearLevel] || 0) + 1;
-//         return acc;
-//       },
-//       {} as Record<string, number>,
-//     );
+        return {
+          ...classList,
+          classListStudents: availableStudents,
+          totalStudents: allClassListStudents.length,
+          availableStudents: availableStudents.length,
+          studentsInCourse:
+            allClassListStudents.length - availableStudents.length,
+        };
+      }),
+    );
 
-//     return {
-//       totalStudents: classList.students.length,
-//       coursesUsing: coursesUsingClassList.length,
-//       genderDistribution: genderStats,
-//       yearLevelDistribution: yearLevelStats,
-//       createdAt: classList.createdAt,
-//       lastUpdated: classList.updatedAt,
-//     };
-//   },
-// });
+    // Filter out class lists that have no available students (optional)
+    return classListsWithAvailableStudents.filter(
+      (classList) => classList.availableStudents > 0,
+    );
+  },
+});
