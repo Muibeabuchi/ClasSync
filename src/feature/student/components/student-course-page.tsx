@@ -140,9 +140,7 @@ const StudentCoursesPage = () => {
                   {Math.round(
                     filteredCourses?.reduce((acc, course) => {
                       if (!course) return acc;
-                      return (
-                        acc + course?.attendanceStats?.attendanceRate * 100
-                      );
+                      return acc + course?.attendanceStats?.attendanceRate;
                     }, 0) / enrolledCourses?.length,
                   )}
                   %
