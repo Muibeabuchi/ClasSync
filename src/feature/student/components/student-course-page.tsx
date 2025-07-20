@@ -1,73 +1,88 @@
 import { useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+  Search,
+  BookOpen,
+  Users,
+  Clock,
+  // Eye,
+  // MoreVertical,
+} from 'lucide-react';
+import { useGetStudentCourses } from '@/feature/course/api/get-student-courses';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Search, BookOpen, Users, Clock, LogOut } from 'lucide-react';
-import { toast } from 'sonner';
+import CourseCard from './stuent-course-card';
 
 const StudentCoursesPage = () => {
+  const { data: enrolledCourses } = useGetStudentCourses();
   const [searchTerm, setSearchTerm] = useState('');
-  //   const { toast } = useToast();
 
-  // Mock enrolled courses
-  const enrolledCourses = [
-    {
-      id: 1,
-      name: 'Advanced Database Systems',
-      code: 'CS401',
-      lecturer: 'Prof. Sarah Johnson',
-      schedule: 'Mon, Wed, Fri - 9:00 AM',
-      attendance: 92,
-      totalSessions: 24,
-      attendedSessions: 22,
-      status: 'active',
-      department: 'Computer Science',
-    },
-    {
-      id: 2,
-      name: 'Software Engineering',
-      code: 'CS301',
-      lecturer: 'Dr. Michael Brown',
-      schedule: 'Tue, Thu - 2:00 PM',
-      attendance: 88,
-      totalSessions: 18,
-      attendedSessions: 16,
-      status: 'active',
-      department: 'Computer Science',
-    },
-    {
-      id: 3,
-      name: 'Machine Learning',
-      code: 'CS451',
-      lecturer: 'Engr. Lisa Chen',
-      schedule: 'Wed, Fri - 11:00 AM',
-      attendance: 95,
-      totalSessions: 20,
-      attendedSessions: 19,
-      status: 'active',
-      department: 'Computer Science',
-    },
-  ];
-
-  const handleExitCourse = (courseName: string) => {
-    toast.success(
-      `Your request to exit ${courseName} has been submitted for approval.`,
-    );
-  };
+  // Mock enrolled courses with new structure
+  // const mockCourses: Course[] = [
+  //   {
+  //     id: '1',
+  //     courseName: 'Advanced Database Systems',
+  //     courseCode: 'CS401',
+  //     status: 'active',
+  //     lecturer: {
+  //       id: 'lec1',
+  //       name: 'Sarah Johnson',
+  //       title: 'Prof.',
+  //     },
+  //     attendanceStats: {
+  //       attendanceRate: 0.92,
+  //       totalSessions: 24,
+  //       attendedSessions: 22,
+  //     },
+  //     hasActiveSession: true,
+  //     activeSession: {
+  //       id: 'session1',
+  //       status: 'active',
+  //       endedAt: null,
+  //     },
+  //   },
+  //   {
+  //     id: '2',
+  //     courseName: 'Software Engineering',
+  //     courseCode: 'CS301',
+  //     status: 'active',
+  //     lecturer: {
+  //       id: 'lec2',
+  //       name: 'Michael Brown',
+  //       title: 'Dr.',
+  //     },
+  //     attendanceStats: {
+  //       attendanceRate: 0.88,
+  //       totalSessions: 18,
+  //       attendedSessions: 16,
+  //     },
+  //     hasActiveSession: false,
+  //     activeSession: null,
+  //   },
+  //   {
+  //     id: '3',
+  //     courseName: 'Machine Learning',
+  //     courseCode: 'CS451',
+  //     status: 'active',
+  //     lecturer: {
+  //       id: 'lec3',
+  //       name: 'Lisa Chen',
+  //       title: 'Engr.',
+  //     },
+  //     attendanceStats: {
+  //       attendanceRate: 0.95,
+  //       totalSessions: 20,
+  //       attendedSessions: 19,
+  //     },
+  //     hasActiveSession: false,
+  //     activeSession: null,
+  //   },
+  // ];
 
   const filteredCourses = enrolledCourses.filter(
     (course) =>
-      course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.lecturer.toLowerCase().includes(searchTerm.toLowerCase()),
+      course?.courseName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course?.courseCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      course?.lecturer.name.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   return (
@@ -104,7 +119,7 @@ const StudentCoursesPage = () => {
                   Total Courses
                 </p>
                 <p className="text-2xl font-bold text-foreground">
-                  {enrolledCourses.length}
+                  {enrolledCourses?.length}
                 </p>
               </div>
             </div>
@@ -114,8 +129,8 @@ const StudentCoursesPage = () => {
         <Card>
           <CardContent className="flex items-center p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-2 bg-chart-2/10 rounded-lg">
-                <Clock className="h-6 w-6 text-chart-2" />
+              <div className="p-2 bg-success/10 rounded-lg">
+                <Clock className="h-6 w-6 text-success" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
@@ -123,10 +138,12 @@ const StudentCoursesPage = () => {
                 </p>
                 <p className="text-2xl font-bold text-foreground">
                   {Math.round(
-                    enrolledCourses.reduce(
-                      (acc, course) => acc + course.attendance,
-                      0,
-                    ) / enrolledCourses.length,
+                    filteredCourses?.reduce((acc, course) => {
+                      if (!course) return acc;
+                      return (
+                        acc + course?.attendanceStats?.attendanceRate * 100
+                      );
+                    }, 0) / enrolledCourses?.length,
                   )}
                   %
                 </p>
@@ -138,17 +155,17 @@ const StudentCoursesPage = () => {
         <Card>
           <CardContent className="flex items-center p-6">
             <div className="flex items-center space-x-4">
-              <div className="p-2 bg-chart-4/10 rounded-lg">
-                <Users className="h-6 w-6 text-chart-4" />
+              <div className="p-2 bg-warning/10 rounded-lg">
+                <Users className="h-6 w-6 text-warning" />
               </div>
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Active Courses
+                  Active Sessions
                 </p>
                 <p className="text-2xl font-bold text-foreground">
                   {
-                    enrolledCourses.filter(
-                      (course) => course.status === 'active',
+                    filteredCourses?.filter(
+                      (course) => course?.hasActiveSession,
                     ).length
                   }
                 </p>
@@ -159,85 +176,13 @@ const StudentCoursesPage = () => {
       </div>
 
       {/* Courses Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredCourses.map((course) => (
-          <Card key={course.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <CardTitle className="text-lg">{course.name}</CardTitle>
-                  <CardDescription>
-                    {course.code} • {course.department}
-                  </CardDescription>
-                </div>
-                <Badge variant="secondary">{course.status}</Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback>
-                    {course.lecturer
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="text-sm font-medium">{course.lecturer}</p>
-                  <p className="text-xs text-muted-foreground/80">
-                    {course.schedule}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">Attendance</span>
-                  <span
-                    className={`font-medium ${
-                      course.attendance >= 90
-                        ? 'text-chart-2'
-                        : course.attendance >= 75
-                          ? 'text-chart-5'
-                          : 'text-destructive'
-                    }`}
-                  >
-                    {course.attendance}% ({course.attendedSessions}/
-                    {course.totalSessions})
-                  </span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className={`h-2 rounded-full ${
-                      course.attendance >= 90
-                        ? 'bg-chart-2'
-                        : course.attendance >= 75
-                          ? 'bg-chart-5'
-                          : 'bg-destructive'
-                    }`}
-                    style={{ width: `${course.attendance}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" className="flex-1">
-                  View Details
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleExitCourse(course.name)}
-                  className="flex items-center gap-1"
-                >
-                  <LogOut className="h-3 w-3" />
-                  Exit Course
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {enrolledCourses && enrolledCourses.length > 0
+          ? filteredCourses.map((course) => {
+              if (!course) return;
+              return <CourseCard key={course.id} course={course} />;
+            })
+          : null}
       </div>
 
       {filteredCourses.length === 0 && (

@@ -78,6 +78,10 @@ export type GetLecturerClassListWithStudentsReturnType = FunctionReturnType<
 >;
 export type GetStudentsCoursesWithActiveAttendanceReturnType =
   FunctionReturnType<typeof api.courses.getCoursesWithActiveAttendance>;
+
+export type GetStudentsCoursesReturnType = FunctionReturnType<
+  typeof api.courses.getStudentCourses
+>;
 // const lecturerCurrentPlanSchema = v.optional(
 //   v.union(
 //     v.object({
