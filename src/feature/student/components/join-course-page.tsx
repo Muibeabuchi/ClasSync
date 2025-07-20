@@ -168,13 +168,7 @@ const JoinCoursePage = () => {
       message: requestMessage,
     });
 
-    setSearchResult((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        isMember: !!prev.isMember,
-      };
-    });
+    setSearchResult(null);
 
     toast.success(
       `Your request to join ${selectedCourse.name} has been sent to ${selectedCourse.lecturer}.`,
