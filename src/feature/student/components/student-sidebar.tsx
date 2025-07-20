@@ -22,7 +22,41 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
 // import { ThemeToggle } from '@/components/theme-toggle';
+
+const navigationItems = [
+  {
+    id: 'dashboard',
+    label: 'Dashboard',
+    icon: Home,
+    badge: null,
+  },
+  {
+    id: 'courses',
+    label: 'My Courses',
+    icon: BookOpen,
+    badge: '3',
+  },
+  {
+    id: 'join-course',
+    label: 'Join Course',
+    icon: Plus,
+    badge: null,
+  },
+  {
+    id: 'attendance',
+    label: 'Check In',
+    icon: Clock,
+    badge: null,
+  },
+  {
+    id: 'notifications',
+    label: 'Notifications',
+    icon: Bell,
+    badge: '3',
+  },
+];
 
 interface StudentSidebarProps {
   activePage: string;
@@ -36,42 +70,10 @@ const StudentSidebar = ({
   userData,
 }: StudentSidebarProps) => {
   const { state } = useSidebar();
-
-  const navigationItems = [
-    {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: Home,
-      badge: null,
-    },
-    {
-      id: 'courses',
-      label: 'My Courses',
-      icon: BookOpen,
-      badge: '3',
-    },
-    {
-      id: 'join-course',
-      label: 'Join Course',
-      icon: Plus,
-      badge: null,
-    },
-    {
-      id: 'attendance',
-      label: 'Check In',
-      icon: Clock,
-      badge: null,
-    },
-    {
-      id: 'notifications',
-      label: 'Notifications',
-      icon: Bell,
-      badge: '3',
-    },
-  ];
+  const signOut = useSignOut();
 
   const handleSignOut = () => {
-    console.log('Signing out...');
+    signOut();
   };
 
   return (

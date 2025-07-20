@@ -52,10 +52,7 @@ interface JoinRequestsPageProps {
   // onBack: () => void;
 }
 
-const JoinRequestsPage = ({
-  lecturerJoinRequests,
-  // lecturerCourses,
-}: JoinRequestsPageProps) => {
+const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
   // const [selectedCourse, setSelectedCourse] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<
     GetLecturerJoinRequestsReturnType[number] | null
