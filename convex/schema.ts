@@ -78,6 +78,10 @@ export type GetLecturerClassListWithStudentsReturnType = FunctionReturnType<
 >;
 export type GetStudentsCoursesWithActiveAttendanceReturnType =
   FunctionReturnType<typeof api.courses.getCoursesWithActiveAttendance>;
+
+export type GetStudentsCoursesReturnType = FunctionReturnType<
+  typeof api.courses.getStudentCourses
+>;
 // const lecturerCurrentPlanSchema = v.optional(
 //   v.union(
 //     v.object({
@@ -199,7 +203,7 @@ const applicationTables = {
       v.literal('approved'),
       v.literal('rejected'),
     ),
-    message: v.optional(v.string()),
+    rejectionReason: v.optional(v.string()),
   })
     .index('by_student_by_courseId', ['studentId', 'courseId'])
     .index('by_lecturerId_by_courseId', ['lecturerId', 'courseId'])

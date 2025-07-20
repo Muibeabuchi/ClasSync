@@ -25,6 +25,7 @@ import {
 import { navigationItems } from '@/constants/navigation-constants';
 import { Link } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
+import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
 // import { ThemeToggle } from '@/components/theme-toggle';
 
 interface LecturerSidebarProps {
@@ -38,8 +39,10 @@ const LecturerSidebar = ({
 }: LecturerSidebarProps) => {
   const { state } = useSidebar();
 
+  const signOut = useSignOut();
+
   const handleSignOut = () => {
-    console.log('Signing out...');
+    signOut();
   };
 
   return (

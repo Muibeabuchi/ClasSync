@@ -13,6 +13,7 @@ export const Route = createFileRoute('/dashboard/$role/classLists')({
       convexQuery(api.classLists.getMyClassLists, {}),
     );
   },
+  pendingComponent: LecturerClassListsPageSkeleton,
 });
 
 function RouteComponent() {
@@ -22,11 +23,5 @@ function RouteComponent() {
     return <LecturerClassListsPageSkeleton />;
   }
 
-  return (
-    <LecturerClassListsPage
-      LecturerClassLists={classLists}
-      // onEditClassList={handleEditClassList}
-      // onBack={handleBackToDashboard}
-    />
-  );
+  return <LecturerClassListsPage LecturerClassLists={classLists} />;
 }

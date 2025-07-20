@@ -2,35 +2,30 @@ import { ConvexError } from 'convex/values';
 import { Id } from '../_generated/dataModel';
 import { MutationCtx } from '../_generated/server';
 
-export function generateCourseCode(
-  courseCode: string,
-  lecturerId: string,
-): string {
-  // Remove non-alphanumeric characters from course code and limit it to 6 characters
+export function generateCourseCode(courseCode: string): string {
+  // Remove non-alphanumeric characters from course code and limit it to 5 characters
   const cleanCourseCode = courseCode
     .replace(/[^a-zA-Z0-9]/g, '')
     .toUpperCase()
-    .slice(0, 6);
+    .slice(0, 5);
 
-  // Generate a simple hash from the lecturerId
-  const hash = simpleHash(lecturerId)
-    .toString(36)
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '')
-    .slice(0, 4);
+  // Calculate how many random characters we need
+  const randomCharsNeeded = 10 - cleanCourseCode.length;
 
+  // Generate random alphanumeric characters
+  const randomChars = generateRandomAlphanumeric(randomCharsNeeded);
   // Concatenate and return a 10-character alphanumeric code
-  return (cleanCourseCode + hash).slice(0, 10);
+  return cleanCourseCode + randomChars;
 }
 
-// Simple deterministic hash function for string input
-function simpleHash(input: string): number {
-  let hash = 0;
-  for (let i = 0; i < input.length; i++) {
-    hash = (hash << 5) - hash + input.charCodeAt(i);
-    hash |= 0; // Convert to 32-bit integer
+// Function to generate random alphanumeric characters
+function generateRandomAlphanumeric(length: number): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  return Math.abs(hash);
+  return result;
 }
 
 export async function updateLecturerConsumption({

@@ -26,10 +26,7 @@ export const createCourse = lecturerMutation({
   handler: async (ctx, { courseName, initialCourseCode, classListIds }) => {
     const lecturerId = ctx.user._id;
 
-    const courseCode = CoursesModel.generateCourseCode(
-      initialCourseCode,
-      lecturerId,
-    );
+    const courseCode = CoursesModel.generateCourseCode(initialCourseCode);
 
     const courseId = await ctx.db.insert('courses', {
       lecturerId,
@@ -383,6 +380,8 @@ export const acceptAndLinkJoinRequest = lecturerMutation({
     //   throw new ConvexError('Student Registration Number does not Match');
     // }
 
+    // Check if there is an attendanceListStudent for classListStudent already has already been used
+
     // check if  the student has already been added to the attendanceList
     const linkedStudent = await ctx.db
       .query('courseAttendanceList')
@@ -567,6 +566,96 @@ export const getCoursesWithActiveAttendance = StudentQueryMiddleware({
     // Filter out null results and only return courses with active sessions
     return coursesWithActiveAttendance.filter(Boolean);
     // .filter((course) => course?.session?.status !== 'pending');
+  },
+});
+
+export const getStudentCourses = StudentQueryMiddleware({
+  args: {},
+  handler: async (ctx) => {
+    const studentId = ctx.user._id;
+
+    // Get all courses the student is enrolled in
+    const enrolledCourses = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_studentId', (q) => q.eq('studentId', studentId))
+      .collect();
+
+    if (enrolledCourses.length === 0) {
+      return [];
+    }
+
+    // Get course details with lecturer info and attendance stats
+    const coursesWithDetails = await Promise.all(
+      enrolledCourses.map(async (enrollment) => {
+        const course = await ctx.db.get(enrollment.courseId);
+        if (!course) return null;
+
+        // Get lecturer info
+        const lecturer = await ctx.db.get(course.lecturerId);
+        if (!lecturer) return null;
+
+        // Calculate student's attendance rate for this course
+        const totalSessions = await ctx.db
+          .query('attendanceSessions')
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+          .filter((q) => q.neq(q.field('status'), 'pending'))
+          .collect();
+
+        const attendedSessions = await ctx.db
+          .query('attendanceRecords')
+          .withIndex('by_studentId_by_courseId', (q) =>
+            q.eq('studentId', studentId).eq('courseId', course._id),
+          )
+          .collect();
+
+        const attendanceRate =
+          totalSessions.length > 0
+            ? Math.round((attendedSessions.length / totalSessions.length) * 100)
+            : 0;
+
+        // Check if there's an active session
+        const activeSession = await ctx.db
+          .query('attendanceSessions')
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+          .filter((q) =>
+            q.or(
+              q.eq(q.field('status'), 'active'),
+              q.eq(q.field('status'), 'pending'),
+            ),
+          )
+          .first();
+
+        return {
+          id: course._id,
+          courseName: course.courseName,
+          courseCode: course.courseCode,
+          status: course.status,
+          lecturer: {
+            id: lecturer._id,
+            name: lecturer.fullName,
+            title: lecturer.title,
+          },
+          attendanceStats: {
+            attendanceRate,
+            totalSessions: totalSessions.length,
+            attendedSessions: attendedSessions.length,
+          },
+          hasActiveSession: !!activeSession,
+          activeSession: activeSession
+            ? {
+                id: activeSession._id,
+                status: activeSession.status,
+                endedAt: activeSession.endedAt,
+              }
+            : null,
+        };
+      }),
+    );
+
+    // Filter out null results and return only active courses
+    return coursesWithDetails
+      .filter(Boolean)
+      .filter((course) => course?.status === 'active');
   },
 });
 
