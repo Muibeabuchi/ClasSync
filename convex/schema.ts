@@ -204,6 +204,7 @@ const applicationTables = {
       v.literal('rejected'),
     ),
     rejectionReason: v.optional(v.string()),
+    message: v.optional(v.string()),
   })
     .index('by_student_by_courseId', ['studentId', 'courseId'])
     .index('by_lecturerId_by_courseId', ['lecturerId', 'courseId'])
