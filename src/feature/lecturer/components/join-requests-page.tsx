@@ -26,6 +26,7 @@ import {
   // GraduationCap,
   Clock,
   // AlertTriangle,
+  UserPlus,
 } from 'lucide-react';
 
 // import {
@@ -162,6 +163,29 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
     // setIsModalOpen(true);
   };
 
+  // Empty state component
+  const EmptyRequestsState = () => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="rounded-full bg-muted/50 p-6 mb-4">
+        <UserPlus className="h-12 w-12 text-primary" />
+      </div>
+      <h3 className="text-lg font-semibold mb-2">No join requests yet</h3>
+      <p className="text-muted-foreground mb-6 max-w-sm text-sm">
+        When students request to join your courses, their requests will appear
+        here for your review and approval.
+      </p>
+      <div className="text-sm text-muted-foreground">
+        <h3 className="text-primary text-md font-semibold ">
+          Students can request to join by:
+        </h3>
+        <ul className="mt-2 space-y-1">
+          <li>• Searching for your course using the course code</li>
+          <li>• Following invitation links</li>
+        </ul>
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
@@ -213,65 +237,69 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
           </Select>
         </CardContent>
       </Card> */}
-      {/* Requests Grid */}
-      <div className="grid gap-4">
-        {lecturerJoinRequests.map((request) => (
-          <Card
-            key={request._id}
-            className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-gradient-to-r from-background to-muted/30"
-            onClick={() => {
-              openRequestModal(request);
-              setIsBindingModalOpen(true);
-            }}
-          >
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <Avatar className="h-10 w-10 ring-2 ring-muted">
-                    {/* <AvatarImage src={request.student.profileImage} /> */}
-                    <AvatarFallback className="text-xs font-medium">
-                      {request.student.fullName
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-sm">
-                        {request.student.fullName}
-                      </h3>
-                      <Badge variant="outline" className="text-xs px-2 py-0">
-                        {request.student.registrationNumber}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span>{request.course.courseName}</span>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {getTimeAgo(
-                          new Date(request._creationTime).toLocaleString(),
-                        )}
-                      </span>
+      {/* Requests Grid or Empty State */}
+      {lecturerJoinRequests.length === 0 ? (
+        <EmptyRequestsState />
+      ) : (
+        <div className="grid gap-4">
+          {lecturerJoinRequests.map((request) => (
+            <Card
+              key={request._id}
+              className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-gradient-to-r from-background to-muted/30"
+              onClick={() => {
+                openRequestModal(request);
+                setIsBindingModalOpen(true);
+              }}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Avatar className="h-10 w-10 ring-2 ring-muted">
+                      {/* <AvatarImage src={request.student.profileImage} /> */}
+                      <AvatarFallback className="text-xs font-medium">
+                        {request.student.fullName
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-sm">
+                          {request.student.fullName}
+                        </h3>
+                        <Badge variant="outline" className="text-xs px-2 py-0">
+                          {request.student.registrationNumber}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{request.course.courseName}</span>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          {getTimeAgo(
+                            new Date(request._creationTime).toLocaleString(),
+                          )}
+                        </span>
+                      </div>
                     </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant={
+                        request.status === 'pending' ? 'secondary' : 'default'
+                      }
+                      className="text-xs px-2 py-1"
+                    >
+                      {request.status}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={
-                      request.status === 'pending' ? 'secondary' : 'default'
-                    }
-                    className="text-xs px-2 py-1"
-                  >
-                    {request.status}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <StudentBindingModal
         open={isBindingModalOpen}

@@ -160,16 +160,26 @@ const CourseCard = ({
 
         {/* Pending Requests Alert */}
         {course?.stats?.pendingRequests &&
-          course?.stats?.pendingRequests > 0 && (
-            <div className="flex items-center gap-2 p-2 bg-warning/20 border border-warning/30 rounded-lg mb-4">
-              <AlertCircle className="h-4 w-4 text-warning" />
-              <span className="text-sm">
+        course?.stats?.pendingRequests > 0 ? (
+          <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg mb-4 group-hover:shadow-sm transition-all">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 bg-amber-100 dark:bg-amber-900/50 rounded-full">
+                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              </div>
+              <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
                 {course.stats.pendingRequests} pending request
                 {course.stats.pendingRequests !== 1 ? 's' : ''}
               </span>
             </div>
-          )}
-
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-8 text-amber-600 dark:text-amber-400 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50"
+            >
+              Review
+            </Button>
+          </div>
+        ) : null}
         {/* Action Button */}
         <Button onClick={handleViewCourse} className="w-full" variant="default">
           <Eye className="h-4 w-4 mr-2" />

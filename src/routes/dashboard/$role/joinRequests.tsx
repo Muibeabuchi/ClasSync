@@ -4,6 +4,7 @@ import JoinRequestsPage from '@/feature/lecturer/components/join-requests-page';
 import { convexQuery } from '@convex-dev/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { api } from 'convex/_generated/api';
+
 import { Suspense } from 'react';
 
 export const Route = createFileRoute('/dashboard/$role/joinRequests')({
