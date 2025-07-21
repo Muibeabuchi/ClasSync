@@ -8,5 +8,6 @@
   "files.readonlyInclude": {
     "**/routeTree.gen.ts": true
   },
-  "typescript.autoClosingTags": false
+  "typescript.autoClosingTags": false,
+  "cSpell.words": ["Classynk"]
 }

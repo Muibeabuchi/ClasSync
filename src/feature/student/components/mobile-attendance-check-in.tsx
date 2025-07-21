@@ -191,6 +191,8 @@ interface CourseSessionCardProps {
   onCheckIn: (sessionId: Id<'attendanceSessions'>, code?: string) => void;
   isLoading: boolean;
   gpsReady: boolean;
+  attendanceCode: string;
+  setAttendanceCode: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
@@ -198,8 +200,10 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
   onCheckIn,
   isLoading,
   gpsReady,
+  attendanceCode,
+  setAttendanceCode,
 }) => {
-  const [attendanceCode, setAttendanceCode] = useState('');
+  // const [attendanceCode, setAttendanceCode] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
 
   const handleCheckIn = () => {
@@ -348,10 +352,8 @@ const MobileAttendanceCheckIn: React.FC = () => {
     useGetStudentCoursesWithActiveAttendance();
   const [selectedSession, setSelectedSession] =
     useState<Id<'attendanceSessions'> | null>(null);
-  const [
-    // attendanceCode,
-    setAttendanceCode,
-  ] = useState('');
+  // Todo: Fix this. find where this code should be used
+  const [attendanceCode, setAttendanceCode] = useState('');
   const [isCheckingIn, setIsCheckingIn] = useState(false);
 
   const { mutateAsync: takeAttendance } = useStudentTakeAttendance();
@@ -492,7 +494,9 @@ const MobileAttendanceCheckIn: React.FC = () => {
                   isLoading={
                     isCheckingIn && selectedSession === course?.session._id
                   }
+                  attendanceCode={attendanceCode}
                   gpsReady={gpsReady}
+                  setAttendanceCode={setAttendanceCode}
                 />
               ))}
             </div>

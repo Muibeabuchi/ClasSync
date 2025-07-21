@@ -13,10 +13,10 @@ import {
   BookOpen,
   Clock,
   Bell,
-  Plus,
+  // Plus,
   TrendingUp,
   CheckCircle,
-  ArrowRight,
+  // ArrowRight,
 } from 'lucide-react';
 import { MobilePageContainer } from '@/components/mobile/MobilePageContainer';
 import { MobileBottomNavigation } from '@/components/mobile/MobileBottomNavigation';
@@ -203,7 +203,7 @@ const MobileStudentDashboard = ({ userData }: MobileStudentDashboardProps) => {
       </div>
 
       {/* Mobile Quick Actions */}
-      <div className="mobile-space-sm">
+      {/* <div className="mobile-space-sm">
         <h2 className="mobile-text-lg font-semibold text-foreground mb-3">
           Quick Actions
         </h2>
@@ -275,7 +275,7 @@ const MobileStudentDashboard = ({ userData }: MobileStudentDashboardProps) => {
             </div>
           </Button>
         </div>
-      </div>
+      </div> */}
 
       {/* Mobile Course Cards */}
       <div className="mobile-space-sm">
