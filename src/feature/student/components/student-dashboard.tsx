@@ -22,12 +22,14 @@ import {
   TrendingUp,
   CheckCircle,
 } from 'lucide-react';
+import { useIsMobile } from '@/hooks/use-mobile';
 import StudentSidebar from './student-sidebar';
 import StudentCoursesPage from './student-course-page';
 import AttendanceCheckIn from './attendance-check-in';
 import StudentNotifications from './student-notifications';
 import StudentProfile from './student-profile';
 import StudentSettings from './student-settings';
+import MobileStudentDashboard from './mobile-student-dashboard';
 // import { toast } from 'sonner';
 
 interface StudentDashboardProps {
@@ -44,6 +46,7 @@ type ActivePage =
 
 const StudentDashboard = ({ userData }: StudentDashboardProps) => {
   const [activePage, setActivePage] = useState<ActivePage>('dashboard');
+  const isMobile = useIsMobile();
 
   // Mock data
   const mockCourses = [
@@ -385,6 +388,12 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
     }
   };
 
+  // Render mobile version for mobile devices
+  if (isMobile) {
+    return <MobileStudentDashboard userData={userData} />;
+  }
+
+  // Render desktop version for larger screens
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">

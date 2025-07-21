@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MobileDemoRouteImport } from './routes/mobile-demo'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as OnboardRouteRouteImport } from './routes/_onboard/route'
 import { Route as AuthRouteRouteImport } from './routes/_auth/route'
@@ -24,6 +25,11 @@ import { Route as DashboardRoleClassListsRouteImport } from './routes/dashboard/
 import { Route as DashboardRoleCoursesCourseIdRouteImport } from './routes/dashboard/$role/_courses.$courseId'
 import { Route as DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRouteImport } from './routes/dashboard/$role/_courses.$lecturerCourseId.$attendanceSessionId'
 
+const MobileDemoRoute = MobileDemoRouteImport.update({
+  id: '/mobile-demo',
+  path: '/mobile-demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRouteRoute = DashboardRouteRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -99,6 +105,7 @@ const DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/mobile-demo': typeof MobileDemoRoute
   '/dashboard/$role': typeof DashboardRoleRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/onboard': typeof OnboardOnboardRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/mobile-demo': typeof MobileDemoRoute
   '/login': typeof AuthLoginRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/_auth': typeof AuthRouteRouteWithChildren
   '/_onboard': typeof OnboardRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/mobile-demo': typeof MobileDemoRoute
   '/dashboard/$role': typeof DashboardRoleRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_onboard/onboard': typeof OnboardOnboardRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
+    | '/mobile-demo'
     | '/dashboard/$role'
     | '/login'
     | '/onboard'
@@ -159,6 +169,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/dashboard'
+    | '/mobile-demo'
     | '/login'
     | '/onboard'
     | '/role'
@@ -174,6 +185,7 @@ export interface FileRouteTypes {
     | '/_auth'
     | '/_onboard'
     | '/dashboard'
+    | '/mobile-demo'
     | '/dashboard/$role'
     | '/_auth/login'
     | '/_onboard/onboard'
@@ -191,10 +203,18 @@ export interface RootRouteChildren {
   AuthRouteRoute: typeof AuthRouteRouteWithChildren
   OnboardRouteRoute: typeof OnboardRouteRouteWithChildren
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
+  MobileDemoRoute: typeof MobileDemoRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mobile-demo': {
+      id: '/mobile-demo'
+      path: '/mobile-demo'
+      fullPath: '/mobile-demo'
+      preLoaderRoute: typeof MobileDemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
@@ -361,6 +381,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRouteRoute: AuthRouteRouteWithChildren,
   OnboardRouteRoute: OnboardRouteRouteWithChildren,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
+  MobileDemoRoute: MobileDemoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

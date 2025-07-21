@@ -26,13 +26,13 @@ export const Route = createRootRouteWithContext<{
 function RootComponent() {
   return (
     <>
-      <div className="h-screen flex flex-col min-h-0">
+      <div className="min-h-[100dvh] flex flex-col overflow-hidden">
         <div className="flex-grow min-h-0 h-full flex flex-col">
           <Outlet />
           <Toaster />
         </div>
       </div>
-      <ReactQueryDevtools buttonPosition="top-right" />
+      <ReactQueryDevtools buttonPosition="bottom-left" />
       <TanStackRouterDevtools position="bottom-right" />
     </>
   );

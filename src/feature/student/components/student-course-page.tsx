@@ -25,40 +25,44 @@ const StudentCoursesPage = () => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">My Courses</h1>
-          <p className="text-muted-foreground">Manage your enrolled courses</p>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">
+            My Courses
+          </h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            Manage your enrolled courses
+          </p>
         </div>
         <JoinCourseSheet />
       </div>
 
       {/* Search Bar */}
       <div className="relative">
-        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search courses by name, code, or lecturer..."
+          placeholder="Search courses..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-10 h-10 md:h-auto text-base md:text-sm touch-target-min"
         />
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center space-x-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <Card className="mobile-tap-feedback">
+          <CardContent className="flex items-center p-4 md:p-6">
+            <div className="flex items-center space-x-3 md:space-x-4">
               <div className="p-2 bg-primary/10 rounded-lg">
-                <BookOpen className="h-6 w-6 text-primary" />
+                <BookOpen className="h-5 w-5 md:h-6 md:w-6 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">
                   Total Courses
                 </p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-xl md:text-2xl font-bold text-foreground">
                   {enrolledCourses?.length}
                 </p>
               </div>
@@ -66,17 +70,17 @@ const StudentCoursesPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center space-x-4">
+        <Card className="mobile-tap-feedback">
+          <CardContent className="flex items-center p-4 md:p-6">
+            <div className="flex items-center space-x-3 md:space-x-4">
               <div className="p-2 bg-success/10 rounded-lg">
-                <Clock className="h-6 w-6 text-success" />
+                <Clock className="h-5 w-5 md:h-6 md:w-6 text-success" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">
                   Avg Attendance
                 </p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-xl md:text-2xl font-bold text-foreground">
                   {Math.round(
                     filteredCourses?.reduce((acc, course) => {
                       if (!course) return acc;
@@ -90,17 +94,17 @@ const StudentCoursesPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center space-x-4">
+        <Card className="mobile-tap-feedback sm:col-span-2 md:col-span-1">
+          <CardContent className="flex items-center p-4 md:p-6">
+            <div className="flex items-center space-x-3 md:space-x-4">
               <div className="p-2 bg-warning/10 rounded-lg">
-                <Users className="h-6 w-6 text-warning" />
+                <Users className="h-5 w-5 md:h-6 md:w-6 text-warning" />
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">
+                <p className="text-xs md:text-sm font-medium text-muted-foreground">
                   Active Sessions
                 </p>
-                <p className="text-2xl font-bold text-foreground">
+                <p className="text-xl md:text-2xl font-bold text-foreground">
                   {
                     filteredCourses?.filter(
                       (course) => course?.hasActiveSession,
