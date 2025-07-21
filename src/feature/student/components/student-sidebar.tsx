@@ -14,7 +14,15 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Home, BookOpen, Plus, Clock, Bell, LogOut, User } from 'lucide-react';
+import {
+  Home,
+  BookOpen,
+  //  Plus,
+  Clock,
+  Bell,
+  LogOut,
+  User,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,12 +45,6 @@ const navigationItems = [
     label: 'My Courses',
     icon: BookOpen,
     badge: '3',
-  },
-  {
-    id: 'join-course',
-    label: 'Join Course',
-    icon: Plus,
-    badge: null,
   },
   {
     id: 'attendance',

@@ -24,7 +24,6 @@ import {
 } from 'lucide-react';
 import StudentSidebar from './student-sidebar';
 import StudentCoursesPage from './student-course-page';
-import JoinCoursePage from './join-course-page';
 import AttendanceCheckIn from './attendance-check-in';
 import StudentNotifications from './student-notifications';
 import StudentProfile from './student-profile';
@@ -38,7 +37,6 @@ interface StudentDashboardProps {
 type ActivePage =
   | 'dashboard'
   | 'courses'
-  | 'join-course'
   | 'attendance'
   | 'notifications'
   | 'profile'
@@ -123,8 +121,6 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
     switch (activePage) {
       case 'courses':
         return <StudentCoursesPage />;
-      case 'join-course':
-        return <JoinCoursePage />;
       case 'attendance':
         return <AttendanceCheckIn />;
       case 'notifications':
@@ -235,7 +231,7 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
             {/* Quick Actions */}
             <div className="flex flex-wrap gap-3">
               <Button
-                onClick={() => setActivePage('join-course')}
+                onClick={() => setActivePage('courses')}
                 className="flex items-center gap-2"
               >
                 <Plus className="h-4 w-4" />

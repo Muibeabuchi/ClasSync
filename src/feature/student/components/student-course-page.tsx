@@ -10,73 +10,12 @@ import {
 } from 'lucide-react';
 import { useGetStudentCourses } from '@/feature/course/api/get-student-courses';
 import { Input } from '@/components/ui/input';
-import CourseCard from './stuent-course-card';
+import CourseCard from './student-course-card';
+import JoinCourseSheet from './join-course-sheet';
 
 const StudentCoursesPage = () => {
   const { data: enrolledCourses } = useGetStudentCourses();
   const [searchTerm, setSearchTerm] = useState('');
-
-  // Mock enrolled courses with new structure
-  // const mockCourses: Course[] = [
-  //   {
-  //     id: '1',
-  //     courseName: 'Advanced Database Systems',
-  //     courseCode: 'CS401',
-  //     status: 'active',
-  //     lecturer: {
-  //       id: 'lec1',
-  //       name: 'Sarah Johnson',
-  //       title: 'Prof.',
-  //     },
-  //     attendanceStats: {
-  //       attendanceRate: 0.92,
-  //       totalSessions: 24,
-  //       attendedSessions: 22,
-  //     },
-  //     hasActiveSession: true,
-  //     activeSession: {
-  //       id: 'session1',
-  //       status: 'active',
-  //       endedAt: null,
-  //     },
-  //   },
-  //   {
-  //     id: '2',
-  //     courseName: 'Software Engineering',
-  //     courseCode: 'CS301',
-  //     status: 'active',
-  //     lecturer: {
-  //       id: 'lec2',
-  //       name: 'Michael Brown',
-  //       title: 'Dr.',
-  //     },
-  //     attendanceStats: {
-  //       attendanceRate: 0.88,
-  //       totalSessions: 18,
-  //       attendedSessions: 16,
-  //     },
-  //     hasActiveSession: false,
-  //     activeSession: null,
-  //   },
-  //   {
-  //     id: '3',
-  //     courseName: 'Machine Learning',
-  //     courseCode: 'CS451',
-  //     status: 'active',
-  //     lecturer: {
-  //       id: 'lec3',
-  //       name: 'Lisa Chen',
-  //       title: 'Engr.',
-  //     },
-  //     attendanceStats: {
-  //       attendanceRate: 0.95,
-  //       totalSessions: 20,
-  //       attendedSessions: 19,
-  //     },
-  //     hasActiveSession: false,
-  //     activeSession: null,
-  //   },
-  // ];
 
   const filteredCourses = enrolledCourses.filter(
     (course) =>
@@ -93,6 +32,7 @@ const StudentCoursesPage = () => {
           <h1 className="text-2xl font-bold text-foreground">My Courses</h1>
           <p className="text-muted-foreground">Manage your enrolled courses</p>
         </div>
+        <JoinCourseSheet />
       </div>
 
       {/* Search Bar */}
