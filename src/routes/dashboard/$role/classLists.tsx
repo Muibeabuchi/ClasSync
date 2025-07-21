@@ -5,11 +5,12 @@ import LecturerClassListsPage, {
 import { convexQuery } from '@convex-dev/react-query';
 import { createFileRoute } from '@tanstack/react-router';
 import { api } from 'convex/_generated/api';
+import { Authenticated } from 'convex/react';
 
 export const Route = createFileRoute('/dashboard/$role/classLists')({
   component: RouteComponent,
   loader: async ({ context }) => {
-    await context.queryClient.ensureQueryData(
+    await context.queryClient.prefetchQuery(
       convexQuery(api.classLists.getMyClassLists, {}),
     );
   },
@@ -23,5 +24,9 @@ function RouteComponent() {
     return <LecturerClassListsPageSkeleton />;
   }
 
-  return <LecturerClassListsPage LecturerClassLists={classLists} />;
+  return (
+    <Authenticated>
+      <LecturerClassListsPage LecturerClassLists={classLists} />
+    </Authenticated>
+  );
 }

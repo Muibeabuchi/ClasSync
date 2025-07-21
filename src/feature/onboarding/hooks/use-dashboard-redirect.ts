@@ -29,13 +29,13 @@ export function useDashboardRedirect() {
           replace: true,
         });
       }
-      if (onboardStatus && onboardStatus.role) {
-        navigate({
-          to: '/dashboard/$role',
-          params: { role: onboardStatus.role },
-          replace: true,
-        });
-      }
+      // if (onboardStatus && onboardStatus.role) {
+      //   navigate({
+      //     to: '/dashboard/$role',
+      //     params: { role: onboardStatus.role },
+      //     replace: true,
+      //   });
+      // }
       if (onboardStatus === null) {
         navigate({
           to: '/login',

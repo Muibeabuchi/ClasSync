@@ -29,9 +29,13 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from '@tanstack/react-router';
-import CreateCourseModal from './CreateCourseModal';
+import CreateCourseModal, {
+  CreateCourseLoadingSkeleton,
+} from './CreateCourseModal';
 import type { Doc, Id } from 'convex/_generated/dataModel';
 import { useGetLecturerCoursesWithStats } from '@/feature/course/api/get-lecturer-course-with-stats';
+import { Suspense } from 'react';
+// import { Loader } from '@/components/Loader';
 
 // Course Card Component
 const CourseCard = ({
@@ -223,13 +227,15 @@ const CourseCardSkeleton = () => (
 const MyCoursesPage = () => {
   const navigate = useNavigate();
 
-  const { data: lecturerCoursesWithStats, isLoading: loadingCoursesWithStats } =
+  const { data: lecturerCoursesWithStats, isPending: loadingCoursesWithStats } =
     useGetLecturerCoursesWithStats();
 
   const isLoading =
     loadingCoursesWithStats || lecturerCoursesWithStats === undefined;
   // const isLoading = coursesWithStats === undefined;
   // const courses = lecturerCoursesWithStats || [];
+
+  if (isLoading) return <MyCoursesPageLoadingSkeleton />;
 
   const handleCourseNavigate = (courseId: Id<'courses'>) => {
     navigate({
@@ -251,7 +257,7 @@ const MyCoursesPage = () => {
           </p>
         </div>
         <CreateCourseModal>
-          <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button variant="outline" className="cursor-pointer">
             <Plus className="h-4 w-4 mr-2" />
             Create Course
           </Button>
@@ -288,12 +294,14 @@ const MyCoursesPage = () => {
             Create your first course to start managing attendance and connecting
             with students
           </p>
-          <CreateCourseModal>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Create Your First Course
-            </Button>
-          </CreateCourseModal>
+          <Suspense fallback={<CreateCourseLoadingSkeleton />}>
+            <CreateCourseModal>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Your First Course
+              </Button>
+            </CreateCourseModal>
+          </Suspense>
         </div>
       )}
     </div>
@@ -301,3 +309,26 @@ const MyCoursesPage = () => {
 };
 
 export default MyCoursesPage;
+
+// Loading skeleton component that mimics the MyCoursesPage structure
+export const MyCoursesPageLoadingSkeleton = () => {
+  return (
+    <div className="space-y-6 p-4 sm:p-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-5 w-64" />
+        </div>
+        <Skeleton className="h-10 w-36" />
+      </div>
+
+      {/* Courses Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <CourseCardSkeleton key={i} />
+        ))}
+      </div>
+    </div>
+  );
+};

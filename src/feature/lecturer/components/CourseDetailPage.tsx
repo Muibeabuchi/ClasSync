@@ -359,7 +359,7 @@ const CourseDetailPage = ({
                     No attendance sessions yet
                   </p>
                 ) : (
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex items-center flex-col w-full">
                     {attendanceSessions.map((session) => (
                       <Link
                         to="/dashboard/$role/$lecturerCourseId/$attendanceSessionId"
@@ -369,13 +369,13 @@ const CourseDetailPage = ({
                           lecturerCourseId: courseId,
                         }}
                         key={session._id}
-                        className="p-3 border rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
+                        className="  w-full"
                       >
-                        <div className="flex justify-between items-center">
+                        <div className="cursor-pointer flex rounded-md  transition-colors w-full border-b pb-1 px-1 justify-between items-center">
                           <div>
-                            <h4 className="font-medium text-sm">
+                            {/* <h4 className="font-medium text-sm">
                               {'Attendance Session'}
-                            </h4>
+                            </h4> */}
                             <p className="text-xs text-gray-500">
                               {new Date(
                                 session._creationTime,

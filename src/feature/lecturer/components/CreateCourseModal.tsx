@@ -12,6 +12,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 // import { Checkbox } from '@/components/ui/checkbox';
 // import { Badge } from '@/components/ui/badge';
 import {
@@ -32,14 +33,6 @@ import { toast } from 'sonner';
 import { useCreateCourseMutation } from '@/feature/course/api/create-course-api';
 import { useLecturerClassListQuery } from '@/feature/classList/api/get-lecturer-classLists';
 import type { Id } from 'convex/_generated/dataModel';
-
-// interface ClassList {
-//   id: string;
-//   name: string;
-//   batchYear: string;
-//   department: string;
-//   students: number;
-// }
 
 const courseFormSchema = z.object({
   name: z
@@ -370,3 +363,82 @@ const CreateCourseModal = ({ children, onSuccess }: CreateCourseModalProps) => {
 };
 
 export default CreateCourseModal;
+
+// Loading skeleton component that mimics the CreateCourseModal structure
+export const CreateCourseLoadingSkeleton = () => {
+  return (
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Skeleton className="h-5 w-5" />
+          <Skeleton className="h-6 w-40" />
+        </DialogTitle>
+        <DialogDescription>
+          <Skeleton className="h-4 w-64" />
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        {/* Course Name Field */}
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+
+        {/* Course Code Field */}
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+
+        {/* Class Lists Field */}
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-20" />
+          <div className="space-y-3">
+            {/* Selected pills area */}
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-8 w-32 rounded-full" />
+              <Skeleton className="h-8 w-40 rounded-full" />
+            </div>
+
+            {/* Dropdown selector */}
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </div>
+
+        {/* Selected Class Lists Summary */}
+        <div className="p-4 bg-muted/20 rounded-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <Skeleton className="h-5 w-5" />
+            <Skeleton className="h-5 w-48" />
+          </div>
+          <div className="space-y-2">
+            {/* Class list items */}
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center justify-between p-2 rounded border"
+              >
+                <div className="space-y-1">
+                  <Skeleton className="h-4 w-48" />
+                  <Skeleton className="h-3 w-64" />
+                </div>
+                <Skeleton className="h-8 w-8" />
+              </div>
+            ))}
+            {/* Total students */}
+            <div className="pt-2 border-t">
+              <Skeleton className="h-4 w-32" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      <div className="flex justify-end space-x-4 pt-4 border-t">
+        <Skeleton className="h-10 w-16" />
+        <Skeleton className="h-10 w-32" />
+      </div>
+    </DialogContent>
+  );
+};

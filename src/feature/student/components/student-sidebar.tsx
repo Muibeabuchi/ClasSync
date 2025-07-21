@@ -70,6 +70,7 @@ const StudentSidebar = ({
   userData,
 }: StudentSidebarProps) => {
   const { state } = useSidebar();
+
   const signOut = useSignOut();
 
   const handleSignOut = () => {
