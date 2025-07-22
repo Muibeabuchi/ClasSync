@@ -35,7 +35,7 @@ const AttendanceSessionModal = ({
   const [isOpen, setIsOpen] = useState(false);
   const [requireCode, setRequireCode] = useState(false);
   const [attendanceCode, setAttendanceCode] = useState('');
-  const [locationRadius, setLocationRadius] = useState(150);
+  const [locationRadius, setLocationRadius] = useState(50);
 
   const navigate = useNavigate();
 
@@ -134,7 +134,7 @@ const AttendanceSessionModal = ({
             <div className="flex items-center gap-3">
               <Input
                 type="range"
-                min="50"
+                min="5"
                 max="300"
                 value={locationRadius}
                 onChange={(e) => setLocationRadius(Number(e.target.value))}
