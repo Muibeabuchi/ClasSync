@@ -3,7 +3,6 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@/components/ui/button';
 import {
   GraduationCap,
-  Users,
   X,
   CheckCircle,
   Calendar,
@@ -49,31 +48,37 @@ export const RoleSelect = ({
             </div>
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">
-            Welcome to Classynk! 🎉
+            Welcome to Classynk
           </h1>
           <p className="text-muted-foreground text-base sm:text-lg max-w-sm lg:max-w-md mx-auto leading-relaxed">
-            Let&apos;s get you set up with the perfect role for your journey
+            Please select your role to customize your academic experience
           </p>
         </div>
 
         {/* Role Selection Cards */}
-        <div className="max-w-md lg:max-w-4xl mx-auto space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8">
+        <div className="max-w-sm sm:max-w-md  lg:max-w-4xl mx-auto space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-8">
           {/* Lecturer Card */}
-          <div className="group relative cursor-pointer transition-all duration-300 active:scale-95">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-            <div className="relative bg-card border-2 border-border group-hover:border-primary/30 rounded-3xl p-6 shadow-sm group-hover:shadow-xl transition-all duration-300">
+          <div className="group h-full relative cursor-pointer transition-all duration-300 active:scale-95">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/10 rounded-2xl lg:rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+            <div className="relative bg-card border border-border lg:border-2 group-hover:border-primary/30 rounded-2xl lg:rounded-3xl p-4 sm:p-6 shadow-sm group-hover:shadow-xl transition-all duration-300">
               <div className="flex items-start space-x-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <h3 className="text-xl font-bold text-foreground">
+                  <div className="flex items-center justify-center sm:justify-start lg:justify-start space-x-2 mb-2">
+                    <h3 className="text-lg sm:text-xl font-bold text-foreground">
                       Lecturer
                     </h3>
-                    <span className="text-2xl">👨‍🏫</span>
+                    <span className="text-xl sm:text-2xl">👨‍🏫</span>
                   </div>
-                  <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
-                    Create courses, track attendance, and manage your classroom
+                  <p className="text-muted-foreground italic text-sm sm:text-xs  mb-3 sm:mb-4 leading-relaxed text-center sm:text-left lg:text-left">
+                    <span className="lg:hidden">
+                      Create courses and track attendance
+                    </span>
+                    <span className="hidden lg:inline">
+                      Create courses, track attendance, and manage your
+                      classroom
+                    </span>
                   </p>
-                  <div className="space-y-2">
+                  <div className="hidden lg:block space-y-2">
                     <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                       <CheckCircle className="w-3 h-3 text-primary" />
                       <span>Create & manage courses</span>
@@ -90,8 +95,8 @@ export const RoleSelect = ({
                 </div>
               </div>
               <Button
-                className="w-full mt-6 rounded-2xl font-semibold transition-all duration-300 group-hover:shadow-lg cursor-pointer"
-                size="lg"
+                className="w-full mt-3 sm:mt-4 lg:mt-6 rounded-xl sm:rounded-2xl font-medium sm:font-semibold transition-all duration-300 group-hover:shadow-lg cursor-pointer"
+                size="sm"
                 disabled={updatingUserRole}
                 onClick={() => handleRoleSelect('lecturer')}
               >
@@ -101,21 +106,26 @@ export const RoleSelect = ({
           </div>
 
           {/* Student Card */}
-          <div className="group relative cursor-pointer transition-all duration-300 active:scale-95">
-            <div className="absolute inset-0 bg-gradient-to-r from-secondary/20 to-secondary/10 rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
-            <div className="relative bg-card border-2 border-border group-hover:border-secondary/30 rounded-3xl p-6 shadow-sm group-hover:shadow-xl transition-all duration-300">
+          <div className="group h-full relative cursor-pointer transition-all duration-300 active:scale-95">
+            <div className="absolute inset-0 bg-gradient-to-r from-secondary/20 to-secondary/10 rounded-2xl lg:rounded-3xl blur-xl group-hover:blur-2xl transition-all duration-300 opacity-0 group-hover:opacity-100"></div>
+            <div className="relative bg-card border border-border lg:border-2 group-hover:border-secondary/30 rounded-2xl lg:rounded-3xl p-4 sm:p-6 shadow-sm group-hover:shadow-xl transition-all duration-300">
               <div className="flex items-start space-x-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <h3 className="text-xl font-bold text-foreground">
+                  <div className="flex items-center justify-center sm:justify-start lg:justify-start space-x-2 mb-2">
+                    <h3 className="text-lg sm:text-xl font-bold text-foreground">
                       Student
                     </h3>
-                    <span className="text-2xl">🎓</span>
+                    <span className="text-xl sm:text-2xl">🎓</span>
                   </div>
-                  <p className="text-muted-foreground text-sm mb-4 leading-relaxed">
-                    Join courses, mark attendance, and track your progress
+                  <p className="text-muted-foreground sm:text-xs italic text-sm  mb-3 sm:mb-4 leading-relaxed text-center sm:text-left lg:text-left">
+                    <span className="lg:hidden">
+                      Join courses and mark attendance
+                    </span>
+                    <span className="hidden lg:inline">
+                      Join courses, mark attendance, and track your progress
+                    </span>
                   </p>
-                  <div className="space-y-2">
+                  <div className="hidden lg:block space-y-2">
                     <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                       <CheckCircle className="w-3 h-3 text-secondary-foreground" />
                       <span>Join courses with codes</span>
@@ -132,8 +142,8 @@ export const RoleSelect = ({
                 </div>
               </div>
               <Button
-                className="w-full mt-6 cursor-pointer rounded-2xl font-semibold bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-all duration-300 group-hover:shadow-lg"
-                size="lg"
+                className="w-full mt-3 sm:mt-4 lg:mt-6 cursor-pointer rounded-xl sm:rounded-2xl font-medium sm:font-semibold bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-all duration-300 group-hover:shadow-lg"
+                size="sm"
                 disabled={updatingUserRole}
                 onClick={() => handleRoleSelect('student')}
               >
