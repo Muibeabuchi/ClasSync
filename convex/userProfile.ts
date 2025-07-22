@@ -1,17 +1,8 @@
 import { ConvexError, v } from 'convex/values';
-import {
-  AuthenticatedUserMutation,
-  // AuthenticatedUserQuery,
-} from './middlewares/authenticatedMiddleware';
-import {
-  lecturerTitleSchema,
-  studentGenderSchema,
-  studentYearLevelSchema,
-  userRoleSchema,
-} from './schema';
+import { AuthenticatedUserMutation } from './middlewares/authenticatedMiddleware';
+import { studentGenderSchema, userRoleSchema } from './schema';
 import { query } from './_generated/server';
 import { getCurrentUser } from './models/userprofileModel';
-// import { createAuth } from './auth';
 
 // ? ====================QUERIES====================
 
@@ -52,17 +43,6 @@ export const getUserOnboardedStatus = query({
 
 // ? ====================MUTATIONS====================
 
-export const updateUserOnboardedStatus = AuthenticatedUserMutation({
-  args: {
-    isOnboarded: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(ctx.userId, {
-      isOnboarded: args.isOnboarded,
-    });
-  },
-});
-
 export const updateUserRole = AuthenticatedUserMutation({
   args: {
     role: userRoleSchema,
@@ -79,11 +59,11 @@ export const updateUserRole = AuthenticatedUserMutation({
 export const completeUserOnboarding = AuthenticatedUserMutation({
   args: {
     fullName: v.string(),
-    title: v.optional(lecturerTitleSchema),
-    faculty: v.optional(v.string()),
-    department: v.optional(v.string()),
-    registrationNumber: v.optional(v.string()),
-    yearLevel: v.optional(studentYearLevelSchema),
+    // title: v.optional(lecturerTitleSchema),
+    // faculty: v.optional(v.string()),
+    // department: v.optional(v.string()),
+    // registrationNumber: v.optional(v.string()),
+    // yearLevel: v.optional(studentYearLevelSchema),
     gender: v.optional(studentGenderSchema),
   },
   returns: {
@@ -108,11 +88,11 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
     if (userRole === 'student') {
       const onboardingData = {
         fullName: args.fullName,
-        registrationNumber: args.registrationNumber,
+        // registrationNumber: args.registrationNumber,
         gender: args.gender,
-        yearLevel: args.yearLevel,
-        faculty: args.faculty,
-        department: args.department,
+        // yearLevel: args.yearLevel,
+        // faculty: args.faculty,
+        // department: args.department,
       };
 
       await ctx.db.patch(ctx.userId, {
@@ -123,9 +103,9 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
     if (userRole === 'lecturer') {
       const onboardingData = {
         fullName: args.fullName,
-        title: args.title,
-        faculty: args.faculty,
-        department: args.department,
+        // title: args.title,
+        // faculty: args.faculty,
+        // department: args.department,
       };
 
       // create a lecturerPlan

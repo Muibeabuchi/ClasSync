@@ -6,13 +6,21 @@ import {
 import LecturerOnboardingSection from '@/feature/onboarding/components/lecturer-onboarding-section';
 import StudentOnboardingSection from '@/feature/onboarding/components/onboard.student';
 import { type OnboardingDataType } from '@/feature/onboarding/schema/onboarding-schema';
+import { convexQuery } from '@convex-dev/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { createFileRoute } from '@tanstack/react-router';
+import { api } from 'convex/_generated/api';
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/_onboard/role')({
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(
+      convexQuery(api.userProfile.getUserRole, {}),
+    );
+  },
   component: RouteComponent,
   pendingComponent: () => {
+    // TODO: create a proper component for handling loading state
     return <div className="">Loading the Role Page</div>;
   },
 });

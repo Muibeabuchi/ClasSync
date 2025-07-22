@@ -23,6 +23,7 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { useGetLecturerCourses } from '@/feature/course/api/get-lecturer-courses';
 import type { Id } from 'convex/_generated/dataModel';
+import { useEffect } from 'react';
 
 interface LecturerDashboardContentProps {
   userData: any;
@@ -41,6 +42,18 @@ const LecturerDashboardContent = ({
     name: course.courseName,
   }));
   const navigate = useNavigate();
+
+  useEffect(() => {
+    async function fetchIp() {
+      const ip = await fetch('https://api.ipify.org?format=json')
+        .then((res) => res.json())
+        .then((data) => data.ip);
+
+      console.log({ ip });
+    }
+
+    fetchIp();
+  }, []);
 
   const handleCourseNavigation = (courseId: Id<'courses'>) => {
     navigate({
