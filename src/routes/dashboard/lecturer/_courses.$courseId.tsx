@@ -8,7 +8,7 @@ import { api } from 'convex/_generated/api';
 import type { Id } from 'convex/_generated/dataModel';
 import { Suspense } from 'react';
 
-export const Route = createFileRoute('/dashboard/$role/_courses/$courseId')({
+export const Route = createFileRoute('/dashboard/lecturer/_courses/$courseId')({
   params: {
     parse: (params) => {
       return {
@@ -45,12 +45,6 @@ function RouteComponent() {
         courseId={courseId}
         courseDetails={courseDetails}
         attendanceSessions={attendanceSessions}
-        // onBack={handleBackToCourses}
-        // onStudentClick={() => {}}
-        // onAnalyticsClick={handleCourseAnalyticsClick}
-        // onAttendanceClick={handleAttendanceClick}
-        // onLiveAttendanceClick={handleLiveAttendanceClick}
-        // onAttendanceHistoryClick={handleAttendanceHistoryClick}
       />
     </Suspense>
   );

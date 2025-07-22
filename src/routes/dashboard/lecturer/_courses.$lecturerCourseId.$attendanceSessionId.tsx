@@ -16,7 +16,7 @@ import type { Id } from 'convex/_generated/dataModel';
 import { Suspense } from 'react';
 
 export const Route = createFileRoute(
-  '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId',
+  '/dashboard/lecturer/_courses/$lecturerCourseId/$attendanceSessionId',
 )({
   params: {
     parse: (params) => {
@@ -66,7 +66,6 @@ function RouteComponent() {
         attendanceSession={attendanceSession}
         attendanceSessionRecords={attendanceSessionRecords}
       />
-      ;
     </Suspense>
   );
 }

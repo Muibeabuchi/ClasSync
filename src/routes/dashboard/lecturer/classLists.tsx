@@ -7,7 +7,7 @@ import { createFileRoute } from '@tanstack/react-router';
 import { api } from 'convex/_generated/api';
 import { Authenticated } from 'convex/react';
 
-export const Route = createFileRoute('/dashboard/$role/classLists')({
+export const Route = createFileRoute('/dashboard/lecturer/classLists')({
   component: RouteComponent,
   loader: async ({ context }) => {
     await context.queryClient.prefetchQuery(

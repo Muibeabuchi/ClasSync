@@ -29,14 +29,11 @@ import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
 // import { ThemeToggle } from '@/components/theme-toggle';
 
 interface LecturerSidebarProps {
-  userData: any;
-  handleSidebarState: (value: boolean) => void;
+  fullName?: string;
+  profileImage?: string;
 }
 
-const LecturerSidebar = ({
-  userData,
-  // handleSidebarState,
-}: LecturerSidebarProps) => {
+const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
   const { state } = useSidebar();
 
   const signOut = useSignOut();
@@ -136,23 +133,17 @@ const LecturerSidebar = ({
                   className="h-12  rounded-lg hover:bg-accent transition-colors duration-200 data-[state=open]:bg-accent"
                 >
                   <Avatar className="h-8 w-8 rounded-lg border">
-                    <AvatarImage src={userData?.profileImage} />
+                    <AvatarImage src={profileImage} />
                     <AvatarFallback className="rounded-lg text-sm font-medium">
-                      {userData?.fullName
+                      {fullName
                         ?.split(' ')
-                        // @ts-expect-error : temporary data
                         .map((n) => n[0])
                         .join('')}
                     </AvatarFallback>
                   </Avatar>
                   {state === 'expanded' && (
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-medium">
-                        {userData?.title} {userData?.fullName}
-                      </span>
-                      <span className="truncate text-xs opacity-70">
-                        {userData?.department}
-                      </span>
+                      <span className="truncate font-medium">{fullName}</span>
                     </div>
                   )}
                   <Bell className="ml-auto size-4 opacity-70" />

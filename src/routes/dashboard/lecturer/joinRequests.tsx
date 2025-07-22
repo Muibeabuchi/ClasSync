@@ -8,7 +8,7 @@ import { api } from 'convex/_generated/api';
 
 import { Suspense } from 'react';
 
-export const Route = createFileRoute('/dashboard/$role/joinRequests')({
+export const Route = createFileRoute('/dashboard/lecturer/joinRequests')({
   component: RouteComponent,
   loader: async ({ context }) => {
     await context.queryClient.ensureQueryData(
@@ -24,10 +24,7 @@ function RouteComponent() {
   return (
     <div>
       <Suspense fallback={<JoinRequestsSkeleton />}>
-        <JoinRequestsPage
-          lecturerJoinRequests={lecturerJoinRequests}
-          // lecturerCourses={lecturerCourses}
-        />
+        <JoinRequestsPage lecturerJoinRequests={lecturerJoinRequests} />
       </Suspense>
     </div>
   );

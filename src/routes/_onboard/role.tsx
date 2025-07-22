@@ -36,26 +36,26 @@ function RouteComponent() {
     useCompleteOnboarding();
 
   const handleGoToDashboard = async ({
-    department,
-    faculty,
+    // department,
+    // faculty,
     fullName,
     gender,
-    registrationNumber,
-    title,
-    yearLevel,
+    // registrationNumber,
+    // title,
+    // yearLevel,
     // passportPhoto,
   }: OnboardingDataType) => {
     if (isCompletingOnboarding) return;
     if (!fullName) return;
     // store the users info  in the back end
     const response = await completeOnboarding({
-      department,
-      faculty,
+      // department,
+      // faculty,
       fullName,
       gender,
-      registrationNumber,
-      title,
-      yearLevel,
+      // registrationNumber,
+      // title,
+      // yearLevel,
       // passportPhoto,
     });
     if (response.success) {

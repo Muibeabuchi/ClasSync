@@ -12,18 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as MobileDemoRouteImport } from './routes/mobile-demo'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as OnboardRouteRouteImport } from './routes/_onboard/route'
-import { Route as AuthRouteRouteImport } from './routes/_auth/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardRoleRouteImport } from './routes/_onboard/role'
 import { Route as OnboardOnboardRouteImport } from './routes/_onboard/onboard'
-import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as DashboardRoleRouteRouteImport } from './routes/dashboard/$role/route'
-import { Route as DashboardRoleIndexRouteImport } from './routes/dashboard/$role/index'
-import { Route as DashboardRoleJoinRequestsRouteImport } from './routes/dashboard/$role/joinRequests'
-import { Route as DashboardRoleCoursesRouteImport } from './routes/dashboard/$role/courses'
-import { Route as DashboardRoleClassListsRouteImport } from './routes/dashboard/$role/classLists'
-import { Route as DashboardRoleCoursesCourseIdRouteImport } from './routes/dashboard/$role/_courses.$courseId'
-import { Route as DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRouteImport } from './routes/dashboard/$role/_courses.$lecturerCourseId.$attendanceSessionId'
+import { Route as authLoginRouteImport } from './routes/(auth)/login'
+import { Route as DashboardStudentRouteRouteImport } from './routes/dashboard/student/route'
+import { Route as DashboardLecturerRouteRouteImport } from './routes/dashboard/lecturer/route'
+import { Route as DashboardLecturerIndexRouteImport } from './routes/dashboard/lecturer/index'
+import { Route as DashboardLecturerJoinRequestsRouteImport } from './routes/dashboard/lecturer/joinRequests'
+import { Route as DashboardLecturerCoursesRouteImport } from './routes/dashboard/lecturer/courses'
+import { Route as DashboardLecturerClassListsRouteImport } from './routes/dashboard/lecturer/classLists'
+import { Route as DashboardLecturerCoursesCourseIdRouteImport } from './routes/dashboard/lecturer/_courses.$courseId'
+import { Route as DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRouteImport } from './routes/dashboard/lecturer/_courses.$lecturerCourseId.$attendanceSessionId'
 
 const MobileDemoRoute = MobileDemoRouteImport.update({
   id: '/mobile-demo',
@@ -37,10 +37,6 @@ const DashboardRouteRoute = DashboardRouteRouteImport.update({
 } as any)
 const OnboardRouteRoute = OnboardRouteRouteImport.update({
   id: '/_onboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRouteRoute = AuthRouteRouteImport.update({
-  id: '/_auth',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -58,96 +54,107 @@ const OnboardOnboardRoute = OnboardOnboardRouteImport.update({
   path: '/onboard',
   getParentRoute: () => OnboardRouteRoute,
 } as any)
-const AuthLoginRoute = AuthLoginRouteImport.update({
-  id: '/login',
+const authLoginRoute = authLoginRouteImport.update({
+  id: '/(auth)/login',
   path: '/login',
-  getParentRoute: () => AuthRouteRoute,
+  getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoleRouteRoute = DashboardRoleRouteRouteImport.update({
-  id: '/$role',
-  path: '/$role',
+const DashboardStudentRouteRoute = DashboardStudentRouteRouteImport.update({
+  id: '/student',
+  path: '/student',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
-const DashboardRoleIndexRoute = DashboardRoleIndexRouteImport.update({
+const DashboardLecturerRouteRoute = DashboardLecturerRouteRouteImport.update({
+  id: '/lecturer',
+  path: '/lecturer',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
+const DashboardLecturerIndexRoute = DashboardLecturerIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => DashboardRoleRouteRoute,
+  getParentRoute: () => DashboardLecturerRouteRoute,
 } as any)
-const DashboardRoleJoinRequestsRoute =
-  DashboardRoleJoinRequestsRouteImport.update({
+const DashboardLecturerJoinRequestsRoute =
+  DashboardLecturerJoinRequestsRouteImport.update({
     id: '/joinRequests',
     path: '/joinRequests',
-    getParentRoute: () => DashboardRoleRouteRoute,
+    getParentRoute: () => DashboardLecturerRouteRoute,
   } as any)
-const DashboardRoleCoursesRoute = DashboardRoleCoursesRouteImport.update({
-  id: '/courses',
-  path: '/courses',
-  getParentRoute: () => DashboardRoleRouteRoute,
-} as any)
-const DashboardRoleClassListsRoute = DashboardRoleClassListsRouteImport.update({
-  id: '/classLists',
-  path: '/classLists',
-  getParentRoute: () => DashboardRoleRouteRoute,
-} as any)
-const DashboardRoleCoursesCourseIdRoute =
-  DashboardRoleCoursesCourseIdRouteImport.update({
+const DashboardLecturerCoursesRoute =
+  DashboardLecturerCoursesRouteImport.update({
+    id: '/courses',
+    path: '/courses',
+    getParentRoute: () => DashboardLecturerRouteRoute,
+  } as any)
+const DashboardLecturerClassListsRoute =
+  DashboardLecturerClassListsRouteImport.update({
+    id: '/classLists',
+    path: '/classLists',
+    getParentRoute: () => DashboardLecturerRouteRoute,
+  } as any)
+const DashboardLecturerCoursesCourseIdRoute =
+  DashboardLecturerCoursesCourseIdRouteImport.update({
     id: '/_courses/$courseId',
     path: '/$courseId',
-    getParentRoute: () => DashboardRoleRouteRoute,
+    getParentRoute: () => DashboardLecturerRouteRoute,
   } as any)
-const DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute =
-  DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRouteImport.update({
-    id: '/_courses/$lecturerCourseId/$attendanceSessionId',
-    path: '/$lecturerCourseId/$attendanceSessionId',
-    getParentRoute: () => DashboardRoleRouteRoute,
-  } as any)
+const DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute =
+  DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRouteImport.update(
+    {
+      id: '/_courses/$lecturerCourseId/$attendanceSessionId',
+      path: '/$lecturerCourseId/$attendanceSessionId',
+      getParentRoute: () => DashboardLecturerRouteRoute,
+    } as any,
+  )
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/mobile-demo': typeof MobileDemoRoute
-  '/dashboard/$role': typeof DashboardRoleRouteRouteWithChildren
-  '/login': typeof AuthLoginRoute
+  '/dashboard/lecturer': typeof DashboardLecturerRouteRouteWithChildren
+  '/dashboard/student': typeof DashboardStudentRouteRoute
+  '/login': typeof authLoginRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
-  '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
-  '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
-  '/dashboard/$role/joinRequests': typeof DashboardRoleJoinRequestsRoute
-  '/dashboard/$role/': typeof DashboardRoleIndexRoute
-  '/dashboard/$role/$courseId': typeof DashboardRoleCoursesCourseIdRoute
-  '/dashboard/$role/$lecturerCourseId/$attendanceSessionId': typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
+  '/dashboard/lecturer/classLists': typeof DashboardLecturerClassListsRoute
+  '/dashboard/lecturer/courses': typeof DashboardLecturerCoursesRoute
+  '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
+  '/dashboard/lecturer/': typeof DashboardLecturerIndexRoute
+  '/dashboard/lecturer/$courseId': typeof DashboardLecturerCoursesCourseIdRoute
+  '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId': typeof DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/mobile-demo': typeof MobileDemoRoute
-  '/login': typeof AuthLoginRoute
+  '/dashboard/student': typeof DashboardStudentRouteRoute
+  '/login': typeof authLoginRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
-  '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
-  '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
-  '/dashboard/$role/joinRequests': typeof DashboardRoleJoinRequestsRoute
-  '/dashboard/$role': typeof DashboardRoleIndexRoute
-  '/dashboard/$role/$courseId': typeof DashboardRoleCoursesCourseIdRoute
-  '/dashboard/$role/$lecturerCourseId/$attendanceSessionId': typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
+  '/dashboard/lecturer/classLists': typeof DashboardLecturerClassListsRoute
+  '/dashboard/lecturer/courses': typeof DashboardLecturerCoursesRoute
+  '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
+  '/dashboard/lecturer': typeof DashboardLecturerIndexRoute
+  '/dashboard/lecturer/$courseId': typeof DashboardLecturerCoursesCourseIdRoute
+  '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId': typeof DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_auth': typeof AuthRouteRouteWithChildren
   '/_onboard': typeof OnboardRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/mobile-demo': typeof MobileDemoRoute
-  '/dashboard/$role': typeof DashboardRoleRouteRouteWithChildren
-  '/_auth/login': typeof AuthLoginRoute
+  '/dashboard/lecturer': typeof DashboardLecturerRouteRouteWithChildren
+  '/dashboard/student': typeof DashboardStudentRouteRoute
+  '/(auth)/login': typeof authLoginRoute
   '/_onboard/onboard': typeof OnboardOnboardRoute
   '/_onboard/role': typeof OnboardRoleRoute
-  '/dashboard/$role/classLists': typeof DashboardRoleClassListsRoute
-  '/dashboard/$role/courses': typeof DashboardRoleCoursesRoute
-  '/dashboard/$role/joinRequests': typeof DashboardRoleJoinRequestsRoute
-  '/dashboard/$role/': typeof DashboardRoleIndexRoute
-  '/dashboard/$role/_courses/$courseId': typeof DashboardRoleCoursesCourseIdRoute
-  '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId': typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
+  '/dashboard/lecturer/classLists': typeof DashboardLecturerClassListsRoute
+  '/dashboard/lecturer/courses': typeof DashboardLecturerCoursesRoute
+  '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
+  '/dashboard/lecturer/': typeof DashboardLecturerIndexRoute
+  '/dashboard/lecturer/_courses/$courseId': typeof DashboardLecturerCoursesCourseIdRoute
+  '/dashboard/lecturer/_courses/$lecturerCourseId/$attendanceSessionId': typeof DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -155,55 +162,57 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/mobile-demo'
-    | '/dashboard/$role'
+    | '/dashboard/lecturer'
+    | '/dashboard/student'
     | '/login'
     | '/onboard'
     | '/role'
-    | '/dashboard/$role/classLists'
-    | '/dashboard/$role/courses'
-    | '/dashboard/$role/joinRequests'
-    | '/dashboard/$role/'
-    | '/dashboard/$role/$courseId'
-    | '/dashboard/$role/$lecturerCourseId/$attendanceSessionId'
+    | '/dashboard/lecturer/classLists'
+    | '/dashboard/lecturer/courses'
+    | '/dashboard/lecturer/joinRequests'
+    | '/dashboard/lecturer/'
+    | '/dashboard/lecturer/$courseId'
+    | '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dashboard'
     | '/mobile-demo'
+    | '/dashboard/student'
     | '/login'
     | '/onboard'
     | '/role'
-    | '/dashboard/$role/classLists'
-    | '/dashboard/$role/courses'
-    | '/dashboard/$role/joinRequests'
-    | '/dashboard/$role'
-    | '/dashboard/$role/$courseId'
-    | '/dashboard/$role/$lecturerCourseId/$attendanceSessionId'
+    | '/dashboard/lecturer/classLists'
+    | '/dashboard/lecturer/courses'
+    | '/dashboard/lecturer/joinRequests'
+    | '/dashboard/lecturer'
+    | '/dashboard/lecturer/$courseId'
+    | '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId'
   id:
     | '__root__'
     | '/'
-    | '/_auth'
     | '/_onboard'
     | '/dashboard'
     | '/mobile-demo'
-    | '/dashboard/$role'
-    | '/_auth/login'
+    | '/dashboard/lecturer'
+    | '/dashboard/student'
+    | '/(auth)/login'
     | '/_onboard/onboard'
     | '/_onboard/role'
-    | '/dashboard/$role/classLists'
-    | '/dashboard/$role/courses'
-    | '/dashboard/$role/joinRequests'
-    | '/dashboard/$role/'
-    | '/dashboard/$role/_courses/$courseId'
-    | '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId'
+    | '/dashboard/lecturer/classLists'
+    | '/dashboard/lecturer/courses'
+    | '/dashboard/lecturer/joinRequests'
+    | '/dashboard/lecturer/'
+    | '/dashboard/lecturer/_courses/$courseId'
+    | '/dashboard/lecturer/_courses/$lecturerCourseId/$attendanceSessionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthRouteRoute: typeof AuthRouteRouteWithChildren
   OnboardRouteRoute: typeof OnboardRouteRouteWithChildren
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   MobileDemoRoute: typeof MobileDemoRoute
+  authLoginRoute: typeof authLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -229,13 +238,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: ''
-      preLoaderRoute: typeof AuthRouteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -257,76 +259,71 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardOnboardRouteImport
       parentRoute: typeof OnboardRouteRoute
     }
-    '/_auth/login': {
-      id: '/_auth/login'
+    '/(auth)/login': {
+      id: '/(auth)/login'
       path: '/login'
       fullPath: '/login'
-      preLoaderRoute: typeof AuthLoginRouteImport
-      parentRoute: typeof AuthRouteRoute
+      preLoaderRoute: typeof authLoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/dashboard/$role': {
-      id: '/dashboard/$role'
-      path: '/$role'
-      fullPath: '/dashboard/$role'
-      preLoaderRoute: typeof DashboardRoleRouteRouteImport
+    '/dashboard/student': {
+      id: '/dashboard/student'
+      path: '/student'
+      fullPath: '/dashboard/student'
+      preLoaderRoute: typeof DashboardStudentRouteRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
-    '/dashboard/$role/': {
-      id: '/dashboard/$role/'
+    '/dashboard/lecturer': {
+      id: '/dashboard/lecturer'
+      path: '/lecturer'
+      fullPath: '/dashboard/lecturer'
+      preLoaderRoute: typeof DashboardLecturerRouteRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
+    '/dashboard/lecturer/': {
+      id: '/dashboard/lecturer/'
       path: '/'
-      fullPath: '/dashboard/$role/'
-      preLoaderRoute: typeof DashboardRoleIndexRouteImport
-      parentRoute: typeof DashboardRoleRouteRoute
+      fullPath: '/dashboard/lecturer/'
+      preLoaderRoute: typeof DashboardLecturerIndexRouteImport
+      parentRoute: typeof DashboardLecturerRouteRoute
     }
-    '/dashboard/$role/joinRequests': {
-      id: '/dashboard/$role/joinRequests'
+    '/dashboard/lecturer/joinRequests': {
+      id: '/dashboard/lecturer/joinRequests'
       path: '/joinRequests'
-      fullPath: '/dashboard/$role/joinRequests'
-      preLoaderRoute: typeof DashboardRoleJoinRequestsRouteImport
-      parentRoute: typeof DashboardRoleRouteRoute
+      fullPath: '/dashboard/lecturer/joinRequests'
+      preLoaderRoute: typeof DashboardLecturerJoinRequestsRouteImport
+      parentRoute: typeof DashboardLecturerRouteRoute
     }
-    '/dashboard/$role/courses': {
-      id: '/dashboard/$role/courses'
+    '/dashboard/lecturer/courses': {
+      id: '/dashboard/lecturer/courses'
       path: '/courses'
-      fullPath: '/dashboard/$role/courses'
-      preLoaderRoute: typeof DashboardRoleCoursesRouteImport
-      parentRoute: typeof DashboardRoleRouteRoute
+      fullPath: '/dashboard/lecturer/courses'
+      preLoaderRoute: typeof DashboardLecturerCoursesRouteImport
+      parentRoute: typeof DashboardLecturerRouteRoute
     }
-    '/dashboard/$role/classLists': {
-      id: '/dashboard/$role/classLists'
+    '/dashboard/lecturer/classLists': {
+      id: '/dashboard/lecturer/classLists'
       path: '/classLists'
-      fullPath: '/dashboard/$role/classLists'
-      preLoaderRoute: typeof DashboardRoleClassListsRouteImport
-      parentRoute: typeof DashboardRoleRouteRoute
+      fullPath: '/dashboard/lecturer/classLists'
+      preLoaderRoute: typeof DashboardLecturerClassListsRouteImport
+      parentRoute: typeof DashboardLecturerRouteRoute
     }
-    '/dashboard/$role/_courses/$courseId': {
-      id: '/dashboard/$role/_courses/$courseId'
+    '/dashboard/lecturer/_courses/$courseId': {
+      id: '/dashboard/lecturer/_courses/$courseId'
       path: '/$courseId'
-      fullPath: '/dashboard/$role/$courseId'
-      preLoaderRoute: typeof DashboardRoleCoursesCourseIdRouteImport
-      parentRoute: typeof DashboardRoleRouteRoute
+      fullPath: '/dashboard/lecturer/$courseId'
+      preLoaderRoute: typeof DashboardLecturerCoursesCourseIdRouteImport
+      parentRoute: typeof DashboardLecturerRouteRoute
     }
-    '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId': {
-      id: '/dashboard/$role/_courses/$lecturerCourseId/$attendanceSessionId'
+    '/dashboard/lecturer/_courses/$lecturerCourseId/$attendanceSessionId': {
+      id: '/dashboard/lecturer/_courses/$lecturerCourseId/$attendanceSessionId'
       path: '/$lecturerCourseId/$attendanceSessionId'
-      fullPath: '/dashboard/$role/$lecturerCourseId/$attendanceSessionId'
-      preLoaderRoute: typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRouteImport
-      parentRoute: typeof DashboardRoleRouteRoute
+      fullPath: '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId'
+      preLoaderRoute: typeof DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRouteImport
+      parentRoute: typeof DashboardLecturerRouteRoute
     }
   }
 }
-
-interface AuthRouteRouteChildren {
-  AuthLoginRoute: typeof AuthLoginRoute
-}
-
-const AuthRouteRouteChildren: AuthRouteRouteChildren = {
-  AuthLoginRoute: AuthLoginRoute,
-}
-
-const AuthRouteRouteWithChildren = AuthRouteRoute._addFileChildren(
-  AuthRouteRouteChildren,
-)
 
 interface OnboardRouteRouteChildren {
   OnboardOnboardRoute: typeof OnboardOnboardRoute
@@ -342,34 +339,40 @@ const OnboardRouteRouteWithChildren = OnboardRouteRoute._addFileChildren(
   OnboardRouteRouteChildren,
 )
 
-interface DashboardRoleRouteRouteChildren {
-  DashboardRoleClassListsRoute: typeof DashboardRoleClassListsRoute
-  DashboardRoleCoursesRoute: typeof DashboardRoleCoursesRoute
-  DashboardRoleJoinRequestsRoute: typeof DashboardRoleJoinRequestsRoute
-  DashboardRoleIndexRoute: typeof DashboardRoleIndexRoute
-  DashboardRoleCoursesCourseIdRoute: typeof DashboardRoleCoursesCourseIdRoute
-  DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute: typeof DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute
+interface DashboardLecturerRouteRouteChildren {
+  DashboardLecturerClassListsRoute: typeof DashboardLecturerClassListsRoute
+  DashboardLecturerCoursesRoute: typeof DashboardLecturerCoursesRoute
+  DashboardLecturerJoinRequestsRoute: typeof DashboardLecturerJoinRequestsRoute
+  DashboardLecturerIndexRoute: typeof DashboardLecturerIndexRoute
+  DashboardLecturerCoursesCourseIdRoute: typeof DashboardLecturerCoursesCourseIdRoute
+  DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute: typeof DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 
-const DashboardRoleRouteRouteChildren: DashboardRoleRouteRouteChildren = {
-  DashboardRoleClassListsRoute: DashboardRoleClassListsRoute,
-  DashboardRoleCoursesRoute: DashboardRoleCoursesRoute,
-  DashboardRoleJoinRequestsRoute: DashboardRoleJoinRequestsRoute,
-  DashboardRoleIndexRoute: DashboardRoleIndexRoute,
-  DashboardRoleCoursesCourseIdRoute: DashboardRoleCoursesCourseIdRoute,
-  DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute:
-    DashboardRoleCoursesLecturerCourseIdAttendanceSessionIdRoute,
-}
+const DashboardLecturerRouteRouteChildren: DashboardLecturerRouteRouteChildren =
+  {
+    DashboardLecturerClassListsRoute: DashboardLecturerClassListsRoute,
+    DashboardLecturerCoursesRoute: DashboardLecturerCoursesRoute,
+    DashboardLecturerJoinRequestsRoute: DashboardLecturerJoinRequestsRoute,
+    DashboardLecturerIndexRoute: DashboardLecturerIndexRoute,
+    DashboardLecturerCoursesCourseIdRoute:
+      DashboardLecturerCoursesCourseIdRoute,
+    DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute:
+      DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute,
+  }
 
-const DashboardRoleRouteRouteWithChildren =
-  DashboardRoleRouteRoute._addFileChildren(DashboardRoleRouteRouteChildren)
+const DashboardLecturerRouteRouteWithChildren =
+  DashboardLecturerRouteRoute._addFileChildren(
+    DashboardLecturerRouteRouteChildren,
+  )
 
 interface DashboardRouteRouteChildren {
-  DashboardRoleRouteRoute: typeof DashboardRoleRouteRouteWithChildren
+  DashboardLecturerRouteRoute: typeof DashboardLecturerRouteRouteWithChildren
+  DashboardStudentRouteRoute: typeof DashboardStudentRouteRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
-  DashboardRoleRouteRoute: DashboardRoleRouteRouteWithChildren,
+  DashboardLecturerRouteRoute: DashboardLecturerRouteRouteWithChildren,
+  DashboardStudentRouteRoute: DashboardStudentRouteRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
@@ -378,10 +381,10 @@ const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AuthRouteRoute: AuthRouteRouteWithChildren,
   OnboardRouteRoute: OnboardRouteRouteWithChildren,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   MobileDemoRoute: MobileDemoRoute,
+  authLoginRoute: authLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

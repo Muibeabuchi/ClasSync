@@ -30,13 +30,17 @@ export function useOnboardRedirect() {
         });
       }
       if (onboardStatus && onboardStatus.isOnboarded === true) {
-        navigate({
-          to: '/dashboard/$role',
-          params: {
-            role: onboardStatus.role!,
-          },
-          replace: true,
-        });
+        if (onboardStatus.role === 'lecturer') {
+          navigate({
+            to: '/dashboard/lecturer',
+            replace: true,
+          });
+        } else {
+          navigate({
+            to: '/dashboard/student',
+            replace: true,
+          });
+        }
       }
     }
 

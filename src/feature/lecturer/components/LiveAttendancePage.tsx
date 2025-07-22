@@ -45,12 +45,7 @@ const LiveAttendancePage = ({
   attendanceSession,
   attendanceSessionRecords,
 }: LiveAttendancePageProps) => {
-  // const [sessionState, setSessionState] = useState<'prep' | 'active' | 'ended'>(
-  //   'prep',
-  // );
   const sessionState = attendanceSession.status;
-
-  // useEffect(()=>{
 
   const [timeRemaining, setTimeRemaining] = useState(
     ((attendanceSession?.endedAt ?? attendanceSession._creationTime + 60) -
@@ -76,19 +71,7 @@ const LiveAttendancePage = ({
     attendanceSession._creationTime,
     attendanceSession.status,
   ]);
-  // },[])
 
-  // const [timeRemaining, setTimeRemaining] = useState(60); // Total 60 seconds
-  // const [checkedInStudents, setCheckedInStudents] = useState<StudentCheckIn[]>(
-  //   [],
-  // );
-  // const [selectedStudent, setSelectedStudent] = useState<StudentCheckIn | null>(
-  //   null,
-  // );
-  // const [overrideReason, setOverrideReason] = useState('');
-  // const [isOverrideDialogOpen, setIsOverrideDialogOpen] = useState(false);
-
-  // Mock session data
   const sessionData = {
     courseCode: attendanceSession.courseCode,
     courseName: attendanceSession.courseName.toLocaleUpperCase(),
@@ -99,57 +82,14 @@ const LiveAttendancePage = ({
   };
 
   const formatTime = (seconds: number) => {
-    // const mins = Math.floor(seconds / 60);
     const secs = Math.floor((seconds - 1) % 60);
     return `${secs.toString().padStart(2, '0')}`;
   };
 
   const navigate = useNavigate();
-  // const getStatusIcon = (status: string) => {
-  //   switch (status) {
-  //     case 'present':
-  //       return <CheckCircle className="h-4 w-4 text-green-600" />;
-  //     case 'outside_radius':
-  //       return <XCircle className="h-4 w-4 text-red-600" />;
-  //     default:
-  //       return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
-  //   }
-  // };
 
-  // const getStatusBadge = (status: string) => {
-  //   switch (status) {
-  //     case 'present':
-  //       return <Badge className="bg-green-100 text-green-800">Present</Badge>;
-  //     case 'outside_radius':
-  //       return <Badge variant="destructive">Outside Radius</Badge>;
-  //     default:
-  //       return <Badge variant="secondary">GPS Error</Badge>;
-  //   }
-  // };
-
-  // const handleOverride = () => {
-  //   if (selectedStudent && overrideReason.trim()) {
-  //     setCheckedInStudents((prev) =>
-  //       prev.map((student) =>
-  //         student.id === selectedStudent.id
-  //           ? { ...student, status: 'present' as const, overridden: true }
-  //           : student,
-  //       ),
-  //     );
-
-  //     // toast({
-  //     //   title: "Student Marked Present",
-  //     //   description: `${selectedStudent.name} has been manually marked present.`,
-  //     // });
-
-  //     setIsOverrideDialogOpen(false);
-  //     setOverrideReason('');
-  //     setSelectedStudent(null);
-  //   }
-  // };
-
-  const copyAttendanceCode = () => {
-    navigator.clipboard.writeText(sessionData.attendanceCode!);
+  const copyAttendanceCode = async () => {
+    await navigator.clipboard.writeText(sessionData.attendanceCode!);
     toast.info('Code Copied!', {
       description: 'Attendance code copied to clipboard.',
     });
@@ -157,9 +97,8 @@ const LiveAttendancePage = ({
 
   const handleNavigate = () =>
     navigate({
-      to: '/dashboard/$role/$courseId',
+      to: '/dashboard/lecturer/$courseId',
       params: {
-        role: 'lecturer',
         courseId: attendanceSession.courseId,
       },
     });
