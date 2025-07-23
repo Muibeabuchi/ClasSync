@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query'; // Import useQuery
 import { convexQuery } from '@convex-dev/react-query';
@@ -24,25 +24,20 @@ export function useLoginRedirect() {
     isLoading,
   } = useQuery(convexQuery(api.userProfile.getUserOnboardedStatus, {}));
 
-  useEffect(() => {
-    // Only proceed with redirection logic if data has been fetched and is not loading
-    if (!isLoading) {
-      if (onboardStatus && onboardStatus.isOnboarded === true) {
-        navigate({
-          to: '/dashboard/$role',
-          params: { role: onboardStatus.role! },
-          replace: true,
-        });
-      } else if (onboardStatus && onboardStatus.isOnboarded === false) {
-        navigate({ to: '/onboard', replace: true });
-      }
+  if (!isLoading) {
+    if (onboardStatus && onboardStatus.isOnboarded === false) {
+      navigate({ to: '/onboard', replace: true });
     }
+  }
 
-    // if (isError) {
-    //   console.error('Error checking authentication status:', error);
-    //   // Handle error, e.g., show an error message or navigate to an error page
-    // }
-  }, [onboardStatus, isLoading, navigate]); // Dependencies for useEffect
+  // useEffect(() => {
+  //   // Only proceed with redirection logic if data has been fetched and is not loading
+
+  //   // if (isError) {
+  //   //   console.error('Error checking authentication status:', error);
+  //   //   // Handle error, e.g., show an error message or navigate to an error page
+  //   // }
+  // }, [onboardStatus, isLoading, navigate]); // Dependencies for useEffect
 
   return {
     onboardStatus,

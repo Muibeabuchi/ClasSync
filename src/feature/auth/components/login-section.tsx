@@ -1,12 +1,17 @@
 import { Button } from '@/components/ui/button';
 import { GraduationCap, Shield, Clock, Users } from 'lucide-react';
 import { useGoogleSignIn } from '../hooks/use-google-auth';
+import { useState } from 'react';
+// import type { UserRoleType } from '@/feature/onboarding/schema/onboarding-schema';
 
 const LoginPage = ({ isLoading }: { isLoading: boolean }) => {
+  const [isLogin, setIsLogin] = useState(false);
   const loginWithGoogle = useGoogleSignIn();
   const handleGoogleLogin = async () => {
+    setIsLogin(true);
     if (isLoading) return;
-    loginWithGoogle();
+    await loginWithGoogle();
+    setIsLogin(false);
   };
 
   return (
@@ -135,7 +140,7 @@ const LoginPage = ({ isLoading }: { isLoading: boolean }) => {
                   <Button
                     onClick={handleGoogleLogin}
                     className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm hover:shadow-md transition-all duration-200 font-medium active:scale-95"
-                    disabled={isLoading}
+                    disabled={isLoading || isLogin}
                   >
                     <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                       <path

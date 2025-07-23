@@ -37,7 +37,11 @@ export const getUserOnboardedStatus = query({
   handler: async (ctx) => {
     const user = await getCurrentUser({ ctx });
     if (!user) return null;
-    return { isOnboarded: user.isOnboarded, role: user.role };
+    return {
+      isOnboarded: user.isOnboarded,
+      role: user.role,
+      user,
+    };
   },
 });
 

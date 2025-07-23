@@ -79,7 +79,7 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
                 return (
                   <SidebarMenuItem key={item.id}>
                     <Link
-                      to={`/dashboard/$role/${item.to}`}
+                      to={`/dashboard/lecturer/${item.to}`}
                       activeOptions={{ exact: true }}
                     >
                       {({ isActive }) => {

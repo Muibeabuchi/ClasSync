@@ -1,29 +1,31 @@
-import {
-  AuthQueryOptions,
-  useGetCurrentUser,
-} from '@/feature/auth/api/get-current-user';
 import LecturerDashboardContent, {
   LecturerDashboardSkeleton,
 } from '@/feature/lecturer/components/lecturer-dashboard-content';
+import {
+  useGetUserOnboardedStatus,
+  userOnBoardedQueries,
+} from '@/feature/onboarding/api/api-hooks';
 import { createFileRoute } from '@tanstack/react-router';
 import { Authenticated } from 'convex/react';
 
 export const Route = createFileRoute('/dashboard/lecturer/')({
   component: RouteComponent,
   async loader({ context }) {
-    await context.queryClient.ensureQueryData(AuthQueryOptions.getCurrentUser);
+    await context.queryClient.ensureQueryData(
+      userOnBoardedQueries.getUserOnboardedStatus,
+    );
   },
   pendingComponent: LecturerDashboardSkeleton,
 });
 
 function RouteComponent() {
-  const { data: user, isLoading } = useGetCurrentUser();
+  const { data } = useGetUserOnboardedStatus();
 
-  if (isLoading) return <LecturerDashboardSkeleton />;
+  // if (isLoading) return <LecturerDashboardSkeleton />;
 
   return (
     <Authenticated>
-      <LecturerDashboardContent fullName={user?.fullName} />;
+      <LecturerDashboardContent fullName={data?.user?.fullName} />;
     </Authenticated>
   );
 }

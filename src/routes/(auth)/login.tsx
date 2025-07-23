@@ -11,7 +11,10 @@ function RouteComponent() {
 
   return (
     <main>
-      <LoginPage isLoading={isLoading} />
+      <LoginPage
+        isLoading={isLoading}
+        // role={onboardStatus?.role}
+      />
     </main>
   );
 }
