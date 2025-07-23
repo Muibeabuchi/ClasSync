@@ -3,7 +3,9 @@ import {
   useCompleteOnboarding,
   useGetUserRole,
 } from '@/feature/onboarding/api/api-hooks';
-import LecturerOnboardingSection from '@/feature/onboarding/components/lecturer-onboarding-section';
+import LecturerOnboardingSection, {
+  LecturerOnboardingSkeleton,
+} from '@/feature/onboarding/components/lecturer-onboarding-section';
 import StudentOnboardingSection from '@/feature/onboarding/components/onboard.student';
 import { type OnboardingDataType } from '@/feature/onboarding/schema/onboarding-schema';
 import { convexQuery } from '@convex-dev/react-query';
@@ -19,10 +21,7 @@ export const Route = createFileRoute('/_onboard/role')({
     );
   },
   component: RouteComponent,
-  pendingComponent: () => {
-    // TODO: create a proper component for handling loading state
-    return <div className="">Loading the Role Page</div>;
-  },
+  pendingComponent: LecturerOnboardingSkeleton,
 });
 
 function RouteComponent() {
