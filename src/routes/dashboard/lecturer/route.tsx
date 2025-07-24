@@ -34,8 +34,8 @@ function RouteComponent() {
       <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <div className="min-h-screen flex w-full">
           <LecturerSidebar
-            fullName={data?.user?.fullName}
-            profileImage={data?.user?.image}
+            fullName={data?.fullName}
+            profileImage={data?.userImage}
           />
           <SidebarInset className="flex-1">
             <div className="flex items-center gap-2 px-4 py-2 border-b">

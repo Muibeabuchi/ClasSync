@@ -35,6 +35,7 @@ import {
   type OnboardingDataType,
 } from '../schema/onboarding-schema';
 import { lecturerTitleArrayConstant } from '@/constants/onboarding';
+import { useImageUpload } from '@/hooks/useImageUpload';
 
 export default function LecturerOnboardingSection({
   handleConfirmCancel,
@@ -46,7 +47,9 @@ export default function LecturerOnboardingSection({
   const [currentStep, setCurrentStep] = useState(1);
   const [showCancelModal, setShowCancelModal] = useState(false);
 
-  const form = useForm<LecturerPersonalInfo>({
+  const { uploadImage, isUploading } = useImageUpload();
+
+  const form = useForm<NonNullable<LecturerPersonalInfo>>({
     resolver: zodResolver(lecturerPersonalInfoSchema),
     defaultValues: {
       fullName: '',
@@ -57,6 +60,7 @@ export default function LecturerOnboardingSection({
 
   const onSubmit = async (data: LecturerPersonalInfo) => {
     try {
+      await uploadImage(data.profileImage);
       await handleCompleteOnboarding(data);
       setCurrentStep(2);
     } catch (error) {
@@ -180,7 +184,7 @@ export default function LecturerOnboardingSection({
                     </Button>
                     <Button
                       type="submit"
-                      disabled={form.formState.isSubmitting}
+                      disabled={form.formState.isSubmitting || isUploading}
                     >
                       {form.formState.isSubmitting
                         ? 'Setting up...'

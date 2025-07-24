@@ -2,7 +2,10 @@ import { ConvexError, v } from 'convex/values';
 import { AuthenticatedUserMutation } from './middlewares/authenticatedMiddleware';
 import { studentGenderSchema, userRoleSchema } from './schema';
 import { query } from './_generated/server';
-import { getCurrentUser } from './models/userprofileModel';
+import {
+  getCurrentUser,
+  //  getUserReturnType
+} from './models/userprofileModel';
 
 // ? ====================QUERIES====================
 
@@ -31,16 +34,25 @@ export const getUserOnboardedStatus = query({
     v.object({
       isOnboarded: v.union(v.boolean(), v.null()),
       role: v.optional(userRoleSchema),
+      fullName: v.string(),
+      userImage: v.string(),
     }),
     v.null(),
   ),
   handler: async (ctx) => {
     const user = await getCurrentUser({ ctx });
     if (!user) return null;
+
+    const userImage =
+      user.role === 'student'
+        ? ((await ctx.storage.getUrl(user.student_passport_photo_id!)) ?? '')
+        : ((await ctx.storage.getUrl(user.lecturerPassportImage!)) ?? '');
+
     return {
       isOnboarded: user.isOnboarded,
       role: user.role,
-      user,
+      fullName: user.fullName,
+      userImage,
     };
   },
 });
@@ -69,6 +81,7 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
     // registrationNumber: v.optional(v.string()),
     // yearLevel: v.optional(studentYearLevelSchema),
     gender: v.optional(studentGenderSchema),
+    profileImageId: v.optional(v.id('_storage')),
   },
   returns: {
     success: v.boolean(),
@@ -97,6 +110,7 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
         // yearLevel: args.yearLevel,
         // faculty: args.faculty,
         // department: args.department,
+        student_passport_photo_id: args.profileImageId,
       };
 
       await ctx.db.patch(ctx.userId, {
@@ -110,6 +124,7 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
         // title: args.title,
         // faculty: args.faculty,
         // department: args.department,
+        lecturerPassportImage: args.profileImageId,
       };
 
       // create a lecturerPlan

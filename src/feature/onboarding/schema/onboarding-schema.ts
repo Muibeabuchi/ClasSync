@@ -62,8 +62,7 @@ export const lecturerPersonalInfoSchema = z.object({
     })
     .refine((file) => file.size <= 5 * 1024 * 1024, {
       message: 'Image must be smaller than 5MB',
-    })
-    .optional(),
+    }),
 });
 
 export const lecturerAcademicInfoSchema = z.object({

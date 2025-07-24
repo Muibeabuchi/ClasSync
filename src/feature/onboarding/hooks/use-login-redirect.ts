@@ -28,6 +28,9 @@ export function useLoginRedirect() {
     if (onboardStatus && onboardStatus.isOnboarded === false) {
       navigate({ to: '/onboard', replace: true });
     }
+    if (onboardStatus && onboardStatus.isOnboarded === true) {
+      navigate({ to: `/dashboard/${onboardStatus.role}`, replace: true });
+    }
   }
 
   // useEffect(() => {

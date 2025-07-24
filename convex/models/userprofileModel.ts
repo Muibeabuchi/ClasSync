@@ -1,3 +1,4 @@
+// import { Doc } from './../_generated/dataModel.d';
 // import { QueryCtx } from './../_generated/server.d';
 import { ConvexError } from 'convex/values';
 import { Id } from '../_generated/dataModel';
@@ -27,6 +28,8 @@ export const getCurrentUser = async ({
   };
   // },
 };
+
+export type getUserReturnType = ReturnType<typeof getCurrentUser>;
 
 export const ensureIsLecturer = async (ctx: MutationCtx) => {
   const user = await getCurrentUser({ ctx });
