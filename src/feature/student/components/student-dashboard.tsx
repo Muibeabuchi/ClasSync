@@ -13,12 +13,12 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+// import { Button } from '@/components/ui/button';
 import {
   BookOpen,
   Clock,
   Bell,
-  Plus,
+  // Plus,
   TrendingUp,
   CheckCircle,
 } from 'lucide-react';
@@ -33,7 +33,11 @@ import MobileStudentDashboard from './mobile-student-dashboard';
 // import { toast } from 'sonner';
 
 interface StudentDashboardProps {
-  userData: any;
+  userData: {
+    fullName: string | undefined;
+    regNumber: string | undefined;
+    profileImage: string | undefined;
+  };
 }
 
 type ActivePage =
@@ -141,17 +145,13 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
                 <h1 className="text-2xl font-bold text-foreground">
                   Welcome back, {userData?.fullName}
                 </h1>
-                <p className="text-muted-foreground">
-                  {userData?.regNumber} • {userData?.department} •{' '}
-                  {userData?.yearLevel} Year
-                </p>
+                <p className="text-muted-foreground">{userData?.regNumber}</p>
               </div>
               <Avatar className="h-12 w-12">
                 <AvatarImage src={userData?.profileImage} />
                 <AvatarFallback>
                   {userData?.fullName
                     ?.split(' ')
-                    // @ts-expect-error: initial data
                     .map((n) => n[0])
                     .join('')}
                 </AvatarFallback>
@@ -232,7 +232,7 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
             </div>
 
             {/* Quick Actions */}
-            <div className="flex flex-wrap gap-3">
+            {/* <div className="flex flex-wrap gap-3">
               <Button
                 onClick={() => setActivePage('courses')}
                 className="flex items-center gap-2"
@@ -254,7 +254,7 @@ const StudentDashboard = ({ userData }: StudentDashboardProps) => {
                 <Bell className="h-4 w-4 mr-2" />
                 View Notifications (3)
               </Button>
-            </div>
+            </div> */}
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* My Courses */}

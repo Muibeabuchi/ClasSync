@@ -137,7 +137,7 @@ const StudentSidebar = ({
                   size="lg"
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar className="size-5 rounded-md">
                     <AvatarImage src={userData?.profileImage} />
                     <AvatarFallback className="rounded-lg">
                       {userData?.fullName
@@ -154,9 +154,6 @@ const StudentSidebar = ({
                       </span>
                       <span className="truncate text-xs">
                         {userData?.regNumber}
-                      </span>
-                      <span className="truncate text-xs">
-                        {userData?.yearLevel} Year • {userData?.department}
                       </span>
                     </div>
                   )}

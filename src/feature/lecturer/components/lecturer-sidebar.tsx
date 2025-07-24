@@ -132,7 +132,7 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
                   size="lg"
                   className="h-12  rounded-lg hover:bg-accent transition-colors duration-200 data-[state=open]:bg-accent"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg border">
+                  <Avatar className="size-5 rounded-md border">
                     <AvatarImage src={profileImage} />
                     <AvatarFallback className="rounded-lg text-sm font-medium">
                       {fullName
