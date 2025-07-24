@@ -81,12 +81,14 @@ const StudentCoursesPage = () => {
                   Avg Attendance
                 </p>
                 <p className="text-xl md:text-2xl font-bold text-foreground">
-                  {Math.round(
-                    filteredCourses?.reduce((acc, course) => {
-                      if (!course) return acc;
-                      return acc + course?.attendanceStats?.attendanceRate;
-                    }, 0) / enrolledCourses?.length,
-                  )}
+                  {filteredCourses.length > 0
+                    ? Math.round(
+                        filteredCourses?.reduce((acc, course) => {
+                          if (!course) return acc;
+                          return acc + course?.attendanceStats?.attendanceRate;
+                        }, 0) / enrolledCourses?.length,
+                      )
+                    : 0}
                   %
                 </p>
               </div>
