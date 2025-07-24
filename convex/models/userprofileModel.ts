@@ -22,9 +22,17 @@ export const getCurrentUser = async ({
   // (skip this if you have no fields in your users table schema)
   const user = await ctx.db.get(userMetadata.userId as Id<'userProfiles'>);
   if (!user) return null;
+  let userImage: string = '';
+  if (user.isOnboarded) {
+    userImage =
+      user.role === 'student'
+        ? ((await ctx.storage.getUrl(user.student_passport_photo_id!)) ?? '')
+        : ((await ctx.storage.getUrl(user.lecturerPassportImage!)) ?? '');
+  }
   return {
     ...user,
     ...userMetadata,
+    userImage,
   };
   // },
 };
