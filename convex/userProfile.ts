@@ -43,10 +43,13 @@ export const getUserOnboardedStatus = query({
     const user = await getCurrentUser({ ctx });
     if (!user) return null;
 
-    const userImage =
-      user.role === 'student'
-        ? ((await ctx.storage.getUrl(user.student_passport_photo_id!)) ?? '')
-        : ((await ctx.storage.getUrl(user.lecturerPassportImage!)) ?? '');
+    let userImage: string = '';
+    if (user.isOnboarded) {
+      userImage =
+        user.role === 'student'
+          ? ((await ctx.storage.getUrl(user.student_passport_photo_id!)) ?? '')
+          : ((await ctx.storage.getUrl(user.lecturerPassportImage!)) ?? '');
+    }
 
     return {
       isOnboarded: user.isOnboarded,
@@ -81,7 +84,7 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
     // registrationNumber: v.optional(v.string()),
     // yearLevel: v.optional(studentYearLevelSchema),
     gender: v.optional(studentGenderSchema),
-    profileImageId: v.optional(v.id('_storage')),
+    // profileImageId: v.optional(v.id('_storage')),
   },
   returns: {
     success: v.boolean(),
@@ -110,7 +113,7 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
         // yearLevel: args.yearLevel,
         // faculty: args.faculty,
         // department: args.department,
-        student_passport_photo_id: args.profileImageId,
+        // student_passport_photo_id: args.profileImageId,
       };
 
       await ctx.db.patch(ctx.userId, {
@@ -124,7 +127,7 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
         // title: args.title,
         // faculty: args.faculty,
         // department: args.department,
-        lecturerPassportImage: args.profileImageId,
+        // lecturerPassportImage: args.profileImageId,
       };
 
       // create a lecturerPlan

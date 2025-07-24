@@ -50,7 +50,7 @@ const passportPhotoSchema = z
     message: 'Image must be smaller than 2MB',
   });
 
-const genderSchema = z.union([z.literal('male'), z.literal('female')]);
+export const genderSchema = z.union([z.literal('male'), z.literal('female')]);
 
 export const lecturerPersonalInfoSchema = z.object({
   fullName: z.string().min(5, 'Full name must be at least 5 characters'),

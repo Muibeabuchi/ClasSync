@@ -79,11 +79,19 @@ export default function LecturerOnboardingSection({
         <div className="max-w-2xl mx-auto pt-8">
           <Card>
             <CardHeader>
-              <CardTitle>Professional Profile</CardTitle>
-              <CardDescription>
+              <div className="text-center mb-8">
+                <CardTitle className="text-3xl font-bold text-foreground text-primary mb-2">
+                  Lecturer Registration
+                </CardTitle>
+                <CardDescription className="text-muted-foreground text-xs">
+                  Complete your profile to start using ClassSynk
+                </CardDescription>
+              </div>
+              {/* <CardTitle>Professional Profile</CardTitle> */}
+              {/* <CardDescription>
                 Please provide your official academic credentials and profile
                 information
-              </CardDescription>
+              </CardDescription> */}
             </CardHeader>
             <CardContent>
               <Form {...form}>

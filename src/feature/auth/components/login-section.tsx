@@ -8,8 +8,8 @@ const LoginPage = ({ isLoading }: { isLoading: boolean }) => {
   const [isLogin, setIsLogin] = useState(false);
   const loginWithGoogle = useGoogleSignIn();
   const handleGoogleLogin = async () => {
-    setIsLogin(true);
     if (isLoading) return;
+    setIsLogin(true);
     await loginWithGoogle();
     setIsLogin(false);
   };
