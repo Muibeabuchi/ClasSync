@@ -14,8 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+
 import type { Doc, Id } from 'convex/_generated/dataModel';
 import {
   BookOpen,
@@ -62,7 +61,7 @@ export const CourseCard = ({
   const deleteMutation = useDeleteCourse();
 
   const isArchived = course.status === 'archived';
-  const isLoading = archiveMutation.isPending || unarchiveMutation.isPending;
+  // const isLoading = archiveMutation.isPending || unarchiveMutation.isPending;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -94,14 +93,6 @@ export const CourseCard = ({
 
   const handleViewCourse = () => {
     handleCourseNavigate(course._id);
-  };
-
-  const handleArchiveToggle = (checked: boolean) => {
-    if (checked && course.status === 'active') {
-      setShowArchiveModal(true);
-    } else if (!checked && course.status === 'archived') {
-      setShowUnarchiveModal(true);
-    }
   };
 
   const handleArchiveConfirm = () => {
@@ -214,6 +205,44 @@ export const CourseCard = ({
                   <Edit className="h-4 w-4 mr-2" />
                   Edit Course
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {isArchived ? (
+                  <DropdownMenuItem
+                    onClick={() => setShowUnarchiveModal(true)}
+                    disabled={unarchiveMutation.isPending}
+                    className="text-emerald-600 dark:text-emerald-400"
+                  >
+                    {unarchiveMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                        Unarchiving...
+                      </>
+                    ) : (
+                      <>
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Unarchive Course
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem
+                    onClick={() => setShowArchiveModal(true)}
+                    disabled={archiveMutation.isPending}
+                    className="text-amber-600 dark:text-amber-400"
+                  >
+                    {archiveMutation.isPending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                        Archiving...
+                      </>
+                    ) : (
+                      <>
+                        <Archive className="h-4 w-4 mr-2" />
+                        Archive Course
+                      </>
+                    )}
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive"
@@ -341,37 +370,6 @@ export const CourseCard = ({
             </div>
           ) : null
         ) : null}
-
-        {/* Archive/Unarchive Switch */}
-        <div
-          className={`flex items-center justify-between p-3 rounded-lg mb-4 ${
-            isArchived
-              ? 'bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200/50 dark:border-emerald-800/50'
-              : 'bg-muted/30'
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {isArchived ? (
-              <RotateCcw className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            ) : (
-              <Archive className="h-4 w-4 text-muted-foreground" />
-            )}
-            <Label
-              htmlFor={`archive-${course._id}`}
-              className={`text-sm font-medium ${
-                isArchived ? 'text-emerald-700 dark:text-emerald-300' : ''
-              }`}
-            >
-              {isArchived ? 'Unarchive Course' : 'Archive Course'}
-            </Label>
-          </div>
-          <Switch
-            id={`archive-${course._id}`}
-            checked={isArchived}
-            onCheckedChange={handleArchiveToggle}
-            disabled={isLoading}
-          />
-        </div>
 
         {/* Action Button */}
         <Button
