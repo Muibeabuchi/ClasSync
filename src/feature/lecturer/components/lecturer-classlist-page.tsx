@@ -30,6 +30,7 @@ import {
 import { CreateClassListSheet } from './CreateClassListSheet';
 import { DeleteClassListModal } from './DeleteClassListModal';
 import { ViewClassListModal } from './ViewClassListModal';
+import { EditClassListSheet } from './EditClassListSheet';
 import { toast } from 'sonner';
 import { useCreateClassList } from '@/feature/classList/api/create-classList';
 import { useDeleteClassList } from '@/feature/classList/api/delete-classList';
@@ -47,6 +48,7 @@ const LecturerClassListsPage = ({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedClassList, setSelectedClassList] = useState<{
     id: Id<'classLists'>;
     name: string;
@@ -92,6 +94,17 @@ const LecturerClassListsPage = ({
       name: classList.classListName || 'Unnamed Class List',
     });
     setShowViewModal(true);
+  };
+
+  const handleEditClick = (classList: {
+    _id: Id<'classLists'>;
+    classListName?: string;
+  }) => {
+    setSelectedClassList({
+      id: classList._id,
+      name: classList.classListName || 'Unnamed Class List',
+    });
+    setShowEditModal(true);
   };
 
   const handleDeleteClick = (classList: {
@@ -258,7 +271,11 @@ const LecturerClassListsPage = ({
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditClick(classList)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
@@ -330,7 +347,7 @@ const LecturerClassListsPage = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              // onClick={() => onEditClassList(classList.id)}
+                              onClick={() => handleEditClick(classList)}
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -368,6 +385,13 @@ const LecturerClassListsPage = ({
         classListName={selectedClassList?.name || ''}
       />
 
+      <EditClassListSheet
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        classListId={selectedClassList?.id || null}
+        classListName={selectedClassList?.name || ''}
+      />
+
       <DeleteClassListModal
         open={showDeleteModal}
         onOpenChange={setShowDeleteModal}
@@ -375,16 +399,6 @@ const LecturerClassListsPage = ({
         onConfirmDelete={handleDeleteClassList}
         isDeleting={deleteClassList.isPending}
       />
-
-      {/* <UpdateClassListSheet
-          isOpen={showUpdateSheet}
-          onClose={() => {
-            setShowUpdateSheet(false);
-            setSelectedClassList(null);
-          }}
-          // classlist={selectedClassList}
-          // onUpdate={handleUpdateClassList}
-        /> */}
     </div>
   );
 };
