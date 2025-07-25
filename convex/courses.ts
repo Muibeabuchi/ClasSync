@@ -883,14 +883,14 @@ export const getStudentCourses = StudentQueryMiddleware({
 
 export const getCourseDetails = LecturerCourseQuery({
   args: {},
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const lecturerId = ctx.user._id;
     const course = ctx.course;
 
     // Get course attendance list (enrolled students)
     const courseAttendanceList = await ctx.db
       .query('courseAttendanceList')
-      .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
       .collect();
 
     // Get student profiles and calculate attendance rates
@@ -911,16 +911,14 @@ export const getCourseDetails = LecturerCourseQuery({
         // Calculate attendance rate for this student in this course
         const totalSessions = await ctx.db
           .query('attendanceSessions')
-          .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
           .filter((q) => q.neq(q.field('status'), 'pending'))
           .collect();
 
         const attendedSessions = await ctx.db
           .query('attendanceRecords')
           .withIndex('by_studentId_by_courseId', (q) =>
-            q
-              .eq('studentId', attendance.studentId)
-              .eq('courseId', args.courseId),
+            q.eq('studentId', attendance.studentId).eq('courseId', course._id),
           )
           .collect();
 
@@ -928,6 +926,14 @@ export const getCourseDetails = LecturerCourseQuery({
           totalSessions.length > 0
             ? Math.round((attendedSessions.length / totalSessions.length) * 100)
             : 0;
+
+        // Get student image URL if available
+        let imageUrl = null;
+        if (studentProfile.student_passport_photo_id) {
+          imageUrl = await ctx.storage.getUrl(
+            studentProfile.student_passport_photo_id,
+          );
+        }
 
         return {
           id: studentProfile._id,
@@ -937,6 +943,7 @@ export const getCourseDetails = LecturerCourseQuery({
           regNumber:
             classListStudent?.student?.studentRegistrationNumber || 'N/A',
           department: studentProfile.department || 'Not specified',
+          imageUrl,
           attendanceRate,
           courseAttendanceListId: attendance._id,
         };
@@ -949,7 +956,7 @@ export const getCourseDetails = LecturerCourseQuery({
     const joinRequests = await ctx.db
       .query('joinRequests')
       .withIndex('by_lecturerId_by_courseId', (q) =>
-        q.eq('lecturerId', lecturerId).eq('courseId', args.courseId),
+        q.eq('lecturerId', lecturerId).eq('courseId', course._id),
       )
       .collect();
 
@@ -959,6 +966,14 @@ export const getCourseDetails = LecturerCourseQuery({
         if (!studentProfile)
           throw new ConvexError('studentProfile does not exist');
 
+        // Get student image URL if available
+        let imageUrl = null;
+        if (studentProfile.student_passport_photo_id) {
+          imageUrl = await ctx.storage.getUrl(
+            studentProfile.student_passport_photo_id,
+          );
+        }
+
         return {
           id: request._id,
           student: {
@@ -966,6 +981,7 @@ export const getCourseDetails = LecturerCourseQuery({
             email: studentProfile.email,
             regNumber: studentProfile.registrationNumber || 'N/A',
             department: studentProfile.department || 'Not specified',
+            imageUrl,
           },
           status: request.status,
           requestDate: new Date(request._creationTime)
@@ -1021,7 +1037,7 @@ export const getCourseDetails = LecturerCourseQuery({
     // Get attendance sessions count
     const attendanceSessions = await ctx.db
       .query('attendanceSessions')
-      .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
       .collect();
 
     return {

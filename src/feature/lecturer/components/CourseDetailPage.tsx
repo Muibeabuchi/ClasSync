@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import {
-  ArrowLeft,
   Users,
   BookOpen,
   BarChart,
@@ -76,14 +75,6 @@ const CourseDetailPage = ({
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            // onClick={onBack}
-            className="hover:scale-110 transition-transform flex-shrink-0"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
           <div className="flex-1 min-w-0">
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
               {courseData.name}
