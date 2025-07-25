@@ -71,7 +71,14 @@ type CreateClassListForm = z.infer<typeof createClassListSchema>;
 interface CreateClassListSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onCreateClassList: (data: CreateClassListForm) => Promise<void>;
+  onCreateClassList: (data: {
+    classListName: string;
+    students: {
+      gender: 'male' | 'female';
+      registrationNumber: string;
+      Name: string;
+    }[];
+  }) => Promise<void>;
   selectedClassList?: {
     id: string;
     name: string;
