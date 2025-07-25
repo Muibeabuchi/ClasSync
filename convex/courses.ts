@@ -251,6 +251,57 @@ export const removeCourseClassList = courseMutation({
   },
 });
 
+export const archiveCourse = courseMutation({
+  args: {},
+  async handler(ctx) {
+    const course = ctx.course;
+
+    // Validate course can be archived
+    if (course.status === 'archived') {
+      throw new ConvexError('Course is already archived');
+    }
+
+    // Check if there are any active attendance sessions
+    const activeAttendanceSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .collect();
+
+    if (activeAttendanceSessions.length > 0) {
+      throw new ConvexError(
+        'Cannot archive course with active attendance sessions. Please end all active sessions first.',
+      );
+    }
+
+    // Archive the course
+    await ctx.db.patch(course._id, {
+      status: 'archived',
+    });
+
+    return { success: true, message: 'Course archived successfully' };
+  },
+});
+
+export const unarchiveCourse = courseMutation({
+  args: {},
+  async handler(ctx) {
+    const course = ctx.course;
+
+    // Validate course can be unarchived
+    if (course.status !== 'archived') {
+      throw new ConvexError('Only archived courses can be unarchived');
+    }
+
+    // Unarchive the course (set back to active)
+    await ctx.db.patch(course._id, {
+      status: 'active',
+    });
+
+    return { success: true, message: 'Course unarchived successfully' };
+  },
+});
+
 export const deleteCourse = courseMutation({
   args: {},
   async handler(ctx) {
