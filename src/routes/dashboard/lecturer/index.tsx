@@ -21,11 +21,9 @@ export const Route = createFileRoute('/dashboard/lecturer/')({
 function RouteComponent() {
   const { data } = useGetUserOnboardedStatus();
 
-  // if (isLoading) return <LecturerDashboardSkeleton />;
-
   return (
     <Authenticated>
-      <LecturerDashboardContent fullName={data?.user?.fullName} />;
+      <LecturerDashboardContent fullName={data?.fullName} />
     </Authenticated>
   );
 }

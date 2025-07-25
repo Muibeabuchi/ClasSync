@@ -80,31 +80,6 @@ const CreateCourseModal = ({ children, onSuccess }: CreateCourseModalProps) => {
     },
   });
 
-  // Mock data for ClassLists
-  // const availableClassLists: ClassList[] = [
-  //   {
-  //     id: '1',
-  //     name: 'Computer Science Year 3',
-  //     batchYear: '2021/2022',
-  //     department: 'Computer Science',
-  //     students: 45,
-  //   },
-  //   {
-  //     id: '2',
-  //     name: 'Software Engineering Year 2',
-  //     batchYear: '2022/2023',
-  //     department: 'Computer Science',
-  //     students: 38,
-  //   },
-  //   {
-  //     id: '3',
-  //     name: 'Information Technology Year 1',
-  //     batchYear: '2023/2024',
-  //     department: 'Computer Science',
-  //     students: 52,
-  //   },
-  // ];
-
   const getSelectedClassListsData = (classListIds: string[]) => {
     return availableClassLists?.filter((cl) => classListIds.includes(cl.id));
   };
