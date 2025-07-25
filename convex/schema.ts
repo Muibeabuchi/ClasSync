@@ -252,6 +252,7 @@ const applicationTables = {
       'attendanceSessionId',
       'studentId',
     ])
+    .index('by_courseId', ['courseId'])
     .index('by_attendanceSessionId', ['attendanceSessionId'])
     .index('by_studentId', ['studentId'])
     .index('by_studentId_by_courseId', ['studentId', 'courseId']),

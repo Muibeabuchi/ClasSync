@@ -191,6 +191,7 @@ export const updateCourse = courseMutation({
   },
 });
 
+// TODO: Add a check to ensure
 export const removeCourseClassList = courseMutation({
   args: {
     classListIds: v.array(v.id('classLists')),
@@ -247,6 +248,96 @@ export const removeCourseClassList = courseMutation({
     await ctx.db.patch(course._id, {
       classListIds: updatedCourseClassListIds,
     });
+  },
+});
+
+export const deleteCourse = courseMutation({
+  args: {},
+  async handler(ctx) {
+    const course = ctx.course;
+    const lecturerId = ctx.user._id;
+
+    // Validate course can be deleted
+    if (course.status === 'archived') {
+      throw new ConvexError('Archived courses cannot be deleted');
+    }
+
+    // Check if there are any active attendance sessions
+    const activeAttendanceSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .collect();
+
+    if (activeAttendanceSessions.length > 0) {
+      throw new ConvexError(
+        'Cannot delete course with active attendance sessions',
+      );
+    }
+
+    // Delete all related data in the correct order
+
+    // 1. Delete attendance records
+    const attendanceRecords = await ctx.db
+      .query('attendanceRecords')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .collect();
+
+    await Promise.all(
+      attendanceRecords.map(async (record) => {
+        await ctx.db.delete(record._id);
+      }),
+    );
+
+    // 2. Delete attendance sessions
+    const attendanceSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .collect();
+
+    await Promise.all(
+      attendanceSessions.map(async (session) => {
+        await ctx.db.delete(session._id);
+      }),
+    );
+
+    // 3. Delete course attendance list entries
+    const courseAttendanceList = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .collect();
+
+    await Promise.all(
+      courseAttendanceList.map(async (attendance) => {
+        await ctx.db.delete(attendance._id);
+      }),
+    );
+
+    // 4. Delete join requests
+    const joinRequests = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_lecturerId_by_courseId', (q) =>
+        q.eq('lecturerId', lecturerId).eq('courseId', course._id),
+      )
+      .collect();
+
+    await Promise.all(
+      joinRequests.map(async (request) => {
+        await ctx.db.delete(request._id);
+      }),
+    );
+
+    // 5. Finally delete the course
+    await ctx.db.delete(course._id);
+
+    // Update lecturer consumption
+    await CoursesModel.updateLecturerConsumption({
+      ctx,
+      lecturerId,
+      method: 'delete',
+    });
+
+    return { success: true, message: 'Course deleted successfully' };
   },
 });
 
