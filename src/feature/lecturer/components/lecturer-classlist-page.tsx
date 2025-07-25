@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { CreateClassListSheet } from './CreateClassListSheet';
 import { DeleteClassListModal } from './DeleteClassListModal';
+import { ViewClassListModal } from './ViewClassListModal';
 import { toast } from 'sonner';
 import { useCreateClassList } from '@/feature/classList/api/create-classList';
 import { useDeleteClassList } from '@/feature/classList/api/delete-classList';
@@ -45,6 +46,7 @@ const LecturerClassListsPage = ({
 }: LecturerClassListsPageProps) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
   const [selectedClassList, setSelectedClassList] = useState<{
     id: Id<'classLists'>;
     name: string;
@@ -79,6 +81,17 @@ const LecturerClassListsPage = ({
       console.error('Error creating class list:', error);
       toast.error('Failed to create class list');
     }
+  };
+
+  const handleViewClick = (classList: {
+    _id: Id<'classLists'>;
+    classListName?: string;
+  }) => {
+    setSelectedClassList({
+      id: classList._id,
+      name: classList.classListName || 'Unnamed Class List',
+    });
+    setShowViewModal(true);
   };
 
   const handleDeleteClick = (classList: {
@@ -238,7 +251,11 @@ const LecturerClassListsPage = ({
                           </p>
                         </div>
                         <div className="flex items-center space-x-1 ml-2">
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewClick(classList)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button variant="ghost" size="sm">
@@ -306,7 +323,7 @@ const LecturerClassListsPage = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              // onClick={() => onViewClassList(classList.id)}
+                              onClick={() => handleViewClick(classList)}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -342,6 +359,13 @@ const LecturerClassListsPage = ({
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         onCreateClassList={handleCreateClassList}
+      />
+
+      <ViewClassListModal
+        open={showViewModal}
+        onOpenChange={setShowViewModal}
+        classListId={selectedClassList?.id || null}
+        classListName={selectedClassList?.name || ''}
       />
 
       <DeleteClassListModal
