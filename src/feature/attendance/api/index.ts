@@ -50,3 +50,11 @@ export const useStudentTakeAttendance = () =>
   useMutation({
     mutationFn: useConvexMutation(api.attendance.checkInToAttendance),
   });
+
+// Course management hooks
+export const useUnlinkStudentFromCourse = () =>
+  useMutation({
+    mutationFn: useConvexMutation(
+      api.courses.unLinkStudentFromCourseAttendanceList,
+    ),
+  });

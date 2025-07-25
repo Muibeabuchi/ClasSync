@@ -566,14 +566,94 @@ export const acceptAndLinkJoinRequest = lecturerMutation({
   },
 });
 
-export const unLinkStudentFromCourseAttendanceList = courseMutation({
+export const unLinkStudentFromCourseAttendanceList = lecturerMutation({
   args: { courseAttendanceListId: v.id('courseAttendanceList') },
   async handler(ctx, args) {
+    const lecturerId = ctx.user._id;
+    // Verify the courseAttendanceList exists
     const courseAttendanceList = await ctx.db.get(args.courseAttendanceListId);
     if (!courseAttendanceList)
       throw new ConvexError('CourseAttendanceList does not exist');
 
+    // Verify the lecturer owns this course attendance list entry
+    if (courseAttendanceList.lecturerId !== lecturerId) {
+      throw new ConvexError(
+        'Unauthorized: You do not have access to this course attendance list',
+      );
+    }
+
+    // Get the course to verify it exists and belongs to the lecturer
+    const course = await ctx.db.get(courseAttendanceList.courseId);
+    if (!course) {
+      throw new ConvexError('Course does not exist');
+    }
+
+    if (course.lecturerId !== lecturerId) {
+      throw new ConvexError(
+        'Unauthorized: You do not have access to this course',
+      );
+    }
+
+    // Check if the course is archived - prevent unlinking from archived courses
+    if (course.status === 'archived') {
+      throw new ConvexError('Cannot unlink students from archived courses');
+    }
+
+    // Check if there are any active attendance sessions for this course
+    const activeAttendanceSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .collect();
+
+    if (activeAttendanceSessions.length > 0) {
+      throw new ConvexError(
+        'Cannot unlink student while there are active attendance sessions. Please end all active sessions first.',
+      );
+    }
+
+    // Get all attendance records for this student in this course
+    const attendanceRecords = await ctx.db
+      .query('attendanceRecords')
+      .withIndex('by_studentId_by_courseId', (q) =>
+        q
+          .eq('studentId', courseAttendanceList.studentId)
+          .eq('courseId', course._id),
+      )
+      .collect();
+
+    // Delete all attendance records for this student in this course
+    await Promise.all(
+      attendanceRecords.map(async (record) => {
+        await ctx.db.delete(record._id);
+      }),
+    );
+
+    // Update any related join request to rejected status if it exists
+    const joinRequest = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_student_by_courseId', (q) =>
+        q
+          .eq('studentId', courseAttendanceList.studentId)
+          .eq('courseId', course._id),
+      )
+      .unique();
+
+    if (joinRequest && joinRequest.status === 'approved') {
+      await ctx.db.patch(joinRequest._id, {
+        status: 'rejected',
+      });
+    }
+
+    // Finally, delete the courseAttendanceList entry
     await ctx.db.delete(courseAttendanceList._id);
+
+    return {
+      success: true,
+      message: 'Student successfully unlinked from course',
+      studentId: courseAttendanceList.studentId,
+      courseId: course._id,
+    };
   },
 });
 
