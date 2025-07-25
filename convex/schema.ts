@@ -149,17 +149,11 @@ const applicationTables = {
   // ClassList - Core abstraction for student groups
   classLists: defineTable({
     classListName: v.optional(v.string()),
-    department: v.string(),
-    yearGroup: v.string(), // e.g., "Software Engineering - 2022"
-    faculty: v.string(),
     //  ClassLists have to be tied to a lecturer
     lecturerId: v.id('userProfiles'),
     // For figuring out classLists that are archived
     isArchived: v.boolean(),
-  })
-    .index('by_lecturer', ['lecturerId'])
-    .index('by_department', ['department'])
-    .index('by_year_group', ['yearGroup']),
+  }).index('by_lecturer', ['lecturerId']),
 
   classListStudents: defineTable({
     classListId: v.id('classLists'),

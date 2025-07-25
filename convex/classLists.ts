@@ -13,9 +13,6 @@ import * as ClassListModel from './models/classListModel';
 export const createClassList = lecturerMutation({
   args: {
     classListName: v.optional(v.string()),
-    department: v.string(),
-    yearGroup: v.string(),
-    faculty: v.string(),
     students: v.array(
       v.object({
         Name: v.string(),
@@ -34,9 +31,6 @@ export const createClassList = lecturerMutation({
 
     const classListId = await ctx.db.insert('classLists', {
       classListName: args.classListName,
-      department: args.department,
-      yearGroup: args.yearGroup,
-      faculty: args.faculty,
       lecturerId: ctx.user._id,
       isArchived: false,
     });
@@ -125,32 +119,13 @@ export const deleteClassList = lecturerMutation({
 });
 
 // Update ClassList info
-export const updateClassList = lecturerMutation({
+export const updateClassListName = lecturerMutation({
   args: {
     classListId: v.id('classLists'),
     classListName: v.optional(v.string()),
-    department: v.optional(v.string()),
-    yearGroup: v.optional(v.string()),
-    faculty: v.optional(v.string()),
-    // students: v.optional(
-    //   v.array(
-    //     v.object({
-    //       fullName: v.string(),
-    //       registrationNumber: v.string(),
-    //       gender: v.union(
-    //         v.literal('Male'),
-    //         v.literal('Female'),
-    //         v.literal('Other'),
-    //       ),
-    //       faculty: v.string(),
-    //       department: v.string(),
-    //       yearLevel: v.string(),
-    //     }),
-    //   ),
-    // ),
   },
   handler: async (ctx, args) => {
-    const { classListId, classListName, department, faculty, yearGroup } = args;
+    const { classListId, classListName } = args;
     const lecturerId = ctx.user._id;
 
     const classList = await ClassListModel.ensureLecturerClassListAccess({
@@ -159,20 +134,8 @@ export const updateClassList = lecturerMutation({
       lecturerId,
     });
 
-    //   // Validate unique registration numbers
-    //   const regNumbers = args.students.map((s) => s.registrationNumber);
-    //   const uniqueRegNumbers = new Set(regNumbers);
-    //   if (regNumbers.length !== uniqueRegNumbers.size) {
-    //     throw new Error('Duplicate registration numbers found');
-    //   }
-    //   updates.students = args.students;
-    // }
-
     await ctx.db.patch(classList._id, {
       classListName: classListName ?? classList.classListName,
-      faculty: faculty ?? classList.faculty,
-      department: department ?? classList.department,
-      yearGroup: yearGroup ?? classList.yearGroup,
     });
     return { success: true };
   },

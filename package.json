@@ -47,6 +47,7 @@
     "@tanstack/react-query-devtools": "^5.66.0",
     "@tanstack/react-router": "^1.121.34",
     "@tanstack/react-router-devtools": "^1.121.34",
+    "@tanstack/react-table": "^8.21.3",
     "@tanstack/router-plugin": "^1.124.0",
     "better-auth": "1.2.7",
     "class-variance-authority": "^0.7.1",
