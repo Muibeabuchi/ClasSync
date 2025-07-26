@@ -166,10 +166,15 @@ export const MobilePageContainer = forwardRef<
             className={cn(
               'flex-1 flex flex-col',
               // Bottom padding to account for bottom navigation
-              'pb-[calc(var(--mobile-bottom-nav-height)+var(--mobile-safe-area-bottom))]',
+              'pb-[calc(80px+env(safe-area-inset-bottom))]',
               // Minimum height to ensure content fills screen
               'min-h-full',
             )}
+            style={{
+              // Fallback padding using CSS custom properties
+              paddingBottom:
+                'calc(var(--mobile-bottom-nav-height, 80px) + var(--mobile-safe-area-bottom, 0px))',
+            }}
           >
             {children}
           </div>

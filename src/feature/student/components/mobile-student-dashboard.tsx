@@ -18,7 +18,7 @@ import {
   CheckCircle,
   // ArrowRight,
 } from 'lucide-react';
-import { MobilePageContainer } from '@/components/mobile/MobilePageContainer';
+// import { MobilePageContainer } from '@/components/mobile/MobilePageContainer';
 import { MobileBottomNavigation } from '@/components/mobile/MobileBottomNavigation';
 import { cn } from '@/lib/utils';
 import MobileStudentCoursesPage from './mobile-student-courses-page';
@@ -450,14 +450,10 @@ const MobileStudentDashboard = ({ userData }: MobileStudentDashboardProps) => {
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background">
-      <MobilePageContainer
-        scrollable={true}
-        transition="fade"
-        className="flex-1"
-      >
-        {renderContent()}
-      </MobilePageContainer>
+      {/* Main content area with bottom padding for navigation */}
+      <div className="flex-1 overflow-y-auto pb-20">{renderContent()}</div>
 
+      {/* Fixed bottom navigation */}
       <MobileBottomNavigation
         activeTab={activeTab}
         onTabChange={setActiveTab}

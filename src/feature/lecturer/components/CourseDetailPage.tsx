@@ -9,10 +9,10 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Label } from '@/components/ui/label';
+// import { Label } from '@/components/ui/label';
 import {
   Users,
-  BookOpen,
+  // BookOpen,
   BarChart,
   TrendingUp,
   AlertTriangle,
@@ -139,43 +139,6 @@ const CourseDetailPage = ({
 
         <TabsContent value="overview" className="space-y-6 animate-fade-in">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-blue-600" />
-                  Course Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">
-                    Course Name
-                  </Label>
-                  <p className="text-sm text-gray-900">{courseData.name}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">
-                    Course Code
-                  </Label>
-                  <p className="text-sm text-gray-900">{courseData.code}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">
-                    Status
-                  </Label>
-                  <p className="text-sm text-gray-900">{courseData.status}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">
-                    Description
-                  </Label>
-                  <p className="text-sm text-gray-900">
-                    {courseData.description}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

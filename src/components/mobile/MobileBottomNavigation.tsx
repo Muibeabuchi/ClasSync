@@ -68,6 +68,8 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
         'bg-background/95 backdrop-blur-sm',
         'border-t border-border',
         'safe-area-bottom', // For devices with home indicator
+        // Ensure consistent height
+        'mobile-bottom-nav-height',
         className,
       )}
       aria-label="Main navigation"
