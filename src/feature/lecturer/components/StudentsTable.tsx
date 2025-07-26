@@ -273,23 +273,23 @@ export const StudentsTable = ({ students, onRefresh }: StudentsTableProps) => {
   return (
     <div className="space-y-4">
       {/* Table Controls */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
         <div className="flex items-center space-x-2">
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search students..."
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
-              className="pl-8 w-[250px]"
+              className="pl-8 w-full sm:w-[250px]"
             />
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Settings2 className="h-4 w-4 mr-2" />
-                Columns
-                <ChevronDown className="h-4 w-4 ml-2" />
+              <Button variant="outline" size="sm" className="shrink-0">
+                <Settings2 className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Columns</span>
+                <ChevronDown className="h-4 w-4 sm:ml-2" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -315,13 +315,20 @@ export const StudentsTable = ({ students, onRefresh }: StudentsTableProps) => {
         </div>
 
         {selectedRows.length > 0 && (
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0">
             <span className="text-sm text-muted-foreground">
               {selectedRows.length} of {table.getFilteredRowModel().rows.length}{' '}
               row(s) selected
             </span>
-            <Button variant="destructive" size="sm">
-              Remove Selected ({selectedRows.length})
+            <Button
+              variant="destructive"
+              size="sm"
+              className="w-full sm:w-auto"
+            >
+              <span className="sm:hidden">Remove ({selectedRows.length})</span>
+              <span className="hidden sm:inline">
+                Remove Selected ({selectedRows.length})
+              </span>
             </Button>
           </div>
         )}
@@ -379,13 +386,15 @@ export const StudentsTable = ({ students, onRefresh }: StudentsTableProps) => {
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between px-2">
-        <div className="flex-1 text-sm text-muted-foreground">
+      <div className="flex flex-col space-y-4 px-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+        <div className="text-sm text-muted-foreground order-2 sm:order-1">
           {table.getFilteredSelectedRowModel().rows.length} of{' '}
           {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <div className="flex items-center space-x-6 lg:space-x-8">
-          <div className="flex items-center space-x-2">
+
+        <div className="flex flex-col space-y-4 order-1 sm:order-2 sm:flex-row sm:items-center sm:space-x-6 sm:space-y-0 lg:space-x-8">
+          {/* Rows per page - Mobile: Full width, Desktop: Inline */}
+          <div className="flex items-center justify-between sm:justify-start sm:space-x-2">
             <p className="text-sm font-medium">Rows per page</p>
             <select
               value={table.getState().pagination.pageSize}
@@ -401,14 +410,18 @@ export const StudentsTable = ({ students, onRefresh }: StudentsTableProps) => {
               ))}
             </select>
           </div>
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+
+          {/* Page info - Centered on mobile */}
+          <div className="flex items-center justify-center text-sm font-medium sm:w-[100px]">
             Page {table.getState().pagination.pageIndex + 1} of{' '}
             {table.getPageCount()}
           </div>
-          <div className="flex items-center space-x-2">
+
+          {/* Navigation buttons */}
+          <div className="flex items-center justify-center space-x-1 sm:space-x-2">
             <Button
               variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
+              className="hidden h-8 w-8 p-0 sm:flex lg:flex"
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
@@ -435,7 +448,7 @@ export const StudentsTable = ({ students, onRefresh }: StudentsTableProps) => {
             </Button>
             <Button
               variant="outline"
-              className="hidden h-8 w-8 p-0 lg:flex"
+              className="hidden h-8 w-8 p-0 sm:flex lg:flex"
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
             >
