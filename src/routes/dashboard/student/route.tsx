@@ -47,9 +47,9 @@ function RouteComponent() {
         <div className="min-h-screen flex w-full">
           <StudentSidebar userData={userInfo} />
           <SidebarInset className="flex-1">
-            <div className="flex items-center gap-2 px-4 py-2 border-b">
-              <SidebarTrigger />
-            </div>
+            {/* <div className="flex items-center gap-2 px-4 py-2 border-b"> */}
+            <SidebarTrigger />
+            {/* </div> */}
             <div className="p-6">
               <Outlet />
             </div>
