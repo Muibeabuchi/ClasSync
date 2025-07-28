@@ -23,16 +23,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+// import {
+//   Popover,
+//   PopoverContent,
+//   PopoverTrigger,
+// } from '@/components/ui/popover';
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import { Plus, BookOpen, Check, X, ChevronDown } from 'lucide-react';
+  Plus,
+  BookOpen,
+  Check,
+  X,
+  //  ChevronDown
+} from 'lucide-react';
 import { toast } from 'sonner';
 import { useCreateCourseMutation } from '@/feature/course/api/create-course-api';
 import { useLecturerClassListQuery } from '@/feature/classList/api/get-lecturer-classLists';
 import type { Id } from 'convex/_generated/dataModel';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const courseFormSchema = z.object({
   name: z
@@ -66,8 +79,6 @@ const CreateCourseModal = ({ children, onSuccess }: CreateCourseModalProps) => {
   const availableClassLists = classLists?.map((classList) => ({
     id: classList._id,
     name: classList.classListName,
-    batchYear: classList.yearGroup,
-    department: classList.department,
     students: classList.numberOfStudent, // Assuming students is an array of student IDs
   }));
 
@@ -174,7 +185,7 @@ const CreateCourseModal = ({ children, onSuccess }: CreateCourseModalProps) => {
                           (classList) => (
                             <div
                               key={classList.id}
-                              className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-gray-200 rounded-full text-sm font-medium shadow-sm"
+                              className="inline-flex items-center gap-2 px-3 py-1.5  border border-gray-200 rounded-full text-sm font-medium shadow-sm"
                             >
                               <span>{classList.name}</span>
                               <button
@@ -197,50 +208,38 @@ const CreateCourseModal = ({ children, onSuccess }: CreateCourseModalProps) => {
                     )}
 
                     {/* Dropdown selector */}
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          role="combobox"
-                          className="w-full justify-between h-12 px-4 text-left font-normal"
-                        >
-                          {field.value && field.value.length > 0
-                            ? `${field.value.length} item${field.value.length > 1 ? 's' : ''} selected`
-                            : 'Select class lists...'}
-                          <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        className="w-full flex flex-col p-0"
-                        align="center"
-                      >
-                        <div className=" overflow-y-auto flex w-full flex-col gap-y-2">
-                          {availableClassLists?.map((classList) => (
-                            <Button
-                              key={classList.id}
-                              className={`flex items-center w-full bg-background text-primary space-x-3 p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0 ${
-                                field.value?.includes(classList.id)
-                                  ? 'bg-muted'
-                                  : ''
-                              }`}
-                              onClick={() => {
-                                const isSelected = field.value?.includes(
-                                  classList.id,
-                                );
-                                if (isSelected) {
-                                  field.onChange(
-                                    field.value?.filter(
-                                      (id) => id !== classList.id,
-                                    ),
-                                  );
-                                } else {
-                                  field.onChange([
-                                    ...field.value,
-                                    classList.id,
-                                  ]);
-                                }
-                              }}
-                            >
+                    <Select
+                      value=""
+                      onValueChange={(value) => {
+                        if (value && availableClassLists) {
+                          const isSelected = field.value?.includes(value);
+                          if (isSelected) {
+                            field.onChange(
+                              field.value?.filter((id) => id !== value),
+                            );
+                          } else {
+                            field.onChange([...(field.value || []), value]);
+                          }
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="w-full h-12">
+                        <SelectValue
+                          placeholder={
+                            field.value && field.value.length > 0
+                              ? `${field.value.length} item${field.value.length > 1 ? 's' : ''} selected`
+                              : 'Select class lists...'
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[300px]">
+                        {availableClassLists?.map((classList) => (
+                          <SelectItem
+                            key={classList.id}
+                            value={classList.id}
+                            className="cursor-pointer"
+                          >
+                            <div className="flex items-center space-x-3 w-full">
                               <div className="flex items-center justify-center w-5 h-5">
                                 {field.value?.includes(classList.id) && (
                                   <Check className="h-4 w-4 text-primary" />
@@ -250,23 +249,22 @@ const CreateCourseModal = ({ children, onSuccess }: CreateCourseModalProps) => {
                                 <div className="font-medium text-sm">
                                   {classList.name}
                                 </div>
-                                <div className="text-xs text-gray-500">
-                                  {classList.department} • {classList.batchYear}{' '}
-                                  • {classList.students} students
+                                <div className="text-xs text-muted-foreground">
+                                  {classList.students} students
                                 </div>
                               </div>
-                            </Button>
-                          ))}
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {form.watch('classListIds')?.length > 0 && (
+            {/* {form.watch('classListIds')?.length > 0 && (
               <div className="p-4 bg-muted/20 rounded-lg">
                 <div className="flex items-center gap-2 mb-3">
                   <Check className="h-5 w-5 text-green-500" />
@@ -284,8 +282,7 @@ const CreateCourseModal = ({ children, onSuccess }: CreateCourseModalProps) => {
                     >
                       <div>
                         <p className="font-medium text-sm">{classList.name}</p>
-                        <p className="text-xs bg-background">
-                          {classList.department} • {classList.batchYear} •{' '}
+                        <p className="text-xs text-muted-foreground">
                           {classList.students} students
                         </p>
                       </div>
@@ -315,7 +312,7 @@ const CreateCourseModal = ({ children, onSuccess }: CreateCourseModalProps) => {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
           </form>
         </Form>
 

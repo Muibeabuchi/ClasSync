@@ -19,7 +19,7 @@ import type { Doc, Id } from 'convex/_generated/dataModel';
 import {
   BookOpen,
   MoreVertical,
-  Edit,
+  // Edit,
   Trash2,
   // FileText,
   // Users,
@@ -148,10 +148,10 @@ export const CourseCard = ({
 
   return (
     <Card
-      className={`group relative overflow-hidden border hover:shadow-xl transition-all duration-300  cursor-pointer ${
+      className={`group relative overflow-hidden border hover:shadow-xl transition-all duration-300   ${
         isArchived ? 'opacity-75 hover:opacity-90' : ''
       }`}
-      onClick={handleViewCourse}
+      // onClick={handleViewCourse}
     >
       {/* Header */}
       <CardHeader className="p-8 pb-6">
@@ -184,11 +184,11 @@ export const CourseCard = ({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem disabled={isArchived}>
+                {/* <DropdownMenuItem disabled={isArchived}>
                   <Edit className="h-4 w-4 mr-3" />
-                  Edit Course
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
+                  View Course
+                </DropdownMenuItem> */}
+                {/* <DropdownMenuSeparator /> */}
                 {isArchived ? (
                   <DropdownMenuItem
                     onClick={(e) => {
@@ -329,7 +329,7 @@ export const CourseCard = ({
             e.stopPropagation();
             handleViewCourse();
           }}
-          className={`w-full h-12 text-base font-medium rounded-xl transition-all duration-200 ${
+          className={` cursor-pointer w-full h-12 text-base font-medium rounded-xl transition-all duration-200 ${
             isArchived ? 'cursor-not-allowed' : 'shadow-sm'
           }`}
           disabled={isArchived}
