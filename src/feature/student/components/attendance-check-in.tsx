@@ -186,14 +186,14 @@ const AttendanceCheckIn = () => {
   return (
     <>
       <div className="space-y-6">
-        <div className="text-center">
+        {/* <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground">
             Attendance Check-In
           </h1>
           <p className="text-muted-foreground mt-2">
             Mark your attendance for active course sessions
           </p>
-        </div>
+        </div> */}
 
         {/* GPS Status and Active Sessions Header */}
         <div className="flex items-center justify-between">
