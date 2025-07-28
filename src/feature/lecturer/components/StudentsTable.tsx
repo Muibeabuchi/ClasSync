@@ -163,13 +163,6 @@ export const StudentsTable = ({ students, onRefresh }: StudentsTableProps) => {
         ),
       },
       {
-        accessorKey: 'department',
-        header: 'Department',
-        cell: ({ row }) => (
-          <span className="text-sm">{row.getValue('department')}</span>
-        ),
-      },
-      {
         accessorKey: 'attendanceRate',
         header: ({ column }) => (
           <Button
