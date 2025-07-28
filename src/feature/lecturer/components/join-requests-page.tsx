@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+// import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 //   SelectValue,
 // } from '@/components/ui/select';
 import {
-  ArrowLeft,
+  // ArrowLeft,
   // Clock,
   // Check,
   // X,
@@ -177,14 +177,14 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button
+          {/* <Button
             variant="ghost"
             size="icon"
             // onClick={onBack}
             className="hover:scale-110 transition-transform"
           >
             <ArrowLeft className="h-4 w-4" />
-          </Button>
+          </Button> */}
           <div>
             <h1 className="text-2xl font-bold">Join Requests</h1>
             <p className="text-sm text-muted-foreground">
