@@ -12,7 +12,9 @@ import {
   SidebarHeader,
   SidebarFooter,
   useSidebar,
+  // SidebarTrigger,
 } from '@/components/ui/sidebar';
+// import { SidebarToggle } from '@/components/ui/sidebar-toggle';
 import { BookOpen, Bell, LogOut, User } from 'lucide-react';
 import {
   DropdownMenu,
@@ -43,7 +45,7 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
 
   return (
     <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b">
+      <SidebarHeader>
         <div className="flex items-center gap-3 px-1 py-0.5">
           <div
             className={cn('bg-primary p-3 rounded-md shadow-lg', {
@@ -62,7 +64,7 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
               <p className="text-xs font-normal opacity-70">Lecturer Portal</p>
             </div>
           )}
-          {/* <ThemeToggle /> */}
+          {/* <SidebarTrigger /> */}
         </div>
       </SidebarHeader>
 

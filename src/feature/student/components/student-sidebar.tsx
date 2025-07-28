@@ -13,6 +13,7 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
+// import { SidebarToggle } from '@/components/ui/sidebar-toggle';
 import {
   Home,
   BookOpen,
@@ -90,7 +91,7 @@ const StudentSidebar = ({ userData }: StudentSidebarProps) => {
               <p className="text-xs text-muted-foreground">Student Portal</p>
             </div>
           )}
-          {/* <ThemeToggle /> */}
+          {/* <SidebarToggle /> */}
         </div>
       </SidebarHeader>
 
