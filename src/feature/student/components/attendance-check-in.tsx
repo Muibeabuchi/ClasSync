@@ -82,8 +82,8 @@ const AttendanceCheckIn = () => {
     setCurrentCourse(course);
     setSelectedSession(course.session._id);
 
-    // If the session requires a code, show the modal
-    if (course.session.requiresCode) {
+    // Always show the modal first if the session requires a code
+    if (course.session.attendanceCode) {
       setIsCodeModalOpen(true);
       return;
     }
@@ -368,7 +368,7 @@ const AttendanceCheckIn = () => {
                             <>
                               <CheckCircle className="h-4 w-4 mr-2" />
                               {course?.session.attendanceCode
-                                ? 'Enter Code & Check In'
+                                ? 'Take Attendance'
                                 : 'Check In Now'}
                             </>
                           )}
@@ -387,10 +387,11 @@ const AttendanceCheckIn = () => {
       <Dialog open={isCodeModalOpen} onOpenChange={setIsCodeModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Enter Attendance Code</DialogTitle>
+            <DialogTitle>Attendance Code Required</DialogTitle>
             <DialogDescription>
-              {currentCourse?.courseName} requires an attendance code to check
-              in.
+              Please enter the attendance code provided by your lecturer for{' '}
+              <strong>{currentCourse?.courseName}</strong> before taking
+              attendance.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">

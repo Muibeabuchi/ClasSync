@@ -25,6 +25,7 @@ import { useStudentTakeAttendance } from '@/feature/attendance/api';
 import { cn } from '@/lib/utils';
 import type { Id } from 'convex/_generated/dataModel';
 import MobilePageContainer from '@/components/mobile/MobilePageContainer';
+import type { GetCoursesWithActiveAttendanceReturnType } from 'convex/schema';
 
 // Utility function to calculate distance between two coordinates using Haversine formula
 const calculateDistance = (
@@ -196,7 +197,7 @@ const DistanceIndicator: React.FC<DistanceIndicatorProps> = ({
 
 interface SessionTimerProps {
   endTime: number;
-  status: 'pending' | 'active' | 'inactive';
+  status: 'pending' | 'active' | 'complete';
 }
 
 const SessionTimer: React.FC<SessionTimerProps> = ({ endTime, status }) => {
@@ -228,7 +229,7 @@ const SessionTimer: React.FC<SessionTimerProps> = ({ endTime, status }) => {
         return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       case 'active':
         return 'text-green-600 bg-green-50 border-green-200';
-      case 'inactive':
+      case 'complete':
         return 'text-gray-600 bg-gray-50 border-gray-200';
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200';
@@ -252,7 +253,7 @@ const SessionTimer: React.FC<SessionTimerProps> = ({ endTime, status }) => {
 };
 
 interface CourseSessionCardProps {
-  course: any; // Type from API
+  course: NonNullable<GetCoursesWithActiveAttendanceReturnType[number]>; // Type from API
   onCheckIn: (sessionId: Id<'attendanceSessions'>, code?: string) => void;
   isLoading: boolean;
   gpsReady: boolean;
@@ -277,11 +278,11 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
   const [showCodeInput, setShowCodeInput] = useState(false);
 
   const handleCheckIn = () => {
-    if (course?.session.requiresCode && !showCodeInput) {
+    if (course?.session.attendanceCode && !showCodeInput) {
       setShowCodeInput(true);
       return;
     }
-    onCheckIn(course?.session._id, attendanceCode);
+    onCheckIn(course.session._id!, attendanceCode);
   };
 
   const canCheckIn =
@@ -289,7 +290,7 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
     gpsReady &&
     !isLoading &&
     isWithinRange &&
-    (!course?.session.requiresCode ||
+    (!course?.session.attendanceCode ||
       !showCodeInput ||
       (showCodeInput && attendanceCode.trim().length > 0));
 
@@ -318,13 +319,13 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
                 'bg-green-100 text-green-800',
               course?.session.status === 'pending' &&
                 'bg-yellow-100 text-yellow-800',
-              course?.session.status === 'inactive' &&
+              course?.session.status === 'complete' &&
                 'bg-gray-100 text-gray-800',
             )}
           >
             {course?.session.status === 'active' && 'Active'}
             {course?.session.status === 'pending' && 'Starting Soon'}
-            {course?.session.status === 'inactive' && 'Ended'}
+            {course?.session.status === 'complete' && 'Ended'}
           </Badge>
         </div>
       </CardHeader>
@@ -332,21 +333,21 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
       <CardContent className="space-y-4">
         {/* Session Timer */}
         <SessionTimer
-          endTime={course?.session.endTime || Date.now()}
-          status={course?.session.status || 'inactive'}
+          endTime={course?.session.endedAt || Date.now()}
+          status={course?.session.status || 'complete'}
         />
 
         {/* Distance Indicator - Only show for active sessions with GPS */}
         {course?.session.status === 'active' && gpsReady && userLocation && (
           <DistanceIndicator
             distance={distance}
-            maxDistance={course?.session.radiusMeters || 100}
+            maxDistance={course?.session.radius || 100}
             isWithinRange={isWithinRange}
           />
         )}
 
         {/* Attendance Code Input */}
-        {course?.session.requiresCode && showCodeInput && (
+        {course?.session.attendanceCode && showCodeInput && (
           <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <div className="flex items-center gap-2">
               <AlertCircle className="h-4 w-4 text-blue-600" />
@@ -354,9 +355,13 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
                 htmlFor="attendance-code"
                 className="mobile-text-sm font-medium text-blue-800"
               >
-                Enter Attendance Code
+                Attendance Code Required
               </Label>
             </div>
+            <p className="mobile-text-xs text-blue-700 mb-2">
+              Please enter the attendance code provided by your lecturer before
+              taking attendance.
+            </p>
             <Input
               id="attendance-code"
               type="text"
@@ -365,15 +370,15 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
               onChange={(e) => setAttendanceCode(e.target.value.toUpperCase())}
               className="text-center font-mono text-xl h-12 border-blue-300 focus:border-blue-500"
               maxLength={6}
-              // autoFocus
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && attendanceCode.trim()) {
                   handleCheckIn();
                 }
               }}
             />
-            <p className="mobile-text-xs text-blue-700">
-              Ask your lecturer for the 6-digit attendance code
+            <p className="mobile-text-xs text-blue-600">
+              Ask your lecturer for the 6-digit attendance code if you
+              don&apos;t have it.
             </p>
           </div>
         )}
@@ -402,7 +407,7 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
               <Clock className="h-5 w-5 mr-2" />
               Session Starting Soon
             </>
-          ) : course?.session.status === 'inactive' ? (
+          ) : course?.session.status === 'complete' ? (
             <>
               <AlertCircle className="h-5 w-5 mr-2" />
               Session Ended
@@ -417,10 +422,10 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
               <MapPin className="h-5 w-5 mr-2" />
               Move Closer to Check In
             </>
-          ) : course?.session.requiresCode && !showCodeInput ? (
+          ) : course?.session.attendanceCode && !showCodeInput ? (
             <>
               <CheckCircle className="h-5 w-5 mr-2" />
-              Enter Code to Check In
+              Take Attendance
             </>
           ) : (
             <>
@@ -632,29 +637,35 @@ const MobileAttendanceCheckIn: React.FC = () => {
             </Card>
           ) : (
             <div className="space-y-4">
-              {activeCourses.map((course) => (
-                <CourseSessionCard
-                  key={course?.courseId}
-                  course={course}
-                  onCheckIn={handleCheckIn}
-                  isLoading={
-                    isCheckingIn && selectedSession === course?.session._id
-                  }
-                  attendanceCode={attendanceCode}
-                  gpsReady={gpsReady}
-                  setAttendanceCode={setAttendanceCode}
-                  userLocation={
-                    coords
-                      ? {
-                          latitude: coords.latitude,
-                          longitude: coords.longitude,
-                        }
-                      : null
-                  }
-                  distance={distances[course.session._id!] || null}
-                  isWithinRange={isWithinRange[course.session._id!] || false}
-                />
-              ))}
+              {activeCourses.map((course) => {
+                if (course) {
+                  return (
+                    <CourseSessionCard
+                      key={course?.courseId}
+                      course={course}
+                      onCheckIn={handleCheckIn}
+                      isLoading={
+                        isCheckingIn && selectedSession === course?.session._id
+                      }
+                      attendanceCode={attendanceCode}
+                      gpsReady={gpsReady}
+                      setAttendanceCode={setAttendanceCode}
+                      userLocation={
+                        coords
+                          ? {
+                              latitude: coords.latitude,
+                              longitude: coords.longitude,
+                            }
+                          : null
+                      }
+                      distance={distances[course.session._id!] || null}
+                      isWithinRange={
+                        isWithinRange[course.session._id!] || false
+                      }
+                    />
+                  );
+                }
+              })}
             </div>
           )}
         </div>
