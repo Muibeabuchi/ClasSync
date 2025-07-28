@@ -20,13 +20,14 @@ import {
 } from 'lucide-react';
 import AttendanceSessionModal from './AttendanceSessionModal';
 import { StudentsTable } from './StudentsTable';
+import { AttendanceSessionsTable } from './AttendanceSessionsTable';
 
 import type {
   GetAttendanceSessionsReturnType,
   GetCourseDetailsReturnType,
 } from 'convex/schema';
 import type { Id } from 'convex/_generated/dataModel';
-import { Link } from '@tanstack/react-router';
+// import { Link } from '@tanstack/react-router';
 interface CourseDetailPageProps {
   courseId: Id<'courses'>;
   courseDetails: GetCourseDetailsReturnType;
@@ -101,13 +102,6 @@ const CourseDetailPage = ({
 
         {/* Action Buttons - Mobile Responsive */}
         <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <Button
-            variant="outline"
-            // onClick={() => onAttendanceHistoryClick?.(courseId)}
-            className="w-full sm:w-auto text-sm"
-          >
-            View History
-          </Button>
           <AttendanceSessionModal
             courseId={courseId}
             courseName={courseData.name}
@@ -219,54 +213,10 @@ const CourseDetailPage = ({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {/* list out and map the attendnace session for the course ,where clicking on each would navigate to the specific attendnaceSession */}
-
-                {/* <div className="space-y-3"> */}
-                {/* <h3 className="text-sm font-medium text-gray-700">
-                    Recent Attendance Sessions
-                  </h3> */}
-                {attendanceSessions.length === 0 ? (
-                  <p className="text-sm text-gray-500">
-                    No attendance sessions yet
-                  </p>
-                ) : (
-                  <div className="space-y-2 flex items-center flex-col w-full">
-                    {attendanceSessions.map((session) => (
-                      <Link
-                        to="/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId"
-                        params={{
-                          attendanceSessionId: session._id,
-                          lecturerCourseId: courseId,
-                        }}
-                        key={session._id}
-                        className="  w-full"
-                      >
-                        <div className="cursor-pointer flex rounded-md  transition-colors w-full border-b pb-1 px-1 justify-between items-center">
-                          <div>
-                            {/* <h4 className="font-medium text-sm">
-                              {'Attendance Session'}
-                            </h4> */}
-                            <p className="text-xs text-gray-500">
-                              {new Date(
-                                session._creationTime,
-                              ).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <Badge
-                            variant={
-                              session.status === 'active'
-                                ? 'default'
-                                : 'secondary'
-                            }
-                          >
-                            {session.status}
-                          </Badge>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                {/* </div> */}
+                <AttendanceSessionsTable
+                  sessions={attendanceSessions}
+                  // courseId={courseId}
+                />
               </CardContent>
             </Card>
           </div>

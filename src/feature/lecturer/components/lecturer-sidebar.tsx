@@ -150,10 +150,10 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
                   // onClick={() => onPageChange('profile')}
                   className="cursor-pointer"
                 >
-                  <Link to="/">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
-                  </Link>
+                  {/* <Link to="/" className='flex'> */}
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                  {/* </Link> */}
                 </DropdownMenuItem>
                 <ThemeDropdownToggle />
                 <DropdownMenuSeparator />
