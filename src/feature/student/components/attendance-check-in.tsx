@@ -26,6 +26,7 @@ import {
   // MapPin,
   Navigation,
 } from 'lucide-react';
+import { SessionTimer } from '@/components/attendance/SessionTimer';
 import { toast } from 'sonner';
 import { useGetStudentCoursesWithActiveAttendance } from '@/feature/course/api/get-student-courses-with-active-attendance';
 import { useGeolocated } from 'react-geolocated';
@@ -323,6 +324,17 @@ const AttendanceCheckIn = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-3">
+                        {/* Session Timer */}
+                        {course?.session && (
+                          <SessionTimer
+                            endTime={course.session.endedAt || 0}
+                            creationTime={course.session._creationTime}
+                            status={course.session.status}
+                            showProgress={course.session.status === 'active'}
+                            size="md"
+                          />
+                        )}
+
                         {/* Session Info */}
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">

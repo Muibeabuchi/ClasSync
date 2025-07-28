@@ -17,10 +17,12 @@ import {
   TrendingUp,
   AlertTriangle,
   ClipboardCheck,
+  ArrowLeft,
 } from 'lucide-react';
 import AttendanceSessionModal from './AttendanceSessionModal';
 import { StudentsTable } from './StudentsTable';
 import { AttendanceSessionsTable } from './AttendanceSessionsTable';
+import { useNavigate } from '@tanstack/react-router';
 
 import type {
   GetAttendanceSessionsReturnType,
@@ -40,6 +42,7 @@ const CourseDetailPage = ({
   attendanceSessions,
 }: CourseDetailPageProps) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const navigate = useNavigate();
 
   // Extract data from courseDetails prop
   const courseData = courseDetails?.course || {
@@ -76,11 +79,24 @@ const CourseDetailPage = ({
     // when the mutation succeeds
   };
 
+  const handleNavigate = () => {
+    navigate({
+      to: '/dashboard/lecturer/courses',
+    });
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="space-y-4">
         <div className="flex items-center space-x-4">
+          <Button
+            variant="link"
+            className="cursor-pointer hover:bg-muted-foreground"
+            onClick={handleNavigate}
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+          </Button>
           <div className="flex-1 min-w-0">
             <h1 className="text-xl sm:text-2xl font-bold truncate">
               {courseData.name}
@@ -146,7 +162,7 @@ const CourseDetailPage = ({
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 animate-fade-in">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -207,7 +223,7 @@ const CourseDetailPage = ({
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ClipboardCheck className="h-5 w-5" />
@@ -216,7 +232,10 @@ const CourseDetailPage = ({
               </CardHeader>
               <CardContent>
                 <AttendanceSessionsTable
-                  sessions={attendanceSessions}
+                  sessions={attendanceSessions.map((session, index) => ({
+                    ...session,
+                    sn: index + 1,
+                  }))}
                   // courseId={courseId}
                 />
               </CardContent>

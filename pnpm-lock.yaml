@@ -14,6 +14,9 @@ importers:
       '@convex-dev/eslint-plugin':
         specifier: 0.0.1-alpha.4
         version: 0.0.1-alpha.4(eslint@9.29.0(jiti@2.4.2))(typescript@5.8.3)
+      '@convex-dev/migrations':
+        specifier: ^0.2.9
+        version: 0.2.9(convex@1.25.0(react@19.1.0))
       '@convex-dev/react-query':
         specifier: 0.0.0-alpha.8
         version: 0.0.0-alpha.8(@tanstack/react-query@5.81.2(react@19.1.0))(convex@1.25.0(react@19.1.0))
@@ -459,6 +462,11 @@ packages:
 
   '@convex-dev/eslint-plugin@0.0.1-alpha.4':
     resolution: {integrity: sha512-no/F96kJOgqK3g5zVkJrXYhw+QhiqVv+l7u/ID17AisI+I/Dr43MLij780tE0UbXUIwTAe5cRa9VQ0AEZQiDYQ==}
+
+  '@convex-dev/migrations@0.2.9':
+    resolution: {integrity: sha512-HfIv6/F8VbtJ1NVT2bQRTumJGdaqROl/+s5IOnubHm7vvgie0RjcfO6YiB7JoLFWwS19vjDQDKl63ihoA08zOA==}
+    peerDependencies:
+      convex: ~1.16.5 || >=1.17.0 <1.35.0
 
   '@convex-dev/react-query@0.0.0-alpha.8':
     resolution: {integrity: sha512-Rv/q7/CplU75f7ckBd2vh+HoeeQ0tOrjwMl14Hk7D/03e55oUIU0TV5JYYzC79ZQyyAtoj7CmCo5ZxcmtKNv1Q==}
@@ -4179,6 +4187,10 @@ snapshots:
       - eslint
       - supports-color
       - typescript
+
+  '@convex-dev/migrations@0.2.9(convex@1.25.0(react@19.1.0))':
+    dependencies:
+      convex: 1.25.0(react@19.1.0)
 
   '@convex-dev/react-query@0.0.0-alpha.8(@tanstack/react-query@5.81.2(react@19.1.0))(convex@1.25.0(react@19.1.0))':
     dependencies:

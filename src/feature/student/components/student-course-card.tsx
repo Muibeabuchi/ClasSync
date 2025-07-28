@@ -7,7 +7,12 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { GetStudentsCoursesReturnType } from 'convex/schema';
-import { Badge, Eye, MoreVertical, Clock } from 'lucide-react';
+import {
+  Badge,
+  // Eye,
+  // MoreVertical,
+  Clock,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // import { toast } from 'sonner';
@@ -128,28 +133,19 @@ const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
               <Button
                 onClick={onAttendanceClick}
                 size="sm"
-                className="flex-1 bg-success hover:bg-success/90 text-success-foreground transition-colors"
+                className="flex-1 bg-success cursor-pointer hover:bg-success/90 text-success-foreground transition-colors"
               >
                 <Clock className="h-4 w-4 mr-1.5" />
                 Check In Now
               </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Eye className="h-4 w-4 mr-1.5" />
-                View Course
-              </Button>
-            )}
-            <Button
+            ) : null}
+            {/* <Button
               variant="ghost"
               size="sm"
               className="text-muted-foreground hover:text-foreground transition-colors p-2"
             >
               <MoreVertical className="h-4 w-4" />
-            </Button>
+            </Button> */}
           </div>
         </CardContent>
       </Card>

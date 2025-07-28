@@ -35,6 +35,26 @@ type AttendanceSession = GetAttendanceSessionsReturnType[0];
 
 const columns: ColumnDef<AttendanceSession>[] = [
   {
+    id: 'sn',
+    header: 'SN',
+    cell: ({ row, table }) => {
+      // Calculate session number based on sorted order (newest first)
+      const currentPageIndex = table.getState().pagination.pageIndex;
+      const pageSize = table.getState().pagination.pageSize;
+      const rowIndex = row.index;
+      const totalRows = table.getFilteredRowModel().rows.length;
+
+      // Since we sort by newest first, we need to reverse the numbering
+      const sessionNumber =
+        totalRows - (currentPageIndex * pageSize + rowIndex);
+
+      return (
+        <div className="font-medium text-muted-foreground">{sessionNumber}</div>
+      );
+    },
+    size: 60,
+  },
+  {
     accessorKey: '_creationTime',
     header: 'Date',
     cell: ({ row }) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,11 +13,12 @@ import {
   Navigation,
   BookOpen,
   Users,
-  Timer,
+  // Timer,
   Target,
   MapPinOff,
   Radar,
 } from 'lucide-react';
+import { SessionTimer } from '@/components/attendance/SessionTimer';
 import { toast } from 'sonner';
 import { useGetStudentCoursesWithActiveAttendance } from '@/feature/course/api/get-student-courses-with-active-attendance';
 import { useGeolocated } from 'react-geolocated';
@@ -195,63 +196,6 @@ const DistanceIndicator: React.FC<DistanceIndicatorProps> = ({
   );
 };
 
-interface SessionTimerProps {
-  endTime: number;
-  status: 'pending' | 'active' | 'complete';
-}
-
-const SessionTimer: React.FC<SessionTimerProps> = ({ endTime, status }) => {
-  const [timeRemaining, setTimeRemaining] = useState(0);
-
-  useEffect(() => {
-    const updateTimer = () => {
-      const now = Date.now();
-      const remaining = Math.max(0, endTime - now);
-      setTimeRemaining(remaining);
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-
-    return () => clearInterval(interval);
-  }, [endTime]);
-
-  const formatTime = (ms: number) => {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-  };
-
-  const getStatusColor = () => {
-    switch (status) {
-      case 'pending':
-        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      case 'active':
-        return 'text-green-600 bg-green-50 border-green-200';
-      case 'complete':
-        return 'text-gray-600 bg-gray-50 border-gray-200';
-      default:
-        return 'text-gray-600 bg-gray-50 border-gray-200';
-    }
-  };
-
-  return (
-    <div
-      className={cn(
-        'flex items-center justify-center gap-2 p-3 rounded-lg border',
-        getStatusColor(),
-      )}
-    >
-      <Timer className="h-4 w-4" />
-      <span className="font-mono mobile-text-lg font-semibold">
-        {formatTime(timeRemaining)}
-      </span>
-      <span className="mobile-text-sm capitalize">{status}</span>
-    </div>
-  );
-};
-
 interface CourseSessionCardProps {
   course: NonNullable<GetCoursesWithActiveAttendanceReturnType[number]>; // Type from API
   onCheckIn: (sessionId: Id<'attendanceSessions'>, code?: string) => void;
@@ -333,8 +277,11 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
       <CardContent className="space-y-4">
         {/* Session Timer */}
         <SessionTimer
-          endTime={course?.session.endedAt || Date.now()}
+          endTime={course?.session.endedAt || 0}
+          creationTime={course?.session._creationTime}
           status={course?.session.status || 'complete'}
+          showProgress={course?.session.status === 'active'}
+          size="md"
         />
 
         {/* Distance Indicator - Only show for active sessions with GPS */}
