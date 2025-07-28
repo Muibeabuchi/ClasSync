@@ -12,7 +12,7 @@ import { Archive, AlertTriangle } from 'lucide-react';
 
 interface ArchiveConfirmationModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (e?: React.MouseEvent) => void;
   onConfirm: () => void;
   courseName: string;
   isLoading?: boolean;
@@ -26,7 +26,7 @@ export const ArchiveConfirmationModal = ({
   isLoading = false,
 }: ArchiveConfirmationModalProps) => {
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
+    <AlertDialog open={isOpen} onOpenChange={() => onClose()}>
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <div className="flex items-center gap-3 mb-2">

@@ -115,11 +115,11 @@ const LiveAttendancePage = ({
               : 'border-gray-500'
         } transition-all duration-500`}
       >
-        <CardContent className="p-4 md:p-6">
-          <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 space-y-4 md:space-y-0">
-            <div className="flex items-center space-x-4">
+        <CardContent className="p-3 md:p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-3">
               <div
-                className={`p-3 rounded-full ${
+                className={`p-2 rounded-full ${
                   sessionState === 'pending'
                     ? 'bg-yellow-100'
                     : sessionState === 'active'
@@ -128,7 +128,7 @@ const LiveAttendancePage = ({
                 }`}
               >
                 <Clock
-                  className={`h-6 w-6 ${
+                  className={`h-4 w-4 ${
                     sessionState === 'pending'
                       ? 'text-yellow-600'
                       : sessionState === 'active'
@@ -138,23 +138,21 @@ const LiveAttendancePage = ({
                 />
               </div>
               <div>
-                <h3 className="text-base md:text-lg font-semibold">
-                  {sessionState === 'pending' && 'Attendance starts in:'}
-                  {sessionState === 'active' && 'Time remaining:'}
-                  {sessionState === 'complete' && 'Session Completed'}
+                <h3 className="text-sm font-semibold">
+                  {sessionState === 'pending' && 'Starts in:'}
+                  {sessionState === 'active' && 'Time left:'}
+                  {sessionState === 'complete' && 'Completed'}
                 </h3>
                 {sessionState !== 'complete' && (
-                  <p className="text-xl md:text-2xl font-bold text-primary">
+                  <p className="text-lg font-bold text-primary">
                     {formatTime(timeRemaining)}
                   </p>
                 )}
                 {sessionState === 'complete' && (
-                  <p className="text-sm text-muted-foreground">
-                    Started at{' '}
+                  <p className="text-xs text-muted-foreground">
                     {new Date(attendanceSession._creationTime).toLocaleString(
                       'en-US',
                       {
-                        year: 'numeric',
                         month: 'short',
                         day: 'numeric',
                         hour: '2-digit',
@@ -167,36 +165,35 @@ const LiveAttendancePage = ({
               </div>
             </div>
 
-            <div className="flex flex-col space-y-2 md:text-right">
-              <div className="flex items-center space-x-2 md:justify-end">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">
-                  Radius: {sessionData.locationRadius}m
+            <div className="flex flex-col space-y-1 text-right">
+              <div className="flex items-center space-x-1 justify-end">
+                <MapPin className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs text-muted-foreground">
+                  {sessionData.locationRadius}m
                 </span>
               </div>
-              <div className="flex items-center space-x-2 md:justify-end">
-                <span className="text-sm font-medium">CODE:</span>
-                <Badge variant="outline" className="font-mono">
+              <div className="flex items-center space-x-1 justify-end">
+                <span className="text-xs font-medium">CODE:</span>
+                <Badge
+                  variant="outline"
+                  className="font-mono text-xs px-1 py-0"
+                >
                   {sessionData.attendanceCode}
                 </Badge>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={copyAttendanceCode}
-                  className="h-6 w-6 p-0"
+                  className="h-5 w-5 p-0"
                 >
-                  <Copy className="h-3 w-3" />
+                  <Copy className="h-2.5 w-2.5" />
                 </Button>
               </div>
             </div>
           </div>
 
           {sessionState !== 'complete' && (
-            <Progress
-              // value={((60 - timeRemaining) / 60) * 100}
-              value={timeRemaining}
-              className="h-2"
-            />
+            <Progress value={timeRemaining} className="h-1.5" />
           )}
         </CardContent>
       </Card>

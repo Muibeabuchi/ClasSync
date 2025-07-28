@@ -150,30 +150,32 @@ const CourseDetailPage = ({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <BarChart className="h-5 w-5 text-green-600" />
+                  <BarChart className="h-5 w-5" />
                   Class Analytics
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <p className="text-2xl font-bold text-blue-600">
+                  <div className="text-center p-3 bg-muted rounded-lg">
+                    <p className="text-2xl font-bold">
                       {courseData.enrolledCount}
                     </p>
-                    <p className="text-xs text-gray-600">Total Students</p>
-                  </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">
-                      {avgAttendance}%
+                    <p className="text-xs text-muted-foreground">
+                      Total Students
                     </p>
-                    <p className="text-xs text-gray-600">Avg Attendance</p>
+                  </div>
+                  <div className="text-center p-3 bg-muted rounded-lg">
+                    <p className="text-2xl font-bold">{avgAttendance}%</p>
+                    <p className="text-xs text-muted-foreground">
+                      Avg Attendance
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   {bestStudent && (
                     <div className="flex items-center gap-2 text-sm">
-                      <TrendingUp className="h-4 w-4 text-green-600" />
+                      <TrendingUp className="h-4 w-4" />
                       <span className="font-medium">
                         Best: {bestStudent.name}
                       </span>
@@ -185,7 +187,7 @@ const CourseDetailPage = ({
 
                   {worstStudent && (
                     <div className="flex items-center gap-2 text-sm">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                      <AlertTriangle className="h-4 w-4" />
                       <span className="font-medium">
                         Needs Attention: {worstStudent.name}
                       </span>
@@ -196,7 +198,7 @@ const CourseDetailPage = ({
                   )}
 
                   <div className="flex items-center gap-2 text-sm">
-                    <AlertTriangle className="h-4 w-4 text-orange-600" />
+                    <AlertTriangle className="h-4 w-4" />
                     <span>
                       {lowAttendanceCount} students below 50% attendance
                     </span>
@@ -208,7 +210,7 @@ const CourseDetailPage = ({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ClipboardCheck className="h-5 w-5 text-green-600" />
+                  <ClipboardCheck className="h-5 w-5" />
                   Attendance Sessions
                 </CardTitle>
               </CardHeader>

@@ -130,6 +130,22 @@ export const CourseCard = ({
     );
   };
 
+  // Modal close handlers that prevent event propagation
+  const handleArchiveModalClose = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setShowArchiveModal(false);
+  };
+
+  const handleUnarchiveModalClose = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setShowUnarchiveModal(false);
+  };
+
+  const handleDeleteModalClose = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setShowDeleteModal(false);
+  };
+
   return (
     <Card
       className={`group relative overflow-hidden border hover:shadow-xl transition-all duration-300  cursor-pointer ${
@@ -326,7 +342,7 @@ export const CourseCard = ({
       {/* Confirmation Modals */}
       <ArchiveConfirmationModal
         isOpen={showArchiveModal}
-        onClose={() => setShowArchiveModal(false)}
+        onClose={handleArchiveModalClose}
         onConfirm={handleArchiveConfirm}
         courseName={course.courseName}
         isLoading={archiveMutation.isPending}
@@ -334,7 +350,7 @@ export const CourseCard = ({
 
       <UnarchiveConfirmationModal
         isOpen={showUnarchiveModal}
-        onClose={() => setShowUnarchiveModal(false)}
+        onClose={handleUnarchiveModalClose}
         onConfirm={handleUnarchiveConfirm}
         courseName={course.courseName}
         isLoading={unarchiveMutation.isPending}
@@ -342,7 +358,7 @@ export const CourseCard = ({
 
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
+        onClose={handleDeleteModalClose}
         onConfirm={handleDeleteConfirm}
         courseName={course.courseName}
         isLoading={deleteMutation.isPending}

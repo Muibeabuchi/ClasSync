@@ -12,7 +12,7 @@ import { RotateCcw, CheckCircle } from 'lucide-react';
 
 interface UnarchiveConfirmationModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (e?: React.MouseEvent) => void;
   onConfirm: () => void;
   courseName: string;
   isLoading?: boolean;

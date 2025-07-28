@@ -12,7 +12,7 @@ import { Trash2, AlertTriangle } from 'lucide-react';
 
 interface DeleteConfirmationModalProps {
   isOpen: boolean;
-  onClose: () => void;
+  onClose: (e?: React.MouseEvent) => void;
   onConfirm: () => void;
   courseName: string;
   isLoading?: boolean;
