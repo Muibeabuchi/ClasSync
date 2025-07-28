@@ -8,8 +8,16 @@ import { MobilePageContainer } from '@/components/mobile/MobilePageContainer';
 import { cn } from '@/lib/utils';
 import MobileCourseCard from './mobile-course-card';
 import JoinCourseSheet from './join-course-sheet';
+import { useNavigate } from '@tanstack/react-router';
 
 const MobileStudentCoursesPage = () => {
+  const navigate = useNavigate();
+
+  const handleAttendanceClick = () => {
+    navigate({
+      to: '/dashboard/student/attendance',
+    });
+  };
   const { data: enrolledCourses } = useGetStudentCourses();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -34,16 +42,16 @@ const MobileStudentCoursesPage = () => {
 
   return (
     <MobilePageContainer
-      showHeader
+      showHeader={true}
       headerTitle="My Courses"
       headerActions={
         <JoinCourseSheet>
-          <Button size="sm" className="touch-target-min mobile-tap-feedback">
-            <Plus className="h-4 w-4" />
+          <Button size="icon" className="touch-target-min mobile-tap-feedback">
+            <Plus className="size-3 " />
           </Button>
         </JoinCourseSheet>
       }
-      className="bg-background"
+      className="bg-background mt-2"
     >
       <div className="flex flex-col h-full">
         {/* Search Section - Sticky */}
@@ -129,7 +137,13 @@ const MobileStudentCoursesPage = () => {
             <div className="space-y-3 pb-4">
               {filteredCourses.map((course) => {
                 if (!course) return null;
-                return <MobileCourseCard key={course.id} course={course} />;
+                return (
+                  <MobileCourseCard
+                    key={course.id}
+                    course={course}
+                    onAttendanceClick={handleAttendanceClick}
+                  />
+                );
               })}
             </div>
           ) : (

@@ -881,6 +881,116 @@ export const getStudentCourses = StudentQueryMiddleware({
   },
 });
 
+export const getStudentDashboardStats = StudentQueryMiddleware({
+  args: {},
+  handler: async (ctx) => {
+    const studentId = ctx.user._id;
+
+    // Get all courses the student is enrolled in
+    const enrolledCourses = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_studentId', (q) => q.eq('studentId', studentId))
+      .collect();
+
+    if (enrolledCourses.length === 0) {
+      return {
+        totalCourses: 0,
+        avgAttendance: 0,
+        totalSessions: 0,
+        attendedSessions: 0,
+        activeSessions: 0,
+        recentCourses: [],
+      };
+    }
+
+    let totalSessions = 0;
+    let totalAttendedSessions = 0;
+    let activeSessions = 0;
+    // const recentCourses = [];
+
+    // Calculate stats for each course
+    const courseStats = await Promise.all(
+      enrolledCourses.map(async (enrollment) => {
+        const course = await ctx.db.get(enrollment.courseId);
+        if (!course || course.status !== 'active')
+          throw new ConvexError('Course does not exist');
+
+        // Get lecturer info
+        const lecturer = await ctx.db.get(course.lecturerId);
+        if (!lecturer) throw new ConvexError('Lecturer does not exist');
+
+        // Calculate student's attendance for this course
+        const courseSessions = await ctx.db
+          .query('attendanceSessions')
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+          .filter((q) => q.neq(q.field('status'), 'pending'))
+          .collect();
+
+        const courseAttendedSessions = await ctx.db
+          .query('attendanceRecords')
+          .withIndex('by_studentId_by_courseId', (q) =>
+            q.eq('studentId', studentId).eq('courseId', course._id),
+          )
+          .collect();
+
+        const attendanceRate =
+          courseSessions.length > 0
+            ? (courseAttendedSessions.length / courseSessions.length) * 100
+            : 0;
+
+        // Check if there's an active session
+        const activeSession = await ctx.db
+          .query('attendanceSessions')
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+          .filter((q) =>
+            q.or(
+              q.eq(q.field('status'), 'active'),
+              q.eq(q.field('status'), 'pending'),
+            ),
+          )
+          .first();
+
+        if (activeSession) {
+          activeSessions++;
+        }
+
+        totalSessions += courseSessions.length;
+        totalAttendedSessions += courseAttendedSessions.length;
+
+        return {
+          id: course._id,
+          name: course.courseName,
+          code: course.courseCode,
+          lecturer: lecturer.fullName,
+          attendance: Math.round(attendanceRate),
+          totalSessions: courseSessions.length,
+          attendedSessions: courseAttendedSessions.length,
+          status: 'active',
+          hasActiveSession: !!activeSession,
+        };
+      }),
+    );
+
+    const validCourses = courseStats.filter(Boolean);
+    const avgAttendance =
+      validCourses.length > 0
+        ? Math.round(
+            validCourses.reduce((sum, course) => sum + course?.attendance, 0) /
+              validCourses.length,
+          )
+        : 0;
+
+    return {
+      totalCourses: validCourses.length,
+      avgAttendance,
+      totalSessions,
+      attendedSessions: totalAttendedSessions,
+      activeSessions,
+      recentCourses: validCourses.slice(0, 3), // Return top 3 courses for dashboard
+    };
+  },
+});
+
 export const getCourseDetails = LecturerCourseQuery({
   args: {},
   handler: async (ctx) => {

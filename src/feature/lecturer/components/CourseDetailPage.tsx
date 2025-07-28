@@ -51,6 +51,11 @@ const CourseDetailPage = ({
 
   const students = courseDetails?.students || [];
 
+  // Check if there's an active attendance session
+  const hasActiveSession = attendanceSessions.some(
+    (session) => session.status === 'active' || session.status === 'pending',
+  );
+
   // Analytics calculations - use data from courseDetails.analytics or calculate from students
   const analytics = courseDetails?.analytics || {
     avgAttendance: 0,
@@ -106,11 +111,20 @@ const CourseDetailPage = ({
           <AttendanceSessionModal
             courseId={courseId}
             courseName={courseData.name}
+            disabled={hasActiveSession}
             // onStartSession={handleStartAttendance}
           >
-            <Button className="w-full sm:w-auto text-sm">
+            <Button
+              className="w-full sm:w-auto text-sm"
+              disabled={hasActiveSession}
+              title={
+                hasActiveSession
+                  ? 'An attendance session is already active for this course'
+                  : 'Start a new attendance session'
+              }
+            >
               <ClipboardCheck className="h-4 w-4 mr-2" />
-              Take Attendance
+              {hasActiveSession ? 'Session Active' : 'Take Attendance'}
             </Button>
           </AttendanceSessionModal>
         </div>

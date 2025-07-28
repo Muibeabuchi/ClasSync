@@ -1,11 +1,5 @@
 import { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -18,45 +12,35 @@ import {
 import { Label } from '@/components/ui/label';
 import {
   Bell,
-  Shield,
   Smartphone,
   ChevronRight,
   Moon,
-  Globe,
-  Clock,
-  Eye,
-  MessageSquare,
-  BarChart3,
-  Key,
+  Sun,
+  Monitor,
   Download,
   Trash2,
   Save,
   BookOpen,
   ArrowLeft,
+  MessageSquare,
+  type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTheme } from '@/components/theme-provider';
 
 interface MobileStudentSettingsProps {
   onBack?: () => void;
 }
 
 const MobileStudentSettings = ({ onBack }: MobileStudentSettingsProps) => {
+  const { theme, setTheme } = useTheme();
+
   const [settings, setSettings] = useState({
     notifications: {
       attendanceReminders: true,
       courseUpdates: true,
       joinRequestUpdates: true,
       generalAnnouncements: false,
-    },
-    preferences: {
-      theme: 'light',
-      language: 'english',
-      timeFormat: '12h',
-    },
-    privacy: {
-      profileVisibility: 'friends',
-      showAttendanceStats: true,
-      allowMessages: true,
     },
   });
 
@@ -74,24 +58,17 @@ const MobileStudentSettings = ({ onBack }: MobileStudentSettingsProps) => {
     }));
   };
 
-  const updatePreferenceSetting = (key: string, value: string) => {
-    setSettings((prev) => ({
-      ...prev,
-      preferences: {
-        ...prev.preferences,
-        [key]: value,
-      },
-    }));
-  };
-
-  const updatePrivacySetting = (key: string, value: boolean | string) => {
-    setSettings((prev) => ({
-      ...prev,
-      privacy: {
-        ...prev.privacy,
-        [key]: value,
-      },
-    }));
+  const getThemeIcon = (themeValue: string) => {
+    switch (themeValue) {
+      case 'light':
+        return <Sun className="h-4 w-4" />;
+      case 'dark':
+        return <Moon className="h-4 w-4" />;
+      case 'system':
+        return <Monitor className="h-4 w-4" />;
+      default:
+        return <Monitor className="h-4 w-4" />;
+    }
   };
 
   const SettingItem = ({
@@ -101,13 +78,13 @@ const MobileStudentSettings = ({ onBack }: MobileStudentSettingsProps) => {
     children,
     action,
   }: {
-    icon: any;
+    icon: LucideIcon;
     title: string;
     description?: string;
     children?: React.ReactNode;
     action?: () => void;
   }) => (
-    <div
+    <button
       className={`flex items-center justify-between p-4 ${
         action ? 'cursor-pointer active:bg-muted/50' : ''
       } transition-colors`}
@@ -128,7 +105,7 @@ const MobileStudentSettings = ({ onBack }: MobileStudentSettingsProps) => {
         {children}
         {action && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
       </div>
-    </div>
+    </button>
   );
 
   return (
@@ -249,154 +226,47 @@ const MobileStudentSettings = ({ onBack }: MobileStudentSettingsProps) => {
               <div className="p-4">
                 <div className="flex items-center space-x-3 mb-3">
                   <div className="p-2 bg-muted rounded-full">
-                    <Moon className="h-4 w-4" />
+                    {getThemeIcon(theme)}
                   </div>
                   <div className="flex-1">
                     <Label className="font-medium text-sm">Theme</Label>
                   </div>
                 </div>
                 <Select
-                  value={settings.preferences.theme}
+                  value={theme}
                   onValueChange={(value) =>
-                    updatePreferenceSetting('theme', value)
+                    setTheme(value as 'light' | 'dark' | 'system')
                   }
                 >
                   <SelectTrigger className="min-h-[48px]">
-                    <SelectValue />
+                    <SelectValue>
+                      <div className="flex items-center gap-2">
+                        {getThemeIcon(theme)}
+                        <span className="capitalize">{theme}</span>
+                      </div>
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="light">Light</SelectItem>
-                    <SelectItem value="dark">Dark</SelectItem>
-                    <SelectItem value="system">System</SelectItem>
+                    <SelectItem value="light">
+                      <div className="flex items-center gap-2">
+                        <Sun className="h-4 w-4" />
+                        <span>Light</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="dark">
+                      <div className="flex items-center gap-2">
+                        <Moon className="h-4 w-4" />
+                        <span>Dark</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="system">
+                      <div className="flex items-center gap-2">
+                        <Monitor className="h-4 w-4" />
+                        <span>System</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className="border-t border-border p-4">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="p-2 bg-muted rounded-full">
-                    <Globe className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <Label className="font-medium text-sm">Language</Label>
-                  </div>
-                </div>
-                <Select
-                  value={settings.preferences.language}
-                  onValueChange={(value) =>
-                    updatePreferenceSetting('language', value)
-                  }
-                >
-                  <SelectTrigger className="min-h-[48px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="english">English</SelectItem>
-                    <SelectItem value="hausa">Hausa</SelectItem>
-                    <SelectItem value="igbo">Igbo</SelectItem>
-                    <SelectItem value="yoruba">Yoruba</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="border-t border-border p-4">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="p-2 bg-muted rounded-full">
-                    <Clock className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <Label className="font-medium text-sm">Time Format</Label>
-                  </div>
-                </div>
-                <Select
-                  value={settings.preferences.timeFormat}
-                  onValueChange={(value) =>
-                    updatePreferenceSetting('timeFormat', value)
-                  }
-                >
-                  <SelectTrigger className="min-h-[48px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="12h">12 Hour</SelectItem>
-                    <SelectItem value="24h">24 Hour</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Privacy & Security Section */}
-        <div>
-          <div className="px-4 py-2">
-            <div className="flex items-center space-x-2 mb-2">
-              <Shield className="h-5 w-5 text-green-600" />
-              <h2 className="text-lg font-semibold">Privacy & Security</h2>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Control your privacy and data sharing preferences
-            </p>
-          </div>
-
-          <Card className="mx-4 mb-6">
-            <CardContent className="p-0">
-              <div className="p-4">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="p-2 bg-muted rounded-full">
-                    <Eye className="h-4 w-4" />
-                  </div>
-                  <div className="flex-1">
-                    <Label className="font-medium text-sm">
-                      Profile Visibility
-                    </Label>
-                  </div>
-                </div>
-                <Select
-                  value={settings.privacy.profileVisibility}
-                  onValueChange={(value) =>
-                    updatePrivacySetting('profileVisibility', value)
-                  }
-                >
-                  <SelectTrigger className="min-h-[48px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="public">Public</SelectItem>
-                    <SelectItem value="friends">Friends Only</SelectItem>
-                    <SelectItem value="private">Private</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="border-t border-border">
-                <SettingItem
-                  icon={BarChart3}
-                  title="Show Attendance Statistics"
-                  description="Allow others to see your attendance statistics"
-                >
-                  <Switch
-                    checked={settings.privacy.showAttendanceStats}
-                    onCheckedChange={(checked) =>
-                      updatePrivacySetting('showAttendanceStats', checked)
-                    }
-                  />
-                </SettingItem>
-              </div>
-
-              <div className="border-t border-border">
-                <SettingItem
-                  icon={MessageSquare}
-                  title="Allow Messages"
-                  description="Allow lecturers and students to message you"
-                >
-                  <Switch
-                    checked={settings.privacy.allowMessages}
-                    onCheckedChange={(checked) =>
-                      updatePrivacySetting('allowMessages', checked)
-                    }
-                  />
-                </SettingItem>
               </div>
             </CardContent>
           </Card>
@@ -414,20 +284,11 @@ const MobileStudentSettings = ({ onBack }: MobileStudentSettingsProps) => {
           <Card className="mx-4 mb-6">
             <CardContent className="p-0">
               <SettingItem
-                icon={Key}
-                title="Change Password"
-                description="Update your account password"
-                action={() => toast.info('Password change feature coming soon')}
+                icon={Download}
+                title="Download My Data"
+                description="Export your personal data"
+                action={() => toast.info('Data export feature coming soon')}
               />
-
-              <div className="border-t border-border">
-                <SettingItem
-                  icon={Download}
-                  title="Download My Data"
-                  description="Export your personal data"
-                  action={() => toast.info('Data export feature coming soon')}
-                />
-              </div>
 
               <div className="border-t border-border">
                 <SettingItem

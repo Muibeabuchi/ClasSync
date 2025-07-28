@@ -21,9 +21,9 @@ import {
   MoreVertical,
   Edit,
   Trash2,
-  FileText,
-  Users,
-  Clock,
+  // FileText,
+  // Users,
+  // Clock,
   AlertCircle,
   Archive,
   RotateCcw,
@@ -61,36 +61,34 @@ export const CourseCard = ({
   const deleteMutation = useDeleteCourse();
 
   const isArchived = course.status === 'archived';
-  // const isLoading = archiveMutation.isPending || unarchiveMutation.isPending;
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
         return (
-          <Badge
-            variant="secondary"
-            className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400"
-          >
+          <Badge className="bg-green-100 text-green-800 hover:bg-green-100 font-medium px-3 py-1">
             Active
           </Badge>
         );
       case 'archived':
         return (
-          <Badge
-            variant="secondary"
-            className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-          >
-            <Archive className="h-3 w-3 mr-1" />
+          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100 font-medium px-3 py-1">
             Archived
           </Badge>
         );
       case 'completed':
-        return <Badge>Completed</Badge>;
+        return (
+          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 font-medium px-3 py-1">
+            Completed
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return (
+          <Badge variant="outline" className="font-medium px-3 py-1">
+            {status}
+          </Badge>
+        );
     }
   };
-
   const handleViewCourse = () => {
     handleCourseNavigate(course._id);
   };
@@ -134,110 +132,83 @@ export const CourseCard = ({
 
   return (
     <Card
-      className={`group relative overflow-hidden border-0 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 ${
-        isArchived
-          ? 'bg-slate-50/50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-700'
-          : ''
+      className={`group relative overflow-hidden border hover:shadow-xl transition-all duration-300  cursor-pointer ${
+        isArchived ? 'opacity-75 hover:opacity-90' : ''
       }`}
+      onClick={handleViewCourse}
     >
-      {/* Archived Course Overlay */}
-      {isArchived && (
-        <div className="absolute top-0 right-0 w-16 h-16 overflow-hidden">
-          <div className="absolute top-2 right-[-32px] w-24 h-6 bg-slate-500/20 dark:bg-slate-600/30 rotate-45 flex items-center justify-center">
-            <Archive className="h-3 w-3 text-slate-600 dark:text-slate-400" />
-          </div>
-        </div>
-      )}
-
       {/* Header */}
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className={`p-2.5 rounded-xl transition-colors ${
+      <CardHeader className="p-8 pb-6">
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex-1 min-w-0">
+            <CardTitle
+              className={`text-xl font-semibold mb-2 transition-colors ${
                 isArchived
-                  ? 'bg-slate-100 dark:bg-slate-800 group-hover:bg-slate-200 dark:group-hover:bg-slate-700'
-                  : 'bg-primary/10 group-hover:bg-primary/20'
+                  ? 'text-muted-foreground'
+                  : 'group-hover:text-primary'
               }`}
             >
-              <BookOpen
-                className={`h-5 w-5 ${
-                  isArchived
-                    ? 'text-slate-500 dark:text-slate-400'
-                    : 'text-primary'
-                }`}
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <CardTitle
-                className={`text-lg font-semibold transition-colors truncate ${
-                  isArchived
-                    ? 'text-slate-600 dark:text-slate-300 group-hover:text-slate-700 dark:group-hover:text-slate-200'
-                    : 'group-hover:text-primary'
-                }`}
-              >
-                {course.courseName}
-              </CardTitle>
-              <CardDescription
-                className={`text-sm font-medium mt-0.5 ${
-                  isArchived ? 'text-slate-500 dark:text-slate-400' : ''
-                }`}
-              >
-                {course.courseCode}
-              </CardDescription>
-            </div>
+              {course.courseName}
+            </CardTitle>
+            <CardDescription className="text-base font-medium">
+              {course.courseCode}
+            </CardDescription>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4 ml-6">
             {getStatusBadge(course.status)}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-10 w-10 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200"
                 >
-                  <MoreVertical className="h-4 w-4" />
+                  <MoreVertical className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuContent align="end" className="w-52">
                 <DropdownMenuItem disabled={isArchived}>
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit className="h-4 w-4 mr-3" />
                   Edit Course
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {isArchived ? (
                   <DropdownMenuItem
-                    onClick={() => setShowUnarchiveModal(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowUnarchiveModal(true);
+                    }}
                     disabled={unarchiveMutation.isPending}
-                    className="text-emerald-600 dark:text-emerald-400"
                   >
                     {unarchiveMutation.isPending ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-3" />
                         Unarchiving...
                       </>
                     ) : (
                       <>
-                        <RotateCcw className="h-4 w-4 mr-2" />
+                        <RotateCcw className="h-4 w-4 mr-3" />
                         Unarchive Course
                       </>
                     )}
                   </DropdownMenuItem>
                 ) : (
                   <DropdownMenuItem
-                    onClick={() => setShowArchiveModal(true)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowArchiveModal(true);
+                    }}
                     disabled={archiveMutation.isPending}
-                    className="text-amber-600 dark:text-amber-400"
                   >
                     {archiveMutation.isPending ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-3" />
                         Archiving...
                       </>
                     ) : (
                       <>
-                        <Archive className="h-4 w-4 mr-2" />
+                        <Archive className="h-4 w-4 mr-3" />
                         Archive Course
                       </>
                     )}
@@ -246,17 +217,20 @@ export const CourseCard = ({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive"
-                  onClick={handleDeleteClick}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClick();
+                  }}
                   disabled={deleteMutation.isPending}
                 >
                   {deleteMutation.isPending ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-3" />
                       Deleting...
                     </>
                   ) : (
                     <>
-                      <Trash2 className="h-4 w-4 mr-2" />
+                      <Trash2 className="h-4 w-4 mr-3" />
                       Delete Course
                     </>
                   )}
@@ -265,124 +239,90 @@ export const CourseCard = ({
             </DropdownMenu>
           </div>
         </div>
-      </CardHeader>
 
-      {/* Content */}
-      <CardContent className="pt-0">
-        {/* Statistics Grid */}
-        <div className="grid grid-cols-3 gap-4 mb-4">
+        {/* Statistics */}
+        <div className="grid grid-cols-3 gap-8">
           <div className="text-center">
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-lg mx-auto mb-1 ${
-                isArchived
-                  ? 'bg-slate-100 dark:bg-slate-800'
-                  : 'bg-secondary/20'
-              }`}
-            >
-              <FileText
-                className={`h-4 w-4 ${
-                  isArchived
-                    ? 'text-slate-500 dark:text-slate-400'
-                    : 'text-secondary'
-                }`}
-              />
-            </div>
-            <div
-              className={`text-lg font-semibold ${
-                isArchived ? 'text-slate-600 dark:text-slate-300' : ''
+              className={`text-2xl font-bold mb-1 ${
+                isArchived ? 'text-muted-foreground' : ''
               }`}
             >
               {course.stats?.classlistCount || 0}
             </div>
-            <div className="text-xs text-muted-foreground">Classlists</div>
+            <div className="text-sm text-muted-foreground font-medium">
+              Classlists
+            </div>
           </div>
-
           <div className="text-center">
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-lg mx-auto mb-1 ${
-                isArchived ? 'bg-slate-100 dark:bg-slate-800' : 'bg-primary/20'
-              }`}
-            >
-              <Users
-                className={`h-4 w-4 ${
-                  isArchived
-                    ? 'text-slate-500 dark:text-slate-400'
-                    : 'text-primary'
-                }`}
-              />
-            </div>
-            <div
-              className={`text-lg font-semibold ${
-                isArchived ? 'text-slate-600 dark:text-slate-300' : ''
+              className={`text-2xl font-bold mb-1 ${
+                isArchived ? 'text-muted-foreground' : ''
               }`}
             >
               {course.stats?.totalStudents || 0}
             </div>
-            <div className="text-xs text-muted-foreground">Students</div>
+            <div className="text-sm text-muted-foreground font-medium">
+              Students
+            </div>
           </div>
 
           <div className="text-center">
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-lg mx-auto mb-1 ${
-                isArchived ? 'bg-slate-100 dark:bg-slate-800' : 'bg-accent/20'
-              }`}
-            >
-              <Clock
-                className={`h-4 w-4 ${
-                  isArchived
-                    ? 'text-slate-500 dark:text-slate-400'
-                    : 'text-accent'
-                }`}
-              />
-            </div>
-            <div
-              className={`text-lg font-semibold ${
-                isArchived ? 'text-slate-600 dark:text-slate-300' : ''
+              className={`text-2xl font-bold mb-1 ${
+                isArchived ? 'text-muted-foreground' : ''
               }`}
             >
               {course.stats?.sessionsHeld || 0}
             </div>
-            <div className="text-xs text-muted-foreground">Sessions</div>
+            <div className="text-sm text-muted-foreground font-medium">
+              Sessions
+            </div>
           </div>
         </div>
+      </CardHeader>
 
-        {/* Pending Requests Alert - Only show for active courses */}
-        {!isArchived ? (
-          course?.stats?.pendingRequests &&
-          course?.stats?.pendingRequests > 0 ? (
-            <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg mb-4 group-hover:shadow-sm transition-all">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-amber-100 dark:bg-amber-900/50 rounded-full">
-                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                </div>
-                <span className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                  {course.stats.pendingRequests} pending request
-                  {course.stats.pendingRequests !== 1 ? 's' : ''}
-                </span>
+      {/* Content */}
+      <CardContent className="px-8 pb-8">
+        {/* Pending Requests Alert */}
+        {!isArchived &&
+        course?.stats?.pendingRequests &&
+        course?.stats?.pendingRequests > 0 ? (
+          <button
+            className="flex items-center justify-between p-4 border rounded-xl mb-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full">
+                <AlertCircle className="h-4 w-4" />
               </div>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 text-amber-600 dark:text-amber-400 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/50"
-              >
-                Review
-              </Button>
+              <span className="text-sm font-medium">
+                {course.stats.pendingRequests} pending request
+                {course.stats.pendingRequests !== 1 ? 's' : ''}
+              </span>
             </div>
-          ) : null
+            <Button size="sm" variant="ghost" className="h-9 px-4 font-medium">
+              Review
+            </Button>
+          </button>
         ) : null}
 
         {/* Action Button */}
         <Button
-          onClick={handleViewCourse}
-          className="w-full"
-          variant={isArchived ? 'outline' : 'default'}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleViewCourse();
+          }}
+          className={`w-full h-12 text-base font-medium rounded-xl transition-all duration-200 ${
+            isArchived ? 'cursor-not-allowed' : 'shadow-sm'
+          }`}
           disabled={isArchived}
+          variant={isArchived ? 'secondary' : 'default'}
         >
-          <BookOpen className="h-4 w-4 mr-2" />
-          {isArchived ? 'Course Archived' : 'View Course'}
+          <BookOpen className="h-5 w-5 mr-3" />
+          {isArchived ? 'Course Archived' : 'Open Course'}
         </Button>
       </CardContent>
-
       {/* Confirmation Modals */}
       <ArchiveConfirmationModal
         isOpen={showArchiveModal}

@@ -1,30 +1,25 @@
-import { useState } from 'react';
-import {
-  Card,
-  CardContent,
-  // CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { useState, useRef, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import {
   User,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  BookOpen,
-  TrendingUp,
   Edit3,
   Save,
   Camera,
   Settings,
+  // Upload,
+  Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  useGetCurrentUser,
+  useGetUserProfileImage,
+  useUpdateUserProfile,
+  useUploadProfileImage,
+} from '@/feature/student/api/student-profile';
 
 interface MobileStudentProfileProps {
   onOpenSettings?: () => void;
@@ -34,38 +29,93 @@ const MobileStudentProfile = ({
   onOpenSettings,
 }: MobileStudentProfileProps) => {
   const [isEditing, setIsEditing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Mock student data
-  const [studentData, setStudentData] = useState({
-    fullName: 'John Doe',
-    regNumber: '20CS/2021/1234',
-    email: 'john.doe@student.futo.edu.ng',
-    phone: '+234 801 234 5678',
-    department: 'Computer Science',
-    faculty: 'School of Physical Sciences',
-    yearLevel: '400',
-    address: 'Block A, Room 15, Student Hostel',
-    dateOfBirth: '1999-05-15',
-    gender: 'Male',
-    profileImage: '',
+  // Backend data hooks
+  const { data: userData, isLoading: isLoadingUser } = useGetCurrentUser();
+  const { data: profileImageUrl, isLoading: isLoadingImage } =
+    useGetUserProfileImage();
+  const updateProfileMutation = useUpdateUserProfile();
+  const uploadImageMutation = useUploadProfileImage();
+
+  // Form state for editable fields
+  const [formData, setFormData] = useState({
+    fullName: '',
   });
 
-  const academicInfo = {
-    currentGPA: '3.85',
-    totalCourses: 3,
-    averageAttendance: 92,
-    academicYear: '2024/2025',
-    semester: 'Harmattan',
+  // Update form data when user data loads
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        fullName: userData.fullName || '',
+      });
+    }
+  }, [userData]);
+
+  const handleSave = async () => {
+    if (!userData) return;
+    if (formData.fullName !== userData.fullName) {
+      setIsEditing(false);
+      return;
+    }
+    try {
+      await updateProfileMutation.mutateAsync({
+        fullName: formData.fullName,
+      });
+      setIsEditing(false);
+    } catch (error) {
+      // Error handling is done in the mutation hook
+      console.error('Profile update error:', error);
+    }
   };
 
-  const handleSave = () => {
-    toast.success('Profile updated successfully');
-    setIsEditing(false);
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB.');
+      return;
+    }
+
+    try {
+      await uploadImageMutation.mutateAsync(file);
+    } catch (error) {
+      // Error handling is done in the mutation hook
+      console.error('Image upload error:', error);
+    }
   };
 
-  const handleImageUpload = () => {
-    toast.info('Image upload feature coming soon');
+  const triggerImageUpload = () => {
+    fileInputRef.current?.click();
   };
+
+  // Loading state
+  if (isLoadingUser) {
+    return (
+      <div className="min-h-[100dvh] bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // No user data
+  if (!userData) {
+    return (
+      <div className="min-h-[100dvh] bg-background flex items-center justify-center">
+        <p className="text-muted-foreground">Unable to load profile data.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[100dvh] bg-background">
@@ -112,122 +162,48 @@ const MobileStudentProfile = ({
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="relative">
                 <Avatar className="w-24 h-24">
-                  <AvatarImage src={studentData.profileImage} />
+                  {isLoadingImage ? (
+                    <div className="flex items-center justify-center w-full h-full">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                  ) : (
+                    <AvatarImage src={profileImageUrl || undefined} />
+                  )}
                   <AvatarFallback className="text-2xl">
-                    {studentData.fullName
-                      .split(' ')
+                    {userData.fullName
+                      ?.split(' ')
                       .map((n) => n[0])
-                      .join('')}
+                      .join('') || 'U'}
                   </AvatarFallback>
                 </Avatar>
-                {isEditing && (
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full p-0"
-                    onClick={handleImageUpload}
-                  >
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 h-8 w-8 rounded-full p-0"
+                  onClick={triggerImageUpload}
+                  disabled={uploadImageMutation.isPending}
+                >
+                  {uploadImageMutation.isPending ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
                     <Camera className="h-4 w-4" />
-                  </Button>
-                )}
+                  )}
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
               </div>
 
               <div className="space-y-2">
                 <h2 className="mobile-text-xl font-bold">
-                  {studentData.fullName}
+                  {userData.fullName}
                 </h2>
                 <p className="mobile-text-base text-muted-foreground">
-                  {studentData.regNumber}
-                </p>
-                <Badge variant="secondary" className="mobile-text-sm">
-                  {studentData.yearLevel} Level
-                </Badge>
-              </div>
-
-              <div className="text-center space-y-1">
-                <p className="mobile-text-sm font-medium">
-                  {studentData.department}
-                </p>
-                <p className="mobile-text-xs text-muted-foreground">
-                  {studentData.faculty}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="p-4">
-            <div className="flex flex-col items-center text-center space-y-2">
-              <div className="p-2 bg-primary/10 rounded-full">
-                <BookOpen className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <p className="mobile-text-2xl font-bold">
-                  {academicInfo.totalCourses}
-                </p>
-                <p className="mobile-text-sm text-muted-foreground">Courses</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-4">
-            <div className="flex flex-col items-center text-center space-y-2">
-              <div className="p-2 bg-green-100 rounded-full">
-                <TrendingUp className="h-5 w-5 text-green-600" />
-              </div>
-              <div>
-                <p className="mobile-text-2xl font-bold">
-                  {academicInfo.averageAttendance}%
-                </p>
-                <p className="mobile-text-sm text-muted-foreground">
-                  Attendance
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
-
-        {/* Academic Information */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="mobile-text-lg">
-              Academic Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="mobile-p-sm bg-primary/5 rounded-lg">
-                <p className="mobile-text-xs text-muted-foreground mb-1">
-                  Academic Year
-                </p>
-                <p className="mobile-text-sm font-semibold text-primary">
-                  {academicInfo.academicYear}
-                </p>
-              </div>
-              <div className="mobile-p-sm bg-green-50 rounded-lg">
-                <p className="mobile-text-xs text-muted-foreground mb-1">
-                  Semester
-                </p>
-                <p className="mobile-text-sm font-semibold text-green-700">
-                  {academicInfo.semester}
-                </p>
-              </div>
-              <div className="mobile-p-sm bg-blue-50 rounded-lg">
-                <p className="mobile-text-xs text-muted-foreground mb-1">
-                  Current GPA
-                </p>
-                <p className="mobile-text-sm font-semibold text-blue-700">
-                  {academicInfo.currentGPA}
-                </p>
-              </div>
-              <div className="mobile-p-sm bg-purple-50 rounded-lg">
-                <p className="mobile-text-xs text-muted-foreground mb-1">
-                  Year Level
-                </p>
-                <p className="mobile-text-sm font-semibold text-purple-700">
-                  {studentData.yearLevel} Level
+                  {userData.email}
                 </p>
               </div>
             </div>
@@ -254,140 +230,26 @@ const MobileStudentProfile = ({
                   type="text"
                   inputMode="text"
                   autoComplete="name"
-                  value={studentData.fullName}
+                  value={formData.fullName}
                   onChange={(e) =>
-                    setStudentData({
-                      ...studentData,
+                    setFormData({
+                      ...formData,
                       fullName: e.target.value,
                     })
                   }
-                  disabled={!isEditing}
+                  disabled={!isEditing || updateProfileMutation.isPending}
                   className="pl-10 min-h-[48px]"
                 />
               </div>
             </div>
-
-            {/* Registration Number */}
             <div className="space-y-2">
-              <Label htmlFor="regNumber" className="mobile-text-sm font-medium">
-                Registration Number
-              </Label>
-              <Input
-                id="regNumber"
-                value={studentData.regNumber}
-                disabled
-                className="bg-muted touch-target-min"
-              />
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="mobile-text-sm font-medium">
-                Email Address
-              </Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  value={studentData.email}
-                  onChange={(e) =>
-                    setStudentData({ ...studentData, email: e.target.value })
-                  }
-                  disabled={!isEditing}
-                  className="pl-10 touch-target-min"
-                />
-              </div>
-            </div>
-
-            {/* Phone */}
-            <div className="space-y-2">
-              <Label htmlFor="phone" className="mobile-text-sm font-medium">
-                Phone Number
-              </Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="tel"
-                  value={studentData.phone}
-                  onChange={(e) =>
-                    setStudentData({ ...studentData, phone: e.target.value })
-                  }
-                  disabled={!isEditing}
-                  className="pl-10 touch-target-min"
-                />
-              </div>
-            </div>
-
-            {/* Date of Birth */}
-            <div className="space-y-2">
-              <Label
-                htmlFor="dateOfBirth"
-                className="mobile-text-sm font-medium"
-              >
-                Date of Birth
-              </Label>
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={studentData.dateOfBirth}
-                  onChange={(e) =>
-                    setStudentData({
-                      ...studentData,
-                      dateOfBirth: e.target.value,
-                    })
-                  }
-                  disabled={!isEditing}
-                  className="pl-10 touch-target-min"
-                />
-              </div>
-            </div>
-
-            {/* Gender */}
-            <div className="space-y-2">
-              <Label htmlFor="gender" className="mobile-text-sm font-medium">
-                Gender
-              </Label>
+              <Label htmlFor="gender">Gender</Label>
               <Input
                 id="gender"
-                type="text"
-                inputMode="text"
-                value={studentData.gender}
-                onChange={(e) =>
-                  setStudentData({ ...studentData, gender: e.target.value })
-                }
-                disabled={!isEditing}
-                className="touch-target-min"
+                value={userData.gender || 'Not specified'}
+                disabled
+                className="bg-muted"
               />
-            </div>
-
-            {/* Address */}
-            <div className="space-y-2">
-              <Label htmlFor="address" className="mobile-text-sm font-medium">
-                Address
-              </Label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="address"
-                  type="text"
-                  inputMode="text"
-                  autoComplete="street-address"
-                  value={studentData.address}
-                  onChange={(e) =>
-                    setStudentData({ ...studentData, address: e.target.value })
-                  }
-                  disabled={!isEditing}
-                  className="pl-10 touch-target-min"
-                />
-              </div>
             </div>
           </CardContent>
         </Card>

@@ -23,6 +23,7 @@ interface AttendanceSessionModalProps {
   courseId: Id<'courses'>;
   courseName: string;
   children: React.ReactNode;
+  disabled?: boolean;
   onStartSession?: (courseId: string) => void;
 }
 
@@ -30,6 +31,7 @@ const AttendanceSessionModal = ({
   courseId,
   courseName,
   children,
+  disabled = false,
   // onStartSession,
 }: AttendanceSessionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -98,9 +100,18 @@ const AttendanceSessionModal = ({
     getPosition();
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (disabled && open) {
+      return; // Prevent opening when disabled
+    }
+    setIsOpen(open);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild disabled={disabled}>
+        {children}
+      </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

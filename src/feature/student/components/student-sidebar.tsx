@@ -1,4 +1,3 @@
-// import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -17,11 +16,11 @@ import {
 import {
   Home,
   BookOpen,
-  //  Plus,
   Clock,
   Bell,
   LogOut,
   User,
+  Settings,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -31,7 +30,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
-// import { ThemeToggle } from '@/components/theme-toggle';
+import { Link, useRouterState } from '@tanstack/react-router';
 
 const navigationItems = [
   {
@@ -39,38 +38,36 @@ const navigationItems = [
     label: 'Dashboard',
     icon: Home,
     badge: null,
+    to: '/dashboard/student',
   },
   {
     id: 'courses',
     label: 'My Courses',
     icon: BookOpen,
     badge: '3',
+    to: '/dashboard/student/courses',
   },
   {
     id: 'attendance',
     label: 'Check In',
     icon: Clock,
     badge: null,
+    to: '/dashboard/student/attendance',
   },
   {
     id: 'notifications',
     label: 'Notifications',
     icon: Bell,
     badge: '3',
+    to: '/dashboard/student/notifications',
   },
 ];
 
 interface StudentSidebarProps {
-  activePage: string;
-  onPageChange: (page: any) => void;
   userData: any;
 }
 
-const StudentSidebar = ({
-  activePage,
-  onPageChange,
-  userData,
-}: StudentSidebarProps) => {
+const StudentSidebar = ({ userData }: StudentSidebarProps) => {
   const { state } = useSidebar();
 
   const signOut = useSignOut();
@@ -103,22 +100,22 @@ const StudentSidebar = ({
             <SidebarMenu>
               {navigationItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = activePage === item.id;
 
                 return (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => onPageChange(item.id)}
+                      asChild
                       tooltip={state === 'collapsed' ? item.label : undefined}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                      {item.badge && state === 'expanded' && (
-                        <Badge variant="secondary" className="ml-auto">
-                          {item.badge}
-                        </Badge>
-                      )}
+                      <Link to={item.to}>
+                        <Icon className="h-4 w-4" />
+                        <span>{item.label}</span>
+                        {item.badge && state === 'expanded' && (
+                          <Badge variant="secondary" className="ml-auto">
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -166,12 +163,17 @@ const StudentSidebar = ({
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem onClick={() => onPageChange('profile')}>
-                  <User className="h-4 w-4 mr-2" />
-                  Profile
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/student/profile">
+                    <User className="h-4 w-4 mr-2" />
+                    Profile
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onPageChange('settings')}>
-                  Settings
+                <DropdownMenuItem asChild>
+                  <Link to="/dashboard/student/settings">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem

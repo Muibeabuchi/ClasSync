@@ -9,6 +9,7 @@ import { ConvexQueryClient } from '@convex-dev/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { DefaultCatchBoundary } from '@/components/DefaultCatchBoundary';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -25,7 +26,7 @@ export const Route = createRootRouteWithContext<{
 
 function RootComponent() {
   return (
-    <>
+    <ThemeProvider defaultTheme="system" storageKey="classsync-ui-theme">
       <div className="min-h-[100dvh] flex flex-col overflow-hidden">
         <div className="flex-grow min-h-0 h-full flex flex-col">
           <Outlet />
@@ -34,7 +35,7 @@ function RootComponent() {
       </div>
       <ReactQueryDevtools buttonPosition="bottom-right" />
       <TanStackRouterDevtools position="bottom-right" />
-    </>
+    </ThemeProvider>
   );
 }
 

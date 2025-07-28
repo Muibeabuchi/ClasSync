@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -10,48 +10,104 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  BookOpen,
-  TrendingUp,
-} from 'lucide-react';
+import { User, Camera, Upload, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  useGetCurrentUser,
+  useGetUserProfileImage,
+  useUpdateUserProfile,
+  useUploadProfileImage,
+} from '@/feature/student/api/student-profile';
 
 const StudentProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Mock student data
-  const [studentData, setStudentData] = useState({
-    fullName: 'John Doe',
-    regNumber: '20CS/2021/1234',
-    email: 'john.doe@student.futo.edu.ng',
-    phone: '+234 801 234 5678',
-    department: 'Computer Science',
-    faculty: 'School of Physical Sciences',
-    yearLevel: '400',
-    address: 'Block A, Room 15, Student Hostel',
-    dateOfBirth: '1999-05-15',
-    gender: 'Male',
-    profileImage: '',
+  // Backend data hooks
+  const { data: userData, isLoading: isLoadingUser } = useGetCurrentUser();
+  const { data: profileImageUrl, isLoading: isLoadingImage } =
+    useGetUserProfileImage();
+  const updateProfileMutation = useUpdateUserProfile();
+  const uploadImageMutation = useUploadProfileImage();
+
+  // Form state for editable fields
+  const [formData, setFormData] = useState({
+    fullName: '',
   });
 
-  const academicInfo = {
-    currentGPA: '3.85',
-    totalCourses: 3,
-    averageAttendance: 92,
-    academicYear: '2024/2025',
-    semester: 'Harmattan',
+  // Update form data when user data loads
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        fullName: userData.fullName || '',
+      });
+    }
+  }, [userData]);
+
+  const handleSave = async () => {
+    if (!userData) return;
+
+    try {
+      await updateProfileMutation.mutateAsync({
+        fullName:
+          formData.fullName !== userData.fullName
+            ? formData.fullName
+            : undefined,
+      });
+      setIsEditing(false);
+    } catch (error) {
+      // Error handling is done in the mutation hook
+      console.error('Profile update error:', error);
+    }
   };
 
-  const handleSave = () => {
-    toast.success('Your profile information has been saved successfully.');
-    setIsEditing(false);
+  const handleImageUpload = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size should be less than 5MB.');
+      return;
+    }
+
+    try {
+      await uploadImageMutation.mutateAsync(file);
+    } catch (error) {
+      // Error handling is done in the mutation hook
+      console.error('Image upload error:', error);
+    }
   };
+
+  const triggerImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Loading state
+  if (isLoadingUser) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // No user data
+  if (!userData) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Unable to load profile data.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -60,7 +116,7 @@ const StudentProfile = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">My Profile</h1>
           <p className="text-muted-foreground">
-            Manage your personal information and academic details
+            Manage your personal information
           </p>
         </div>
         <Button
@@ -75,51 +131,46 @@ const StudentProfile = () => {
         {/* Profile Overview */}
         <Card className="lg:col-span-1">
           <CardHeader className="text-center">
-            <Avatar className="w-24 h-24 mx-auto mb-4">
-              <AvatarImage src={studentData.profileImage} />
-              <AvatarFallback className="text-2xl">
-                {studentData.fullName
-                  .split(' ')
-                  .map((n) => n[0])
-                  .join('')}
-              </AvatarFallback>
-            </Avatar>
-            <CardTitle>{studentData.fullName}</CardTitle>
-            <CardDescription>{studentData.regNumber}</CardDescription>
-            <Badge variant="secondary">{studentData.yearLevel} Level</Badge>
+            <div className="relative">
+              <Avatar className="w-24 h-24 mx-auto mb-4">
+                {isLoadingImage ? (
+                  <div className="flex items-center justify-center w-full h-full">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                ) : (
+                  <AvatarImage src={profileImageUrl || undefined} />
+                )}
+                <AvatarFallback className="text-2xl">
+                  {userData.fullName
+                    ?.split(' ')
+                    .map((n) => n[0])
+                    .join('') || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <Button
+                size="sm"
+                variant="outline"
+                className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 h-8 w-8 rounded-full p-0"
+                onClick={triggerImageUpload}
+                disabled={uploadImageMutation.isPending}
+              >
+                {uploadImageMutation.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Camera className="h-4 w-4" />
+                )}
+              </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+            </div>
+            <CardTitle>{userData.fullName}</CardTitle>
+            <CardDescription>{userData.email}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                {studentData.department}
-              </p>
-              <p className="text-xs text-muted-foreground/80">
-                {studentData.faculty}
-              </p>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-1">
-                  <BookOpen className="h-4 w-4 text-primary" />
-                </div>
-                <p className="text-lg font-bold text-foreground">
-                  {academicInfo.totalCourses}
-                </p>
-                <p className="text-xs text-muted-foreground">Courses</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center mb-1">
-                  <TrendingUp className="h-4 w-4 text-chart-2" />
-                </div>
-                <p className="text-lg font-bold text-foreground">
-                  {academicInfo.averageAttendance}%
-                </p>
-                <p className="text-xs text-muted-foreground">Attendance</p>
-              </div>
-            </div>
-          </CardContent>
         </Card>
 
         {/* Personal Information */}
@@ -136,74 +187,14 @@ const StudentProfile = () => {
                   <User className="h-4 w-4 text-muted-foreground" />
                   <Input
                     id="fullName"
-                    value={studentData.fullName}
+                    value={formData.fullName}
                     onChange={(e) =>
-                      setStudentData({
-                        ...studentData,
+                      setFormData({
+                        ...formData,
                         fullName: e.target.value,
                       })
                     }
-                    disabled={!isEditing}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="regNumber">Registration Number</Label>
-                <Input
-                  id="regNumber"
-                  value={studentData.regNumber}
-                  disabled
-                  className="bg-muted"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <div className="flex items-center space-x-2">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    value={studentData.email}
-                    onChange={(e) =>
-                      setStudentData({ ...studentData, email: e.target.value })
-                    }
-                    disabled={!isEditing}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number</Label>
-                <div className="flex items-center space-x-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="phone"
-                    value={studentData.phone}
-                    onChange={(e) =>
-                      setStudentData({ ...studentData, phone: e.target.value })
-                    }
-                    disabled={!isEditing}
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                <div className="flex items-center space-x-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={studentData.dateOfBirth}
-                    onChange={(e) =>
-                      setStudentData({
-                        ...studentData,
-                        dateOfBirth: e.target.value,
-                      })
-                    }
-                    disabled={!isEditing}
+                    disabled={!isEditing || updateProfileMutation.isPending}
                   />
                 </div>
               </div>
@@ -212,74 +203,15 @@ const StudentProfile = () => {
                 <Label htmlFor="gender">Gender</Label>
                 <Input
                   id="gender"
-                  value={studentData.gender}
-                  onChange={(e) =>
-                    setStudentData({ ...studentData, gender: e.target.value })
-                  }
-                  disabled={!isEditing}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="address"
-                  value={studentData.address}
-                  onChange={(e) =>
-                    setStudentData({ ...studentData, address: e.target.value })
-                  }
-                  disabled={!isEditing}
+                  value={userData.gender || 'Not specified'}
+                  disabled
+                  className="bg-muted"
                 />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Academic Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Academic Information</CardTitle>
-          <CardDescription>
-            Your current academic status and performance
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-primary/10 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">
-                Academic Year
-              </p>
-              <p className="text-lg font-bold text-primary">
-                {academicInfo.academicYear}
-              </p>
-            </div>
-            <div className="text-center p-4 bg-chart-2/10 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">
-                Current Semester
-              </p>
-              <p className="text-lg font-bold text-chart-2">
-                {academicInfo.semester}
-              </p>
-            </div>
-            <div className="text-center p-4 bg-chart-4/10 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Current GPA</p>
-              <p className="text-lg font-bold text-chart-4">
-                {academicInfo.currentGPA}
-              </p>
-            </div>
-            <div className="text-center p-4 bg-chart-5/10 rounded-lg">
-              <p className="text-sm text-muted-foreground mb-1">Year Level</p>
-              <p className="text-lg font-bold text-chart-5">
-                {studentData.yearLevel} Level
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };

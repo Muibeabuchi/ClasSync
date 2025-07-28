@@ -112,9 +112,7 @@ const LiveAttendancePage = ({
             <ArrowLeft className="h-4 w-4 mr-2" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">
-              Live Attendance Session
-            </h1>
+            <h1 className="text-2xl font-bold">Live Attendance Session</h1>
             <p className="text-gray-600">
               {sessionData.courseCode} - {sessionData.courseName}
             </p>
@@ -171,7 +169,18 @@ const LiveAttendancePage = ({
                 )}
                 {sessionState === 'complete' && (
                   <p className="text-gray-600">
-                    Started at {sessionData.startTime}
+                    Started at{' '}
+                    {new Date(attendanceSession._creationTime).toLocaleString(
+                      'en-US',
+                      {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: true,
+                      },
+                    )}
                   </p>
                 )}
               </div>
@@ -234,12 +243,16 @@ const LiveAttendancePage = ({
         <CardContent>
           {attendanceSessionRecords.length === 0 ? (
             <div className="text-center py-8">
-              <div className="animate-pulse">
+              <div
+                className={sessionState === 'complete' ? '' : 'animate-pulse'}
+              >
                 <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
                 <p className="text-gray-500">
                   {sessionState === 'pending'
                     ? 'Waiting for session to begin...'
-                    : 'Waiting for students to check in...'}
+                    : sessionState === 'complete'
+                      ? 'Session has ended - No students marked attendance'
+                      : 'Waiting for students to check in...'}
                 </p>
               </div>
             </div>
@@ -256,7 +269,7 @@ const LiveAttendancePage = ({
                       <div className="font-medium">
                         {student.student.fullName}
                       </div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm ">
                         {student.student.registrationNumber}
                       </div>
                     </div>
@@ -264,13 +277,22 @@ const LiveAttendancePage = ({
 
                   <div className="flex items-center space-x-4">
                     <div className="text-right text-sm">
-                      <div>{student.distance}m</div>
+                      {/* <div>{student.distance}m</div> */}
                       <div className="text-gray-500">
                         {/* {student.}% accuracy */}
                       </div>
                     </div>
                     <div className="text-right text-sm">
-                      <div>{student.checkedInAt}</div>
+                      <div>
+                        {new Date(student.checkedInAt).toLocaleString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true,
+                        })}
+                      </div>
                       {/* {student.overridden && (
                         <div className="text-xs text-blue-600">
                           Manual Override

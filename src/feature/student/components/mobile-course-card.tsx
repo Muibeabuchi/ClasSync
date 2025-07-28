@@ -9,12 +9,20 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { GetStudentsCoursesReturnType } from 'convex/schema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Eye, MoreVertical, Clock, Users } from 'lucide-react';
+import { Clock, Users } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type StudentCourseType = NonNullable<GetStudentsCoursesReturnType[number]>;
 
-const MobileCourseCard = ({ course }: { course: StudentCourseType }) => {
+interface MobileCourseCardProps {
+  course: StudentCourseType;
+  onAttendanceClick?: () => void;
+}
+
+const MobileCourseCard = ({
+  course,
+  onAttendanceClick,
+}: MobileCourseCardProps) => {
   const attendancePercentage = Math.round(
     course.attendanceStats.attendanceRate,
   );
@@ -164,23 +172,23 @@ const MobileCourseCard = ({ course }: { course: StudentCourseType }) => {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex items-center justify-between pt-2 border-t border-border/50">
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn(
-              'flex-1 text-muted-foreground hover:text-foreground',
-              'transition-colors mobile-tap-feedback',
-              'touch-target-min',
-            )}
-          >
-            <Eye className="h-4 w-4 mr-2" />
-            View Course
-          </Button>
+        <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+          {course.hasActiveSession ? (
+            <Button
+              onClick={onAttendanceClick}
+              size="sm"
+              className={cn(
+                'flex-1 bg-success hover:bg-success/90 text-success-foreground',
+                'transition-colors mobile-tap-feedback',
+                'touch-target-min',
+              )}
+            >
+              <Clock className="h-4 w-4 mr-2" />
+              Check In Now
+            </Button>
+          ) : null}
 
-          <div className="w-px h-6 bg-border mx-2" />
-
-          <Button
+          {/* <Button
             variant="ghost"
             size="sm"
             className={cn(
@@ -190,7 +198,7 @@ const MobileCourseCard = ({ course }: { course: StudentCourseType }) => {
             )}
           >
             <MoreVertical className="h-4 w-4" />
-          </Button>
+          </Button> */}
         </div>
       </CardContent>
     </Card>

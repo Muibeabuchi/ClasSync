@@ -28,7 +28,20 @@ export const startAttendanceSession = courseMutation({
     const lecturerId = ctx.user._id;
     const course = ctx.course;
 
-    // const attendanceCode = AttendanceModel.generateAttendanceCode();
+    // Check if there's already an active attendance session for this course
+    const existingActiveSession = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId_by_lecturerId', (q) =>
+        q.eq('courseId', args.courseId).eq('lecturerId', lecturerId),
+      )
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .first();
+
+    if (existingActiveSession) {
+      throw new ConvexError(
+        'There is already an active attendance session for this course',
+      );
+    }
 
     const startTime = Date.now();
     const endedAt = startTime + AttendanceSessionDuration;

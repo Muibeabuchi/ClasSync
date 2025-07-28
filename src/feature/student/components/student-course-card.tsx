@@ -7,14 +7,19 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { GetStudentsCoursesReturnType } from 'convex/schema';
-import { Badge, Eye, MoreVertical } from 'lucide-react';
+import { Badge, Eye, MoreVertical, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 // import { toast } from 'sonner';
 
 type StudentCourseType = NonNullable<GetStudentsCoursesReturnType[number]>;
 
-const CourseCard = ({ course }: { course: StudentCourseType }) => {
+interface CourseCardProps {
+  course: StudentCourseType;
+  onAttendanceClick?: () => void;
+}
+
+const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
   const attendancePercentage = Math.round(
     course.attendanceStats.attendanceRate,
   );
@@ -118,15 +123,26 @@ const CourseCard = ({ course }: { course: StudentCourseType }) => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <Eye className="h-4 w-4 mr-1.5" />
-              View Course
-            </Button>
+          <div className="flex items-center justify-between pt-2 gap-2">
+            {course.hasActiveSession ? (
+              <Button
+                onClick={onAttendanceClick}
+                size="sm"
+                className="flex-1 bg-success hover:bg-success/90 text-success-foreground transition-colors"
+              >
+                <Clock className="h-4 w-4 mr-1.5" />
+                Check In Now
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Eye className="h-4 w-4 mr-1.5" />
+                View Course
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"

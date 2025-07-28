@@ -1,6 +1,5 @@
 // import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
   SidebarContent,
@@ -103,14 +102,6 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
                           >
                             <Icon className="h-4 w-4 flex-shrink-0" />
                             <span className="font-normal">{item.label}</span>
-                            {item.badge && state === 'expanded' && (
-                              <Badge
-                                variant="secondary"
-                                className="ml-auto text-xs px-2 py-0.5"
-                              >
-                                {item.badge}
-                              </Badge>
-                            )}
                           </SidebarMenuButton>
                         );
                       }}

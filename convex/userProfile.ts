@@ -75,6 +75,36 @@ export const updateUserRole = AuthenticatedUserMutation({
   },
 });
 
+export const updateUserProfile = AuthenticatedUserMutation({
+  args: {
+    fullName: v.optional(v.string()),
+    // email: v.optional(v.string()),
+    // gender: v.optional(studentGenderSchema),
+  },
+  returns: {
+    success: v.boolean(),
+    message: v.string(),
+  },
+  async handler(ctx, args) {
+    try {
+      await ctx.db.patch(ctx.userId, {
+        fullName: args.fullName,
+      });
+      return {
+        success: true,
+        message: 'Profile updated successfully',
+      };
+    } catch (error) {
+      console.error('Failed to update user profile:', error);
+      throw new ConvexError(
+        error instanceof ConvexError
+          ? error.message
+          : 'Failed to update profile',
+      );
+    }
+  },
+});
+
 export const completeUserOnboarding = AuthenticatedUserMutation({
   args: {
     fullName: v.string(),

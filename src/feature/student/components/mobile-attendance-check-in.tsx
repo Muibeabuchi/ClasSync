@@ -14,8 +14,9 @@ import {
   BookOpen,
   Users,
   Timer,
-  // Wifi,
-  WifiOff,
+  Target,
+  MapPinOff,
+  Radar,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useGetStudentCoursesWithActiveAttendance } from '@/feature/course/api/get-student-courses-with-active-attendance';
@@ -25,70 +26,64 @@ import { cn } from '@/lib/utils';
 import type { Id } from 'convex/_generated/dataModel';
 import MobilePageContainer from '@/components/mobile/MobilePageContainer';
 
-interface GPSStatusProps {
+// Utility function to calculate distance between two coordinates using Haversine formula
+const calculateDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number => {
+  const R = 6371e3; // Earth's radius in meters
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // Distance in meters
+};
+
+interface CompactGPSStatusProps {
   isAvailable: boolean;
   isEnabled: boolean;
-  isLoading: boolean;
-  accuracy?: number;
+  // isLoading: boolean;
   error?: string;
 }
 
-const GPSStatusIndicator: React.FC<GPSStatusProps> = ({
+const CompactGPSStatus: React.FC<CompactGPSStatusProps> = ({
   isAvailable,
   isEnabled,
-  isLoading,
-  accuracy,
+  // isLoading,
   error,
 }) => {
   const getStatusInfo = () => {
-    if (isLoading) {
-      return {
-        icon: Loader2,
-        text: 'Getting your location...',
-        subtext: 'Please wait while we access GPS',
-        variant: 'secondary' as const,
-        iconClass: 'animate-spin text-blue-500',
-      };
-    }
+    // if (isLoading) {
+    //   return {
+    //     icon: Loader2,
+    //     color: 'text-blue-500',
+    //     bgColor: 'bg-blue-100',
+    //     animate: 'animate-spin',
+    //   };
+    // }
 
-    if (!isAvailable) {
+    if (!isAvailable || !isEnabled || error) {
       return {
-        icon: WifiOff,
-        text: 'GPS not available',
-        subtext: 'Your device does not support location services',
-        variant: 'destructive' as const,
-        iconClass: 'text-red-500',
-      };
-    }
-
-    if (!isEnabled) {
-      return {
-        icon: AlertCircle,
-        text: 'Location access needed',
-        subtext: 'Please enable location services to check in',
-        variant: 'destructive' as const,
-        iconClass: 'text-red-500',
-      };
-    }
-
-    if (error) {
-      return {
-        icon: AlertCircle,
-        text: 'Location error',
-        subtext: error,
-        variant: 'destructive' as const,
-        iconClass: 'text-red-500',
+        icon: MapPinOff,
+        color: 'text-red-500',
+        bgColor: 'bg-red-100',
+        animate: '',
       };
     }
 
     return {
-      icon: CheckCircle,
-      text: 'GPS ready',
-      subtext: accuracy
-        ? `Accuracy: ${Math.round(accuracy)}m`
-        : 'Location services active',
-      variant: 'default' as const,
-      iconClass: 'text-green-500',
+      icon: Target,
+      color: 'text-green-500',
+      bgColor: 'bg-green-100',
+      animate: '',
     };
   };
 
@@ -96,36 +91,106 @@ const GPSStatusIndicator: React.FC<GPSStatusProps> = ({
   const StatusIcon = status.icon;
 
   return (
-    <Card className="w-full">
-      <CardContent className="pt-6">
-        <div className="flex flex-col items-center text-center space-y-4">
-          <div className="relative">
-            <div
-              className={cn(
-                'w-16 h-16 rounded-full flex items-center justify-center',
-                'bg-muted/50 border-2',
-                status.variant === 'default' && 'border-green-200 bg-green-50',
-                status.variant === 'destructive' && 'border-red-200 bg-red-50',
-                status.variant === 'secondary' && 'border-blue-200 bg-blue-50',
-              )}
-            >
-              <StatusIcon className={cn('h-8 w-8', status.iconClass)} />
-            </div>
-            {status.variant === 'default' && (
-              <div className="absolute -top-1 -right-1">
-                <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse" />
-              </div>
-            )}
-          </div>
-          <div className="space-y-1">
-            <p className="font-semibold mobile-text-lg">{status.text}</p>
-            <p className="mobile-text-sm text-muted-foreground">
-              {status.subtext}
-            </p>
-          </div>
+    <div className="relative">
+      <div
+        className={cn(
+          'w-10 h-10 rounded-full flex items-center justify-center',
+          'border-2 border-white shadow-lg',
+          status.bgColor,
+        )}
+      >
+        <StatusIcon className={cn('h-5 w-5', status.color, status.animate)} />
+      </div>
+
+      {/* Homing beacon animation for active GPS */}
+      {isAvailable && isEnabled && !error && (
+        <>
+          <div className="absolute inset-0 rounded-full border-2 border-green-400 animate-ping opacity-75" />
+          <div className="absolute inset-0 rounded-full border border-green-300 animate-pulse" />
+        </>
+      )}
+    </div>
+  );
+};
+
+interface DistanceIndicatorProps {
+  distance: number | null;
+  maxDistance: number;
+  isWithinRange: boolean;
+}
+
+const DistanceIndicator: React.FC<DistanceIndicatorProps> = ({
+  distance,
+  maxDistance,
+  isWithinRange,
+}) => {
+  if (distance === null) {
+    return (
+      <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
+        <Radar className="h-4 w-4 text-gray-500" />
+        <span className="mobile-text-sm text-gray-600">
+          Calculating distance...
+        </span>
+      </div>
+    );
+  }
+
+  const formatDistance = (meters: number) => {
+    if (meters < 1000) {
+      return `${Math.round(meters)}m`;
+    }
+    return `${(meters / 1000).toFixed(1)}km`;
+  };
+
+  const getStatusInfo = () => {
+    if (isWithinRange) {
+      return {
+        icon: CheckCircle,
+        color: 'text-green-600',
+        bgColor: 'bg-green-50',
+        borderColor: 'border-green-200',
+        message: 'Within range',
+      };
+    }
+
+    return {
+      icon: AlertCircle,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      message: 'Too far from session',
+    };
+  };
+
+  const status = getStatusInfo();
+  const StatusIcon = status.icon;
+  const excessDistance = Math.max(0, distance - maxDistance);
+
+  return (
+    <div
+      className={cn(
+        'flex items-center justify-between p-3 rounded-lg border',
+        status.bgColor,
+        status.borderColor,
+      )}
+    >
+      <div className="flex items-center gap-2">
+        <StatusIcon className={cn('h-4 w-4', status.color)} />
+        <span className={cn('mobile-text-sm font-medium', status.color)}>
+          {status.message}
+        </span>
+      </div>
+      <div className="text-right">
+        <div className={cn('mobile-text-sm font-mono', status.color)}>
+          {formatDistance(distance)}
         </div>
-      </CardContent>
-    </Card>
+        {!isWithinRange && excessDistance > 0 && (
+          <div className="mobile-text-xs text-muted-foreground">
+            Move {formatDistance(excessDistance)} closer
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -193,6 +258,9 @@ interface CourseSessionCardProps {
   gpsReady: boolean;
   attendanceCode: string;
   setAttendanceCode: React.Dispatch<React.SetStateAction<string>>;
+  userLocation: { latitude: number; longitude: number } | null;
+  distance: number | null;
+  isWithinRange: boolean;
 }
 
 const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
@@ -202,8 +270,10 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
   gpsReady,
   attendanceCode,
   setAttendanceCode,
+  userLocation,
+  distance,
+  isWithinRange,
 }) => {
-  // const [attendanceCode, setAttendanceCode] = useState('');
   const [showCodeInput, setShowCodeInput] = useState(false);
 
   const handleCheckIn = () => {
@@ -215,7 +285,13 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
   };
 
   const canCheckIn =
-    course?.session.status === 'active' && gpsReady && !isLoading;
+    course?.session.status === 'active' &&
+    gpsReady &&
+    !isLoading &&
+    isWithinRange &&
+    (!course?.session.requiresCode ||
+      !showCodeInput ||
+      (showCodeInput && attendanceCode.trim().length > 0));
 
   return (
     <Card className="w-full">
@@ -260,24 +336,45 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
           status={course?.session.status || 'inactive'}
         />
 
+        {/* Distance Indicator - Only show for active sessions with GPS */}
+        {course?.session.status === 'active' && gpsReady && userLocation && (
+          <DistanceIndicator
+            distance={distance}
+            maxDistance={course?.session.radiusMeters || 100}
+            isWithinRange={isWithinRange}
+          />
+        )}
+
         {/* Attendance Code Input */}
         {course?.session.requiresCode && showCodeInput && (
-          <div className="space-y-2">
-            <Label
-              htmlFor="attendance-code"
-              className="mobile-text-sm font-medium"
-            >
-              Attendance Code
-            </Label>
+          <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <Label
+                htmlFor="attendance-code"
+                className="mobile-text-sm font-medium text-blue-800"
+              >
+                Enter Attendance Code
+              </Label>
+            </div>
             <Input
               id="attendance-code"
               type="text"
-              placeholder="Enter code"
+              placeholder="Enter 6-digit code"
               value={attendanceCode}
               onChange={(e) => setAttendanceCode(e.target.value.toUpperCase())}
-              className="text-center font-mono text-lg"
+              className="text-center font-mono text-xl h-12 border-blue-300 focus:border-blue-500"
               maxLength={6}
+              // autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && attendanceCode.trim()) {
+                  handleCheckIn();
+                }
+              }}
             />
+            <p className="mobile-text-xs text-blue-700">
+              Ask your lecturer for the 6-digit attendance code
+            </p>
           </div>
         )}
 
@@ -289,6 +386,10 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
             'w-full h-14 text-lg font-semibold',
             'mobile-touch-feedback',
             canCheckIn && 'bg-green-600 hover:bg-green-700',
+            !isWithinRange &&
+              course?.session.status === 'active' &&
+              gpsReady &&
+              'bg-red-600 hover:bg-red-700',
           )}
         >
           {isLoading ? (
@@ -311,6 +412,11 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
               <Navigation className="h-5 w-5 mr-2" />
               Waiting for GPS
             </>
+          ) : !isWithinRange ? (
+            <>
+              <MapPin className="h-5 w-5 mr-2" />
+              Move Closer to Check In
+            </>
           ) : course?.session.requiresCode && !showCodeInput ? (
             <>
               <CheckCircle className="h-5 w-5 mr-2" />
@@ -326,7 +432,7 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
 
         {/* Status Messages */}
         {course?.session.status === 'pending' && (
-          <div className="flex items-center gap-2 mobile-p-sm bg-yellow-50 rounded-lg">
+          <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg">
             <Clock className="h-4 w-4 text-yellow-600" />
             <p className="mobile-text-sm text-yellow-800">
               Session will be available for check-in shortly
@@ -335,7 +441,7 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
         )}
 
         {!gpsReady && course?.session.status === 'active' && (
-          <div className="flex items-center gap-2 mobile-p-sm bg-blue-50 rounded-lg">
+          <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg">
             <Navigation className="h-4 w-4 text-blue-600" />
             <p className="mobile-text-sm text-blue-800">
               Enable location services to check in
@@ -352,28 +458,67 @@ const MobileAttendanceCheckIn: React.FC = () => {
     useGetStudentCoursesWithActiveAttendance();
   const [selectedSession, setSelectedSession] =
     useState<Id<'attendanceSessions'> | null>(null);
-  // Todo: Fix this. find where this code should be used
   const [attendanceCode, setAttendanceCode] = useState('');
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [distances, setDistances] = useState<Record<string, number>>({});
+  const [isWithinRange, setIsWithinRange] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const { mutateAsync: takeAttendance } = useStudentTakeAttendance();
+
+  // Calculate distances and range status for all active sessions
+  const calculateDistancesAndRange = (coords: GeolocationCoordinates) => {
+    if (!coords || activeCourses.length === 0) return;
+
+    const newDistances: Record<string, number> = {};
+    const newRangeStatus: Record<string, boolean> = {};
+
+    activeCourses.forEach((course) => {
+      if (course?.session?.location && course.session.status === 'active') {
+        const distance = calculateDistance(
+          coords.latitude,
+          coords.longitude,
+          course.session.location.lat,
+          course.session.location.long,
+        );
+
+        const maxDistance = course.session.radius || 100;
+
+        newDistances[course.session._id] = distance;
+        newRangeStatus[course.session._id] = distance <= maxDistance;
+      }
+    });
+
+    setDistances(newDistances);
+    setIsWithinRange(newRangeStatus);
+  };
 
   const {
     isGeolocationAvailable,
     isGeolocationEnabled,
     getPosition,
     coords,
-    // isGeolocationLoading,
     positionError,
   } = useGeolocated({
     positionOptions: {
       enableHighAccuracy: true,
       timeout: 10000,
-      maximumAge: 60000,
+      maximumAge: 30000,
     },
     userDecisionTimeout: 5000,
-    suppressLocationOnMount: true,
-    watchPosition: false,
+    suppressLocationOnMount: false,
+    watchPosition: true, // Enable continuous tracking
+    onSuccess: (position) => {
+      // Calculate distances whenever location updates
+      calculateDistancesAndRange(position.coords);
+    },
+    onError: (error) => {
+      console.error('Geolocation error:', error);
+      // Clear distances on error
+      setDistances({});
+      setIsWithinRange({});
+    },
   });
 
   const gpsReady =
@@ -386,6 +531,13 @@ const MobileAttendanceCheckIn: React.FC = () => {
     if (!gpsReady) {
       toast.error('GPS not ready', {
         description: 'Please enable location services and try again.',
+      });
+      return;
+    }
+
+    if (!isWithinRange[sessionId]) {
+      toast.error('Too far from session', {
+        description: 'Move closer to the classroom to check in.',
       });
       return;
     }
@@ -446,23 +598,17 @@ const MobileAttendanceCheckIn: React.FC = () => {
       headerTitle="Check In"
       className="bg-gradient-to-b from-background to-muted/20"
     >
-      <div className="flex-1 p-4 space-y-6">
-        {/* GPS Status Section */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            <h2 className="mobile-text-lg font-semibold">Location Status</h2>
-          </div>
-          <GPSStatusIndicator
-            isAvailable={isGeolocationAvailable}
-            isEnabled={isGeolocationEnabled}
-            // TODO: look into this later
-            isLoading={false}
-            accuracy={coords?.accuracy}
-            error={positionError?.message}
-          />
-        </div>
+      {/* Compact GPS Status Indicator - Top Right */}
+      <div className="absolute top-4 right-4 z-10">
+        <CompactGPSStatus
+          isAvailable={isGeolocationAvailable}
+          isEnabled={isGeolocationEnabled}
+          // isLoading={isGeolocationLoading}
+          error={positionError?.message}
+        />
+      </div>
 
+      <div className="flex-1 p-4 pt-16 space-y-6">
         {/* Active Sessions Section */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
@@ -497,6 +643,16 @@ const MobileAttendanceCheckIn: React.FC = () => {
                   attendanceCode={attendanceCode}
                   gpsReady={gpsReady}
                   setAttendanceCode={setAttendanceCode}
+                  userLocation={
+                    coords
+                      ? {
+                          latitude: coords.latitude,
+                          longitude: coords.longitude,
+                        }
+                      : null
+                  }
+                  distance={distances[course.session._id!] || null}
+                  isWithinRange={isWithinRange[course.session._id!] || false}
                 />
               ))}
             </div>
