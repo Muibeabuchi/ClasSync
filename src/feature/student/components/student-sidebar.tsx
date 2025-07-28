@@ -30,7 +30,8 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
-import { Link, useRouterState } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
+import { ThemeDropdownToggle } from '@/components/theme-dropdown-toggle';
 
 const navigationItems = [
   {
@@ -175,6 +176,7 @@ const StudentSidebar = ({ userData }: StudentSidebarProps) => {
                     Settings
                   </Link>
                 </DropdownMenuItem>
+                <ThemeDropdownToggle />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}

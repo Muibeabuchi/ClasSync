@@ -25,7 +25,7 @@ import { navigationItems } from '@/constants/navigation-constants';
 import { Link } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
 import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
-// import { ThemeToggle } from '@/components/theme-toggle';
+import { ThemeDropdownToggle } from '@/components/theme-dropdown-toggle';
 
 interface LecturerSidebarProps {
   fullName?: string;
@@ -155,6 +155,7 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
                     Profile
                   </Link>
                 </DropdownMenuItem>
+                <ThemeDropdownToggle />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}
