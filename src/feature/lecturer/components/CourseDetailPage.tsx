@@ -82,10 +82,10 @@ const CourseDetailPage = ({
       <div className="space-y-4">
         <div className="flex items-center space-x-4">
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
+            <h1 className="text-xl sm:text-2xl font-bold truncate">
               {courseData.name}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-gray-600 mt-1">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-muted-foreground mt-1">
               <span className="font-medium">{courseData.code}</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">
