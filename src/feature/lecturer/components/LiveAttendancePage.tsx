@@ -242,7 +242,7 @@ const LiveAttendancePage = ({
               {attendanceSessionRecords.map((student) => (
                 <div
                   key={student._id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors animate-scale-in"
+                  className="flex items-center justify-between p-4 border rounded-lg  transition-colors animate-scale-in"
                 >
                   <div className="flex items-center space-x-4">
                     {/* {getStatusIcon(student.)} */}
