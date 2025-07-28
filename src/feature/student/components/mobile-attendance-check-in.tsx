@@ -63,29 +63,22 @@ const CompactGPSStatus: React.FC<CompactGPSStatusProps> = ({
   error,
 }) => {
   const getStatusInfo = () => {
-    // if (isLoading) {
-    //   return {
-    //     icon: Loader2,
-    //     color: 'text-blue-500',
-    //     bgColor: 'bg-blue-100',
-    //     animate: 'animate-spin',
-    //   };
-    // }
-
     if (!isAvailable || !isEnabled || error) {
       return {
         icon: MapPinOff,
-        color: 'text-red-500',
+        color: 'text-red-600',
         bgColor: 'bg-red-100',
-        animate: '',
+        borderColor: 'border-red-200',
+        text: 'GPS Off',
       };
     }
 
     return {
       icon: Target,
-      color: 'text-green-500',
+      color: 'text-green-600',
       bgColor: 'bg-green-100',
-      animate: '',
+      borderColor: 'border-green-200',
+      text: 'GPS Ready',
     };
   };
 
@@ -93,24 +86,17 @@ const CompactGPSStatus: React.FC<CompactGPSStatusProps> = ({
   const StatusIcon = status.icon;
 
   return (
-    <div className="relative">
-      <div
-        className={cn(
-          'w-10 h-10 rounded-full flex items-center justify-center',
-          'border-2 border-white shadow-lg',
-          status.bgColor,
-        )}
-      >
-        <StatusIcon className={cn('h-5 w-5', status.color, status.animate)} />
-      </div>
-
-      {/* Homing beacon animation for active GPS */}
-      {isAvailable && isEnabled && !error && (
-        <>
-          <div className="absolute inset-0 rounded-full border-2 border-green-400 animate-ping opacity-75" />
-          <div className="absolute inset-0 rounded-full border border-green-300 animate-pulse" />
-        </>
+    <div
+      className={cn(
+        'flex items-center gap-1.5 px-2 py-1 rounded-full border shadow-sm',
+        status.bgColor,
+        status.borderColor,
       )}
+    >
+      <StatusIcon className={cn('h-3 w-3', status.color)} />
+      <span className={cn('text-xs font-medium', status.color)}>
+        {status.text}
+      </span>
     </div>
   );
 };
@@ -276,13 +262,15 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
 
       <CardContent className="space-y-4">
         {/* Session Timer */}
-        <SessionTimer
-          endTime={course?.session.endedAt || 0}
-          creationTime={course?.session._creationTime}
-          status={course?.session.status || 'complete'}
-          showProgress={course?.session.status === 'active'}
-          size="md"
-        />
+        <div className="flex justify-center">
+          <SessionTimer
+            endTime={course?.session.endedAt || 0}
+            creationTime={course?.session._creationTime}
+            status={course?.session.status || 'complete'}
+            variant="circular"
+            size="sm"
+          />
+        </div>
 
         {/* Distance Indicator - Only show for active sessions with GPS */}
         {course?.session.status === 'active' && gpsReady && userLocation && (
@@ -550,22 +538,20 @@ const MobileAttendanceCheckIn: React.FC = () => {
       headerTitle="Check In"
       className="bg-gradient-to-b from-background to-muted/20"
     >
-      {/* Compact GPS Status Indicator - Top Right */}
-      <div className="absolute top-4 right-4 z-10">
-        <CompactGPSStatus
-          isAvailable={isGeolocationAvailable}
-          isEnabled={isGeolocationEnabled}
-          // isLoading={isGeolocationLoading}
-          error={positionError?.message}
-        />
-      </div>
-
       <div className="flex-1 p-4 pt-16 space-y-6">
         {/* Active Sessions Section */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary" />
-            <h2 className="mobile-text-lg font-semibold">Active Sessions</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5 text-primary" />
+              <h2 className="mobile-text-lg font-semibold">Active Sessions</h2>
+            </div>
+            <CompactGPSStatus
+              isAvailable={isGeolocationAvailable}
+              isEnabled={isGeolocationEnabled}
+              // isLoading={isGeolocationLoading}
+              error={positionError?.message}
+            />
           </div>
 
           {activeCourses.length === 0 ? (

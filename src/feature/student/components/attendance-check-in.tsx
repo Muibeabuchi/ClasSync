@@ -195,59 +195,61 @@ const AttendanceCheckIn = () => {
           </p>
         </div>
 
-        {/* GPS Status Indicator */}
-        <Card
-          className={cn(
-            'border-2',
-            gpsReady
-              ? 'border-green-200 bg-green-50'
-              : 'border-yellow-200 bg-yellow-50',
-          )}
-        >
-          <CardContent className="pt-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Navigation
-                  className={cn(
-                    'h-4 w-4',
-                    gpsReady ? 'text-green-600' : 'text-yellow-600',
-                  )}
-                />
-                <span
-                  className={cn(
-                    'text-sm font-medium',
-                    gpsReady ? 'text-green-800' : 'text-yellow-800',
-                  )}
-                >
-                  {!isGeolocationAvailable
-                    ? 'GPS not available on this device'
-                    : !isGeolocationEnabled
-                      ? 'Please enable location services'
-                      : positionError
-                        ? `GPS Error: ${positionError.message}`
-                        : coords
-                          ? 'GPS ready'
-                          : 'Getting your location...'}
+        {/* GPS Status and Active Sessions Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Active Sessions</h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                'flex items-center gap-2 px-3 py-2 rounded-full border shadow-sm',
+                gpsReady
+                  ? 'bg-green-100 border-green-200'
+                  : 'bg-yellow-100 border-yellow-200',
+              )}
+            >
+              <Navigation
+                className={cn(
+                  'h-4 w-4',
+                  gpsReady ? 'text-green-600' : 'text-yellow-600',
+                )}
+              />
+              <span
+                className={cn(
+                  'text-sm font-medium',
+                  gpsReady ? 'text-green-800' : 'text-yellow-800',
+                )}
+              >
+                {!isGeolocationAvailable
+                  ? 'GPS unavailable'
+                  : !isGeolocationEnabled
+                    ? 'Enable GPS'
+                    : positionError
+                      ? 'GPS error'
+                      : coords
+                        ? 'GPS ready'
+                        : 'Getting GPS...'}
+              </span>
+              {coords && (
+                <span className="text-xs text-muted-foreground">
+                  ±{Math.round(coords.accuracy)}m
                 </span>
-              </div>
-              {!coords && isGeolocationAvailable && isGeolocationEnabled && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={getPosition}
-                  className="text-xs"
-                >
-                  Retry GPS
-                </Button>
               )}
             </div>
-            {coords && (
-              <div className="mt-2 text-xs text-muted-foreground">
-                Location accuracy: ±{Math.round(coords.accuracy)}m
-              </div>
+            {!coords && isGeolocationAvailable && isGeolocationEnabled && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={getPosition}
+                className="text-xs"
+              >
+                Retry GPS
+              </Button>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {activeCourses.length === 0 ? (
           <Card>
@@ -264,13 +266,9 @@ const AttendanceCheckIn = () => {
           </Card>
         ) : (
           <>
-            {/* Course Selection Header */}
+            {/* Course Selection Description */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  Active Sessions
-                </CardTitle>
                 <CardDescription>
                   Click on a course to check in to its active attendance session
                 </CardDescription>
@@ -326,13 +324,15 @@ const AttendanceCheckIn = () => {
                       <div className="space-y-3">
                         {/* Session Timer */}
                         {course?.session && (
-                          <SessionTimer
-                            endTime={course.session.endedAt || 0}
-                            creationTime={course.session._creationTime}
-                            status={course.session.status}
-                            showProgress={course.session.status === 'active'}
-                            size="md"
-                          />
+                          <div className="flex justify-center">
+                            <SessionTimer
+                              endTime={course.session.endedAt || 0}
+                              creationTime={course.session._creationTime}
+                              status={course.session.status}
+                              variant="circular"
+                              size="md"
+                            />
+                          </div>
                         )}
 
                         {/* Session Info */}
