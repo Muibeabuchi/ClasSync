@@ -9,26 +9,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogDescription,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogTrigger,
-// } from '@/components/ui/dialog';
-// import { Textarea } from '@/components/ui/textarea';
-// import { Label } from '@/components/ui/label';
-import {
-  ArrowLeft,
-  Clock,
-  MapPin,
-  Users,
-  // CheckCircle,
-  // XCircle,
-  // AlertTriangle,
-  Copy,
-} from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Users, Copy } from 'lucide-react';
 import type {
   GetAttendanceSessionRecordsReturnType,
   GetAttendanceSessionReturnType,
@@ -128,14 +109,14 @@ const LiveAttendancePage = ({
       <Card
         className={`${
           sessionState === 'pending'
-            ? 'border-yellow-500 bg-yellow-50'
+            ? 'border-yellow-500'
             : sessionState === 'active'
-              ? 'border-green-500 bg-green-50'
-              : 'border-gray-500 bg-gray-50'
+              ? 'border-green-500'
+              : 'border-gray-500'
         } transition-all duration-500`}
       >
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
+        <CardContent className="p-4 md:p-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 space-y-4 md:space-y-0">
             <div className="flex items-center space-x-4">
               <div
                 className={`p-3 rounded-full ${
@@ -157,18 +138,18 @@ const LiveAttendancePage = ({
                 />
               </div>
               <div>
-                <h3 className="text-lg font-semibold">
+                <h3 className="text-base md:text-lg font-semibold">
                   {sessionState === 'pending' && 'Attendance starts in:'}
                   {sessionState === 'active' && 'Time remaining:'}
                   {sessionState === 'complete' && 'Session Completed'}
                 </h3>
                 {sessionState !== 'complete' && (
-                  <p className="text-2xl font-bold text-primary">
+                  <p className="text-xl md:text-2xl font-bold text-primary">
                     {formatTime(timeRemaining)}
                   </p>
                 )}
                 {sessionState === 'complete' && (
-                  <p className="text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Started at{' '}
                     {new Date(attendanceSession._creationTime).toLocaleString(
                       'en-US',
@@ -186,14 +167,14 @@ const LiveAttendancePage = ({
               </div>
             </div>
 
-            <div className="text-right space-y-2">
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-gray-600">
+            <div className="flex flex-col space-y-2 md:text-right">
+              <div className="flex items-center space-x-2 md:justify-end">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
                   Radius: {sessionData.locationRadius}m
                 </span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 md:justify-end">
                 <span className="text-sm font-medium">CODE:</span>
                 <Badge variant="outline" className="font-mono">
                   {sessionData.attendanceCode}
