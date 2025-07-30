@@ -111,6 +111,35 @@ const CourseDetailPage = ({
   // Check if course is archived
   const isArchived = courseData.status === 'archived';
 
+  // Text truncation utility
+  const truncateText = (
+    text: string,
+    mobileLimit: number = 15,
+    desktopLimit: number = 25,
+  ) => {
+    if (text.length <= mobileLimit) return text;
+
+    // For display purposes, we'll show different lengths based on screen size
+    // This is handled via CSS classes, but we'll provide both versions
+    return {
+      mobile:
+        text.length > mobileLimit
+          ? text.substring(0, mobileLimit) + '...'
+          : text,
+      desktop:
+        text.length > desktopLimit
+          ? text.substring(0, desktopLimit) + '...'
+          : text,
+      full: text,
+    };
+  };
+
+  // Get truncated versions of course name
+  const courseNameDisplay =
+    typeof courseData.name === 'string'
+      ? truncateText(courseData.name)
+      : courseData.name;
+
   // Initialize edited course name when courseData changes
   useEffect(() => {
     if (courseData.name && courseData.name !== 'Loading...') {
@@ -144,6 +173,12 @@ const CourseDetailPage = ({
 
     if (!trimmedName) {
       return; // Don't save empty names
+    }
+
+    // Validate length (max 50 characters for database storage)
+    if (trimmedName.length > 50) {
+      // Don't save names that are too long
+      return;
     }
 
     if (trimmedName === courseData.name) {
@@ -234,48 +269,83 @@ const CourseDetailPage = ({
             {/* Inline Editable Course Name */}
             <div className="flex items-center gap-2 mb-1">
               {isEditingName ? (
-                <div className="flex items-center gap-2 flex-1">
-                  <Input
-                    ref={inputRef}
-                    value={editedCourseName}
-                    onChange={(e) => setEditedCourseName(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    onBlur={handleSaveCourseName}
-                    className="text-xl sm:text-2xl font-bold h-auto py-1 px-2 border-2 border-primary"
-                    disabled={updateCourseMutation.isPending}
-                  />
-                  <div className="flex items-center gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleSaveCourseName}
+                <div className="flex flex-col gap-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      ref={inputRef}
+                      value={editedCourseName}
+                      onChange={(e) => setEditedCourseName(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      onBlur={handleSaveCourseName}
+                      className="text-xl sm:text-2xl font-bold h-auto py-1 px-2 border-2 border-primary"
                       disabled={updateCourseMutation.isPending}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Check className="h-4 w-4 text-green-600" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleCancelEditing}
-                      disabled={updateCourseMutation.isPending}
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4 text-red-600" />
-                    </Button>
+                      maxLength={50}
+                      placeholder="Enter course name"
+                    />
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleSaveCourseName}
+                        disabled={
+                          updateCourseMutation.isPending ||
+                          editedCourseName.trim().length === 0
+                        }
+                        className="h-8 w-8 p-0"
+                      >
+                        <Check className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancelEditing}
+                        disabled={updateCourseMutation.isPending}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  </div>
+                  {/* Character count indicator */}
+                  <div className="text-xs text-muted-foreground">
+                    {editedCourseName.length}/50 characters
+                    {editedCourseName.length > 25 && (
+                      <span className="ml-2 text-amber-600">
+                        • Will be truncated on small screens
+                      </span>
+                    )}
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 flex-1 group">
-                  <h1 className="text-xl sm:text-2xl font-bold truncate">
-                    {courseData.name}
-                  </h1>
+                  {typeof courseNameDisplay === 'object' ? (
+                    <>
+                      {/* Mobile version - show truncated at 15 chars */}
+                      <h1
+                        className="text-xl font-bold sm:hidden"
+                        title={courseNameDisplay.full}
+                      >
+                        {courseNameDisplay.mobile}
+                      </h1>
+                      {/* Desktop version - show truncated at 25 chars */}
+                      <h1
+                        className="hidden sm:block text-2xl font-bold"
+                        title={courseNameDisplay.full}
+                      >
+                        {courseNameDisplay.desktop}
+                      </h1>
+                    </>
+                  ) : (
+                    <h1 className="text-xl sm:text-2xl font-bold">
+                      {courseNameDisplay}
+                    </h1>
+                  )}
                   {!isArchived && (
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={handleStartEditing}
-                      className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="h-8 w-8 p-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                       title="Edit course name"
                     >
                       <Edit2 className="h-4 w-4" />
