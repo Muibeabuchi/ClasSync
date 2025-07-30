@@ -58,3 +58,21 @@ export const useDeleteCourse = () =>
       });
     },
   });
+
+export const useUpdateCourse = () =>
+  useMutation({
+    mutationFn: useConvexMutation(api.courses.updateCourse),
+    onSuccess: () => {
+      toast.success('Course updated successfully', {
+        description: 'The course information has been updated.',
+      });
+    },
+    onError: (error) => {
+      toast.error('Failed to update course', {
+        description:
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred.',
+      });
+    },
+  });

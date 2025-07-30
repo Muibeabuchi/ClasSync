@@ -76,7 +76,6 @@ const LecturerClassListsPage = ({
         classListName: newClassList.classListName,
         students: newClassList.students,
       });
-
       setShowCreateModal(false);
       toast.success('ClassList created successfully');
     } catch (error) {

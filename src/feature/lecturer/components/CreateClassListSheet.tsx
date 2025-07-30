@@ -42,11 +42,16 @@ import {
   Users,
   AlertCircle,
   Loader2,
-  // X,
+  Zap,
+  X,
+  Clock,
   // Check,
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from 'sonner';
+import { useAction } from 'convex/react';
+import { api } from 'convex/_generated/api';
+import { aiRepairToasts } from '../utils/aiRepairToasts';
 
 // Zod schema for form validation
 const studentSchema = z.object({
@@ -112,7 +117,17 @@ export const CreateClassListSheet = ({
   const [csvErrors, setCsvErrors] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rawCsvContent, setRawCsvContent] = useState<string>('');
+  const [isAiFixing, setIsAiFixing] = useState(false);
+  const [rateLimitInfo, setRateLimitInfo] = useState<{
+    exceeded: boolean;
+    retryAfter?: number;
+    message?: string;
+  } | null>(null);
   // const [showCreateForm, setShowCreateForm] = useState(!selectedClassList);
+
+  // Add Convex action hook for AI repair
+  const aiFixCsv = useAction(api.actions.aiFixCsv.aiFixCsv);
 
   // Initialize form with react-hook-form and zod validation
   const form = useForm<CreateClassListForm>({
@@ -210,6 +225,15 @@ export const CreateClassListSheet = ({
     }
 
     setCsvFile(file);
+
+    // Store raw CSV content for AI repair
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      setRawCsvContent(content);
+    };
+    reader.readAsText(file);
+
     parseCSV(file);
   };
 
@@ -248,6 +272,105 @@ export const CreateClassListSheet = ({
         i === index ? { ...student, [field]: value } : student,
       ),
     );
+  };
+
+  // AI Fix CSV function
+  const handleAiFixCsv = async () => {
+    if (!rawCsvContent) {
+      aiRepairToasts.repairFailed('No CSV content available for AI repair');
+      return;
+    }
+
+    setIsAiFixing(true);
+    setRateLimitInfo(null);
+
+    // Show loading toast
+    const loadingToastId = aiRepairToasts.repairStarted();
+
+    try {
+      const result = await aiFixCsv({ rawCsvText: rawCsvContent });
+
+      // Dismiss loading toast
+      aiRepairToasts.dismiss(loadingToastId);
+
+      if (result.repaired) {
+        // Success case - transform and apply the repaired data
+        const transformedStudents: Student[] = result.data.map(
+          (student: any) => ({
+            name: student.name,
+            registrationNumber: student.regNumber,
+            gender: student.gender.toLowerCase() as 'male' | 'female',
+          }),
+        );
+
+        setParsedStudents(transformedStudents);
+        setCsvErrors([]); // Clear the errors since AI fixed them
+
+        // Show success toast with detailed information
+        aiRepairToasts.repairSuccess({
+          studentCount: result.data.length,
+          confidence: result.confidence.overall,
+          correctionsMade: result.metadata.dataCorrections.length,
+          processingTime: Math.round(
+            (result.metadata.processingEndTime -
+              result.metadata.processingStartTime) /
+              1000,
+          ),
+        });
+
+        toast.success(
+          `AI repair successful! ${transformedStudents.length} students loaded.`,
+        );
+      } else {
+        // Error case
+        if (result.errorType === 'rate_limit_error') {
+          setRateLimitInfo({
+            exceeded: true,
+            retryAfter: result.retryAfter,
+            message: result.error,
+          });
+          aiRepairToasts.rateLimitError(result.retryAfter || 300);
+        } else if (result.errorType === 'network_error') {
+          aiRepairToasts.networkError();
+        } else if (result.errorType === 'parsing_error') {
+          aiRepairToasts.fileProcessingError();
+        } else {
+          aiRepairToasts.repairFailed(result.error || 'Unknown error occurred');
+        }
+
+        toast.error(
+          `AI repair failed: ${result.error || 'Unknown error occurred'}`,
+        );
+      }
+    } catch (error) {
+      console.error('AI Fix CSV error:', error);
+      aiRepairToasts.dismiss(loadingToastId);
+
+      // Determine error type and show appropriate toast
+      const errorMessage =
+        error instanceof Error ? error.message : 'An unexpected error occurred';
+      if (
+        errorMessage.toLowerCase().includes('network') ||
+        errorMessage.toLowerCase().includes('fetch')
+      ) {
+        aiRepairToasts.networkError();
+      } else {
+        aiRepairToasts.repairFailed(errorMessage);
+      }
+
+      toast.error(`AI repair failed: ${errorMessage}`);
+    } finally {
+      setIsAiFixing(false);
+    }
+  };
+
+  // Clear CSV data function
+  const handleClearCsv = () => {
+    setCsvFile(null);
+    setCsvErrors([]);
+    setParsedStudents([]);
+    setRawCsvContent('');
+    toast.success('CSV data cleared successfully');
   };
 
   // Get all students based on current method
@@ -314,17 +437,23 @@ export const CreateClassListSheet = ({
 
       await onCreateClassList(submissionData);
 
-      //rm.reset();
+      // Reset form and state after successful submission
+      form.reset();
       setParsedStudents([]);
       setManualStudents([{ name: '', registrationNumber: '', gender: 'male' }]);
       setCsvFile(null);
       setCsvErrors([]);
+      setRawCsvContent('');
+      setRateLimitInfo(null);
       onOpenChange(false);
 
       toast.success('Class list created successfully!');
     } catch (error) {
       console.error('Error creating ClassLists:', error);
       toast.error('Failed to create class list');
+    } finally {
+      // Always reset the submitting state
+      setIsSubmitting(false);
     }
   };
 
@@ -434,11 +563,11 @@ export const CreateClassListSheet = ({
                       )}
 
                       {csvErrors.length > 0 && (
-                        <div className="space-y-2">
+                        <div className="space-y-4">
                           <div className="flex items-center gap-2 text-destructive">
                             <AlertCircle className="h-4 w-4" />
                             <span className="font-medium">
-                              Validation Errors
+                              CSV Parsing Failed
                             </span>
                           </div>
                           <div className="max-h-32 overflow-y-auto border rounded p-2 bg-destructive/5">
@@ -451,6 +580,77 @@ export const CreateClassListSheet = ({
                               </p>
                             ))}
                           </div>
+
+                          {/* AI Fix and Clear Buttons */}
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            {rawCsvContent && (
+                              <Button
+                                onClick={handleAiFixCsv}
+                                disabled={isAiFixing || rateLimitInfo?.exceeded}
+                                size="sm"
+                                className={`${
+                                  rateLimitInfo?.exceeded
+                                    ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed'
+                                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                                } text-white border-0 transition-all duration-200 flex-1`}
+                              >
+                                {isAiFixing ? (
+                                  <>
+                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                    AI is fixing your CSV...
+                                  </>
+                                ) : rateLimitInfo?.exceeded ? (
+                                  <>
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    Rate Limited
+                                  </>
+                                ) : (
+                                  <>
+                                    <Zap className="h-4 w-4 mr-2" />
+                                    AI Fix CSV
+                                  </>
+                                )}
+                              </Button>
+                            )}
+
+                            <Button
+                              onClick={handleClearCsv}
+                              variant="outline"
+                              size="sm"
+                              className="hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Clear CSV
+                            </Button>
+                          </div>
+
+                          <p className="text-xs text-muted-foreground">
+                            Our AI can automatically fix common CSV issues like
+                            incorrect headers, formatting problems, and missing
+                            data.
+                          </p>
+
+                          {/* Rate Limit Info */}
+                          {rateLimitInfo?.exceeded && (
+                            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                              <div className="flex items-center gap-2 text-orange-800 mb-2">
+                                <Clock className="h-4 w-4" />
+                                <span className="font-medium">
+                                  Rate limit reached
+                                </span>
+                              </div>
+                              <p className="text-sm text-orange-700">
+                                {rateLimitInfo.message}
+                              </p>
+                              {rateLimitInfo.retryAfter && (
+                                <p className="text-xs text-orange-600 mt-1">
+                                  Try again in{' '}
+                                  {Math.ceil(rateLimitInfo.retryAfter / 60)}{' '}
+                                  minutes
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
 

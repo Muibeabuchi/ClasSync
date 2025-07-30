@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as actions_aiFixCsv from "../actions/aiFixCsv.js";
 import type * as attendance from "../attendance.js";
 import type * as auth from "../auth.js";
 import type * as classListStudents from "../classListStudents.js";
@@ -30,8 +31,15 @@ import type * as models_classListStudentModel from "../models/classListStudentMo
 import type * as models_coursesModel from "../models/coursesModel.js";
 import type * as models_joinRequestModel from "../models/joinRequestModel.js";
 import type * as models_userprofileModel from "../models/userprofileModel.js";
+import type * as schemas_aiFixCsvTypes from "../schemas/aiFixCsvTypes.js";
+import type * as schemas_studentSchema from "../schemas/studentSchema.js";
 import type * as service_paystack from "../service/paystack.js";
 import type * as userProfile from "../userProfile.js";
+import type * as utils_buildPrompt from "../utils/buildPrompt.js";
+import type * as utils_dataNormalization from "../utils/dataNormalization.js";
+import type * as utils_genderInference from "../utils/genderInference.js";
+import type * as utils_headerMapping from "../utils/headerMapping.js";
+import type * as utils_rateLimiter from "../utils/rateLimiter.js";
 
 import type {
   ApiFromModules,
@@ -48,6 +56,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "actions/aiFixCsv": typeof actions_aiFixCsv;
   attendance: typeof attendance;
   auth: typeof auth;
   classListStudents: typeof classListStudents;
@@ -70,8 +79,15 @@ declare const fullApi: ApiFromModules<{
   "models/coursesModel": typeof models_coursesModel;
   "models/joinRequestModel": typeof models_joinRequestModel;
   "models/userprofileModel": typeof models_userprofileModel;
+  "schemas/aiFixCsvTypes": typeof schemas_aiFixCsvTypes;
+  "schemas/studentSchema": typeof schemas_studentSchema;
   "service/paystack": typeof service_paystack;
   userProfile: typeof userProfile;
+  "utils/buildPrompt": typeof utils_buildPrompt;
+  "utils/dataNormalization": typeof utils_dataNormalization;
+  "utils/genderInference": typeof utils_genderInference;
+  "utils/headerMapping": typeof utils_headerMapping;
+  "utils/rateLimiter": typeof utils_rateLimiter;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
@@ -380,6 +396,140 @@ export declare const components: {
         },
         any
       >;
+    };
+  };
+  rateLimiter: {
+    lib: {
+      checkRateLimit: FunctionReference<
+        "query",
+        "internal",
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          count?: number;
+          key?: string;
+          name: string;
+          reserve?: boolean;
+          throws?: boolean;
+        },
+        { ok: true; retryAfter?: number } | { ok: false; retryAfter: number }
+      >;
+      clearAll: FunctionReference<
+        "mutation",
+        "internal",
+        { before?: number },
+        null
+      >;
+      getServerTime: FunctionReference<"mutation", "internal", {}, number>;
+      getValue: FunctionReference<
+        "query",
+        "internal",
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          key?: string;
+          name: string;
+          sampleShards?: number;
+        },
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          shard: number;
+          ts: number;
+          value: number;
+        }
+      >;
+      rateLimit: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          config:
+            | {
+                capacity?: number;
+                kind: "token bucket";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: null;
+              }
+            | {
+                capacity?: number;
+                kind: "fixed window";
+                maxReserved?: number;
+                period: number;
+                rate: number;
+                shards?: number;
+                start?: number;
+              };
+          count?: number;
+          key?: string;
+          name: string;
+          reserve?: boolean;
+          throws?: boolean;
+        },
+        { ok: true; retryAfter?: number } | { ok: false; retryAfter: number }
+      >;
+      resetRateLimit: FunctionReference<
+        "mutation",
+        "internal",
+        { key?: string; name: string },
+        null
+      >;
+    };
+    time: {
+      getServerTime: FunctionReference<"mutation", "internal", {}, number>;
     };
   };
 };

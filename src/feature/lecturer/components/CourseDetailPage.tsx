@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 // import { Label } from '@/components/ui/label';
 import {
   Users,
@@ -18,11 +19,33 @@ import {
   AlertTriangle,
   ClipboardCheck,
   ArrowLeft,
+  Archive,
+  RotateCcw,
+  Trash2,
+  MoreVertical,
+  Edit2,
+  Check,
+  X,
 } from 'lucide-react';
 import AttendanceSessionModal from './AttendanceSessionModal';
 import { StudentsTable } from './StudentsTable';
 import { AttendanceSessionsTable } from './AttendanceSessionsTable';
 import { useNavigate } from '@tanstack/react-router';
+import { DeleteConfirmationModal } from './DeleteConfirmationModal';
+import { ArchiveConfirmationModal } from './ArchiveConfirmationModal';
+import { UnarchiveConfirmationModal } from './UnarchiveConfirmationModal';
+import {
+  useArchiveCourse,
+  useUnarchiveCourse,
+  useDeleteCourse,
+  useUpdateCourse,
+} from '../hooks/useCourseActions';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 import type {
   GetAttendanceSessionsReturnType,
@@ -42,7 +65,19 @@ const CourseDetailPage = ({
   attendanceSessions,
 }: CourseDetailPageProps) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedCourseName, setEditedCourseName] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  // Course action mutations
+  const archiveMutation = useArchiveCourse();
+  const unarchiveMutation = useUnarchiveCourse();
+  const deleteMutation = useDeleteCourse();
+  const updateCourseMutation = useUpdateCourse();
 
   // Extract data from courseDetails prop
   const courseData = courseDetails?.course || {
@@ -73,6 +108,104 @@ const CourseDetailPage = ({
   const worstStudent = analytics.worstStudent;
   const lowAttendanceCount = analytics.lowAttendanceCount;
 
+  // Check if course is archived
+  const isArchived = courseData.status === 'archived';
+
+  // Initialize edited course name when courseData changes
+  useEffect(() => {
+    if (courseData.name && courseData.name !== 'Loading...') {
+      setEditedCourseName(courseData.name);
+    }
+  }, [courseData.name]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingName && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditingName]);
+
+  // Inline editing handlers
+  const handleStartEditing = () => {
+    if (!isArchived) {
+      setIsEditingName(true);
+      setEditedCourseName(courseData.name);
+    }
+  };
+
+  const handleCancelEditing = () => {
+    setIsEditingName(false);
+    setEditedCourseName(courseData.name);
+  };
+
+  const handleSaveCourseName = async () => {
+    const trimmedName = editedCourseName.trim();
+
+    if (!trimmedName) {
+      return; // Don't save empty names
+    }
+
+    if (trimmedName === courseData.name) {
+      setIsEditingName(false);
+      return; // No changes made
+    }
+
+    try {
+      await updateCourseMutation.mutateAsync({
+        courseId,
+        courseName: trimmedName,
+      });
+      setIsEditingName(false);
+    } catch (error) {
+      console.error('Failed to update course name:', error);
+      // Reset to original name on error
+      setEditedCourseName(courseData.name);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveCourseName();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancelEditing();
+    }
+  };
+
+  // Action handlers
+  const handleArchive = async () => {
+    try {
+      await archiveMutation.mutateAsync({ courseId });
+      setShowArchiveModal(false);
+    } catch (error) {
+      console.error('Failed to archive course:', error);
+    }
+  };
+
+  const handleUnarchive = async () => {
+    try {
+      await unarchiveMutation.mutateAsync({ courseId });
+      setShowUnarchiveModal(false);
+    } catch (error) {
+      console.error('Failed to unarchive course:', error);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await deleteMutation.mutateAsync({ courseId });
+      setShowDeleteModal(false);
+      // Navigate back to courses page after successful deletion
+      navigate({
+        to: '/dashboard/lecturer/courses',
+      });
+    } catch (error) {
+      console.error('Failed to delete course:', error);
+    }
+  };
+
   // Function to refresh data after student operations
   const handleRefresh = () => {
     // This will be handled by TanStack Query's automatic refetching
@@ -98,10 +231,61 @@ const CourseDetailPage = ({
             <ArrowLeft className="h-4 w-4 mr-2" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold truncate">
-              {courseData.name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-muted-foreground mt-1">
+            {/* Inline Editable Course Name */}
+            <div className="flex items-center gap-2 mb-1">
+              {isEditingName ? (
+                <div className="flex items-center gap-2 flex-1">
+                  <Input
+                    ref={inputRef}
+                    value={editedCourseName}
+                    onChange={(e) => setEditedCourseName(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onBlur={handleSaveCourseName}
+                    className="text-xl sm:text-2xl font-bold h-auto py-1 px-2 border-2 border-primary"
+                    disabled={updateCourseMutation.isPending}
+                  />
+                  <div className="flex items-center gap-1">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleSaveCourseName}
+                      disabled={updateCourseMutation.isPending}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Check className="h-4 w-4 text-green-600" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleCancelEditing}
+                      disabled={updateCourseMutation.isPending}
+                      className="h-8 w-8 p-0"
+                    >
+                      <X className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-1 group">
+                  <h1 className="text-xl sm:text-2xl font-bold truncate">
+                    {courseData.name}
+                  </h1>
+                  {!isArchived && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleStartEditing}
+                      className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                      title="Edit course name"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-muted-foreground">
               <span className="font-medium">{courseData.code}</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">
@@ -117,26 +301,138 @@ const CourseDetailPage = ({
         </div>
 
         {/* Action Buttons - Mobile Responsive */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
+          {/* Left side - Take Attendance */}
           <AttendanceSessionModal
             courseId={courseId}
             courseName={courseData.name}
-            disabled={hasActiveSession}
+            disabled={hasActiveSession || isArchived}
             // onStartSession={handleStartAttendance}
           >
             <Button
               className="w-full sm:w-auto text-sm"
-              disabled={hasActiveSession}
+              disabled={hasActiveSession || isArchived}
               title={
-                hasActiveSession
-                  ? 'An attendance session is already active for this course'
-                  : 'Start a new attendance session'
+                isArchived
+                  ? 'Cannot take attendance for archived courses'
+                  : hasActiveSession
+                    ? 'An attendance session is already active for this course'
+                    : 'Start a new attendance session'
               }
             >
               <ClipboardCheck className="h-4 w-4 mr-2" />
               {hasActiveSession ? 'Session Active' : 'Take Attendance'}
             </Button>
           </AttendanceSessionModal>
+
+          {/* Right side - Course Actions */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            {/* Desktop: Individual buttons */}
+            <div className="hidden sm:flex gap-2">
+              {isArchived ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Unarchive button clicked');
+                    setShowUnarchiveModal(true);
+                  }}
+                  disabled={unarchiveMutation.isPending}
+                  className="text-sm"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Unarchive
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Archive button clicked');
+                    setShowArchiveModal(true);
+                  }}
+                  disabled={archiveMutation.isPending}
+                  className="text-sm"
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archive
+                </Button>
+              )}
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Delete button clicked');
+                  setShowDeleteModal(true);
+                }}
+                disabled={deleteMutation.isPending}
+                className="text-sm"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </div>
+
+            {/* Mobile: Dropdown menu */}
+            <div className="sm:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full">
+                    <MoreVertical className="h-4 w-4 mr-2" />
+                    Course Actions
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {isArchived ? (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Mobile Unarchive clicked');
+                        setShowUnarchiveModal(true);
+                      }}
+                      disabled={unarchiveMutation.isPending}
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Unarchive Course
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Mobile Archive clicked');
+                        setShowArchiveModal(true);
+                      }}
+                      disabled={archiveMutation.isPending}
+                    >
+                      <Archive className="h-4 w-4 mr-2" />
+                      Archive Course
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Mobile Delete clicked');
+                      setShowDeleteModal(true);
+                    }}
+                    disabled={deleteMutation.isPending}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Course
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -257,6 +553,31 @@ const CourseDetailPage = ({
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Confirmation Modals */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        courseName={courseData.name}
+        onConfirm={handleDelete}
+        isLoading={deleteMutation.isPending}
+      />
+
+      <ArchiveConfirmationModal
+        isOpen={showArchiveModal}
+        onClose={() => setShowArchiveModal(false)}
+        courseName={courseData.name}
+        onConfirm={handleArchive}
+        isLoading={archiveMutation.isPending}
+      />
+
+      <UnarchiveConfirmationModal
+        isOpen={showUnarchiveModal}
+        onClose={() => setShowUnarchiveModal(false)}
+        courseName={courseData.name}
+        onConfirm={handleUnarchive}
+        isLoading={unarchiveMutation.isPending}
+      />
     </div>
   );
 };
