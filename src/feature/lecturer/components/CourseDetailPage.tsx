@@ -241,12 +241,6 @@ const CourseDetailPage = ({
     }
   };
 
-  // Function to refresh data after student operations
-  const handleRefresh = () => {
-    // This will be handled by TanStack Query's automatic refetching
-    // when the mutation succeeds
-  };
-
   const handleNavigate = () => {
     navigate({
       to: '/dashboard/lecturer/courses',
@@ -618,7 +612,7 @@ const CourseDetailPage = ({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <StudentsTable students={students} onRefresh={handleRefresh} />
+              <StudentsTable students={students} />
             </CardContent>
           </Card>
         </TabsContent>

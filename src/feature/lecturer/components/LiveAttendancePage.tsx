@@ -28,21 +28,24 @@ const LiveAttendancePage = ({
 }: LiveAttendancePageProps) => {
   const sessionState = attendanceSession.status;
 
-  const [timeRemaining, setTimeRemaining] = useState(
-    ((attendanceSession?.endedAt ?? attendanceSession._creationTime + 60) -
-      Date.now()) /
-      1000,
-  );
+  const [timeRemaining, setTimeRemaining] = useState(() => {
+    const endTime =
+      attendanceSession?.endedAt ?? attendanceSession._creationTime + 60000; // 60 seconds in milliseconds
+    return Math.max(0, (endTime - Date.now()) / 1000);
+  });
 
   useEffect(() => {
     if (attendanceSession.status !== 'complete') {
       const timer = setInterval(() => {
-        setTimeRemaining(
-          ((attendanceSession?.endedAt ??
-            attendanceSession._creationTime + 60) -
-            Date.now()) /
-            1000,
-        );
+        const endTime =
+          attendanceSession?.endedAt ?? attendanceSession._creationTime + 60000; // 60 seconds in milliseconds
+        const remaining = Math.max(0, (endTime - Date.now()) / 1000);
+        setTimeRemaining(remaining);
+
+        // Clear timer when time reaches 0
+        if (remaining <= 0) {
+          clearInterval(timer);
+        }
       }, 1000);
 
       return () => clearInterval(timer);
@@ -63,8 +66,15 @@ const LiveAttendancePage = ({
   };
 
   const formatTime = (seconds: number) => {
-    const secs = Math.floor((seconds - 1) % 60);
-    return `${secs.toString().padStart(2, '0')}`;
+    // Ensure we don't show negative values
+    const totalSeconds = Math.max(0, Math.floor(seconds));
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+
+    if (mins > 0) {
+      return `${mins}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${secs.toString().padStart(2, '0')}s`;
   };
 
   const navigate = useNavigate();
@@ -197,7 +207,7 @@ const LiveAttendancePage = ({
           </div>
 
           {sessionState !== 'complete' && (
-            <Progress value={timeRemaining} className="h-1.5" />
+            <Progress value={(timeRemaining / 60) * 100} className="h-1.5" />
           )}
         </CardContent>
       </Card>
@@ -352,89 +362,91 @@ export default LiveAttendancePage;
 
 export const LiveAttendancePageSkeleton = () => {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-4 md:space-y-6 animate-pulse p-4 md:p-0">
       {/* Header Skeleton */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <div className="w-24 h-10 bg-gray-200 rounded-md"></div>
-          <div>
-            <div className="h-8 w-64 bg-gray-200 rounded-md mb-2"></div>
-            <div className="h-4 w-48 bg-gray-200 rounded-md"></div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          <div className="w-16 h-8 sm:w-24 sm:h-10 bg-gray-200 rounded-md"></div>
+          <div className="flex-1">
+            <div className="h-6 sm:h-8 w-48 sm:w-64 bg-gray-200 rounded-md mb-2"></div>
+            <div className="h-3 sm:h-4 w-32 sm:w-48 bg-gray-200 rounded-md"></div>
           </div>
         </div>
       </div>
 
       {/* Session State Card Skeleton */}
       <Card className="border-gray-200 bg-gray-50">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-4">
-              <div className="p-3 rounded-full bg-gray-200">
-                <div className="h-6 w-6"></div>
+        <CardContent className="p-3 sm:p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="p-2 sm:p-3 rounded-full bg-gray-200">
+                <div className="h-4 w-4 sm:h-6 sm:w-6"></div>
               </div>
               <div>
-                <div className="h-6 w-48 bg-gray-200 rounded-md mb-2"></div>
-                <div className="h-8 w-24 bg-gray-200 rounded-md"></div>
+                <div className="h-5 sm:h-6 w-32 sm:w-48 bg-gray-200 rounded-md mb-2"></div>
+                <div className="h-6 sm:h-8 w-16 sm:w-24 bg-gray-200 rounded-md"></div>
               </div>
             </div>
 
-            <div className="text-right space-y-2">
-              <div className="flex items-center space-x-2 justify-end">
-                <div className="h-4 w-4 bg-gray-200 rounded-full"></div>
-                <div className="h-4 w-24 bg-gray-200 rounded-md"></div>
+            <div className="flex flex-col sm:text-right space-y-2">
+              <div className="flex items-center space-x-2 sm:justify-end">
+                <div className="h-3 w-3 sm:h-4 sm:w-4 bg-gray-200 rounded-full"></div>
+                <div className="h-3 sm:h-4 w-16 sm:w-24 bg-gray-200 rounded-md"></div>
               </div>
-              <div className="flex items-center space-x-2 justify-end">
-                <div className="h-4 w-12 bg-gray-200 rounded-md"></div>
-                <div className="h-6 w-20 bg-gray-200 rounded-md"></div>
-                <div className="h-6 w-6 bg-gray-200 rounded-md"></div>
+              <div className="flex items-center space-x-2 sm:justify-end">
+                <div className="h-3 sm:h-4 w-8 sm:w-12 bg-gray-200 rounded-md"></div>
+                <div className="h-5 sm:h-6 w-16 sm:w-20 bg-gray-200 rounded-md"></div>
+                <div className="h-5 sm:h-6 w-5 sm:w-6 bg-gray-200 rounded-md"></div>
               </div>
             </div>
           </div>
 
-          <div className="h-2 bg-gray-200 rounded-full"></div>
+          <div className="h-1.5 sm:h-2 bg-gray-200 rounded-full"></div>
         </CardContent>
       </Card>
 
       {/* Real-Time Student Panel Skeleton */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className="p-3 sm:p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <div className="h-5 w-5 bg-gray-200 rounded-full"></div>
-                <div className="h-6 w-40 bg-gray-200 rounded-md"></div>
+                <div className="h-4 w-4 sm:h-5 sm:w-5 bg-gray-200 rounded-full"></div>
+                <div className="h-5 sm:h-6 w-32 sm:w-40 bg-gray-200 rounded-md"></div>
               </div>
-              <div className="h-4 w-56 bg-gray-200 rounded-md mt-2"></div>
+              <div className="h-3 sm:h-4 w-40 sm:w-56 bg-gray-200 rounded-md mt-2"></div>
             </div>
-            <div className="h-6 w-24 bg-gray-200 rounded-full"></div>
+            <div className="h-5 sm:h-6 w-16 sm:w-24 bg-gray-200 rounded-full"></div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-3 sm:p-4 md:p-6">
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="flex items-center justify-between p-4 border rounded-lg"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 border rounded-lg"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="h-4 w-4 bg-gray-200 rounded-full"></div>
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="h-3 w-3 sm:h-4 sm:w-4 bg-gray-200 rounded-full"></div>
                   <div>
-                    <div className="h-5 w-32 bg-gray-200 rounded-md mb-2"></div>
-                    <div className="h-4 w-24 bg-gray-200 rounded-md"></div>
+                    <div className="h-4 sm:h-5 w-24 sm:w-32 bg-gray-200 rounded-md mb-2"></div>
+                    <div className="h-3 sm:h-4 w-20 sm:w-24 bg-gray-200 rounded-md"></div>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="h-4 w-16 bg-gray-200 rounded-md mb-1"></div>
-                    <div className="h-4 w-20 bg-gray-200 rounded-md"></div>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:space-x-4">
+                  <div className="flex justify-between sm:block sm:text-right">
+                    <div className="h-3 sm:h-4 w-12 sm:w-16 bg-gray-200 rounded-md mb-1"></div>
+                    <div className="h-3 sm:h-4 w-16 sm:w-20 bg-gray-200 rounded-md"></div>
                   </div>
-                  <div className="text-right">
-                    <div className="h-4 w-16 bg-gray-200 rounded-md mb-1"></div>
-                    <div className="h-3 w-24 bg-gray-200 rounded-md"></div>
+                  <div className="flex justify-between sm:block sm:text-right">
+                    <div className="h-3 sm:h-4 w-12 sm:w-16 bg-gray-200 rounded-md mb-1"></div>
+                    <div className="h-2 sm:h-3 w-16 sm:w-24 bg-gray-200 rounded-md"></div>
                   </div>
-                  <div className="h-6 w-20 bg-gray-200 rounded-full"></div>
-                  <div className="h-8 w-20 bg-gray-200 rounded-md"></div>
+                  <div className="flex justify-between sm:justify-end items-center gap-2">
+                    <div className="h-5 sm:h-6 w-16 sm:w-20 bg-gray-200 rounded-full"></div>
+                    <div className="h-6 sm:h-8 w-16 sm:w-20 bg-gray-200 rounded-md"></div>
+                  </div>
                 </div>
               </div>
             ))}

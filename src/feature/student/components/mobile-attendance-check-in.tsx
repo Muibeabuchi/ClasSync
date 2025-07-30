@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -215,11 +215,14 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
     onCheckIn(course.session._id!, attendanceCode);
   };
 
+  // const sessionId = course.session._id!;
+  const currentDistance = distance;
+  const currentIsWithinRange = isWithinRange;
+
   const canCheckIn =
     course?.session.status === 'active' &&
     gpsReady &&
     !isLoading &&
-    isWithinRange &&
     (!course?.session.attendanceCode ||
       !showCodeInput ||
       (showCodeInput && attendanceCode.trim().length > 0));
@@ -272,14 +275,17 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
           />
         </div>
 
-        {/* Distance Indicator - Only show for active sessions with GPS */}
-        {course?.session.status === 'active' && gpsReady && userLocation && (
-          <DistanceIndicator
-            distance={distance}
-            maxDistance={course?.session.radius || 100}
-            isWithinRange={isWithinRange}
-          />
-        )}
+        {/* Distance Indicator - Show for both pending and active sessions with GPS */}
+        {(course?.session.status === 'pending' ||
+          course?.session.status === 'active') &&
+          gpsReady &&
+          userLocation && (
+            <DistanceIndicator
+              distance={distance}
+              maxDistance={course?.session.radius || 100}
+              isWithinRange={isWithinRange}
+            />
+          )}
 
         {/* Attendance Code Input */}
         {course?.session.attendanceCode && showCodeInput && (
@@ -321,12 +327,21 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
         {/* Check-in Button */}
         <Button
           onClick={handleCheckIn}
-          disabled={!canCheckIn}
+          disabled={
+            !canCheckIn ||
+            (course?.session.status === 'active' &&
+              gpsReady &&
+              currentDistance !== null &&
+              !currentIsWithinRange)
+          }
           className={cn(
             'w-full h-14 text-lg font-semibold',
             'mobile-touch-feedback',
-            canCheckIn && 'bg-green-600 hover:bg-green-700',
-            !isWithinRange &&
+            canCheckIn &&
+              (currentDistance === null || currentIsWithinRange) &&
+              'bg-green-600 hover:bg-green-700',
+            currentDistance !== null &&
+              !currentIsWithinRange &&
               course?.session.status === 'active' &&
               gpsReady &&
               'bg-red-600 hover:bg-red-700',
@@ -352,7 +367,12 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
               <Navigation className="h-5 w-5 mr-2" />
               Waiting for GPS
             </>
-          ) : !isWithinRange ? (
+          ) : currentDistance === null ? (
+            <>
+              <Radar className="h-5 w-5 mr-2" />
+              Calculating Distance...
+            </>
+          ) : !currentIsWithinRange ? (
             <>
               <MapPin className="h-5 w-5 mr-2" />
               Move Closer to Check In
@@ -415,7 +435,11 @@ const MobileAttendanceCheckIn: React.FC = () => {
     const newRangeStatus: Record<string, boolean> = {};
 
     activeCourses.forEach((course) => {
-      if (course?.session?.location && course.session.status === 'active') {
+      if (
+        course?.session?.location &&
+        (course.session.status === 'pending' ||
+          course.session.status === 'active')
+      ) {
         const distance = calculateDistance(
           coords.latitude,
           coords.longitude,
@@ -437,7 +461,7 @@ const MobileAttendanceCheckIn: React.FC = () => {
   const {
     isGeolocationAvailable,
     isGeolocationEnabled,
-    getPosition,
+    // getPosition,
     coords,
     positionError,
   } = useGeolocated({
@@ -461,6 +485,13 @@ const MobileAttendanceCheckIn: React.FC = () => {
     },
   });
 
+  // Effect to calculate distances when activeCourses change
+  useEffect(() => {
+    if (coords && activeCourses.length > 0) {
+      calculateDistancesAndRange(coords);
+    }
+  }, [activeCourses, calculateDistancesAndRange, coords]);
+
   const gpsReady =
     isGeolocationAvailable && isGeolocationEnabled && !positionError;
 
@@ -475,7 +506,8 @@ const MobileAttendanceCheckIn: React.FC = () => {
       return;
     }
 
-    if (!isWithinRange[sessionId]) {
+    // Check if we're within range before proceeding (only if distance has been calculated)
+    if (distances[sessionId] !== undefined && !isWithinRange[sessionId]) {
       toast.error('Too far from session', {
         description: 'Move closer to the classroom to check in.',
       });
@@ -486,14 +518,34 @@ const MobileAttendanceCheckIn: React.FC = () => {
     setSelectedSession(sessionId);
 
     try {
+      let currentCoords = coords;
+
       // Get current position if not already available
-      if (!coords) {
-        getPosition();
-        // Wait a moment for position to be available
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!currentCoords) {
+        toast.info('Getting your location...', {
+          description: 'Please wait while we determine your position.',
+        });
+
+        try {
+          const position = await new Promise<GeolocationPosition>(
+            (resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 15000,
+                maximumAge: 30000,
+              });
+            },
+          );
+          currentCoords = position.coords;
+        } catch (gpsError) {
+          console.error('GPS error:', gpsError);
+          throw new Error(
+            'Unable to get your location. Please check your GPS settings.',
+          );
+        }
       }
 
-      if (!coords) {
+      if (!currentCoords) {
         throw new Error('Unable to get your location');
       }
 
@@ -508,8 +560,8 @@ const MobileAttendanceCheckIn: React.FC = () => {
       await takeAttendance({
         attendanceSessionId: sessionId,
         gpsCoordinates: {
-          lat: coords.latitude,
-          long: coords.longitude,
+          lat: currentCoords.latitude,
+          long: currentCoords.longitude,
         },
         attendanceCode: code || undefined,
       });
@@ -591,9 +643,11 @@ const MobileAttendanceCheckIn: React.FC = () => {
                             }
                           : null
                       }
-                      distance={distances[course.session._id!] || null}
+                      distance={distances[course.session._id!] ?? null}
                       isWithinRange={
-                        isWithinRange[course.session._id!] || false
+                        distances[course.session._id!] !== undefined
+                          ? isWithinRange[course.session._id!]
+                          : false
                       }
                     />
                   );

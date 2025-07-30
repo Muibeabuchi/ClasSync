@@ -157,8 +157,11 @@ export const checkInToAttendance = StudentMutationMiddleware({
       lon2: args.gpsCoordinates.long,
     });
 
-    if (distance > DefaultAttendanceRadius) {
-      throw new ConvexError('You are not within the required location radius');
+    const allowedRadius = attendanceSession.radius || DefaultAttendanceRadius;
+    if (distance > allowedRadius) {
+      throw new ConvexError(
+        `You are not within the required location radius of ${allowedRadius}m. You are ${Math.round(distance)}m away.`,
+      );
     }
 
     if (attendanceSession.attendanceCode) {

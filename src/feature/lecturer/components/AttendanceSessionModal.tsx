@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Copy, RefreshCw, MapPin, Clock, Code } from 'lucide-react';
+import { Copy, RefreshCw, MapPin, Clock, Code, Loader2 } from 'lucide-react';
 import { useCreateAttendanceSession } from '@/feature/attendance/api';
 import type { Id } from 'convex/_generated/dataModel';
 import { toast } from 'sonner';
@@ -38,6 +38,7 @@ const AttendanceSessionModal = ({
   const [requireCode, setRequireCode] = useState(false);
   const [attendanceCode, setAttendanceCode] = useState('');
   const [locationRadius, setLocationRadius] = useState(50);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   const navigate = useNavigate();
 
@@ -50,32 +51,49 @@ const AttendanceSessionModal = ({
       userDecisionTimeout: 5000,
       suppressLocationOnMount: true,
       onSuccess: async ({ coords }) => {
-        if (!isGeolocationAvailable && !isGeolocationEnabled) return;
+        if (!isGeolocationAvailable && !isGeolocationEnabled) {
+          setIsCreatingSession(false);
+          return;
+        }
 
-        const { sessionId, courseId: CourseId } = await createAttendanceSession(
-          {
-            courseId,
-            requireCode: attendanceCode,
-            radiusMeters: locationRadius,
-            gpsCoordinates: {
-              lat: coords.latitude,
-              long: coords.longitude,
+        try {
+          const { sessionId, courseId: CourseId } =
+            await createAttendanceSession({
+              courseId,
+              requireCode: attendanceCode,
+              radiusMeters: locationRadius,
+              gpsCoordinates: {
+                lat: coords.latitude,
+                long: coords.longitude,
+              },
+            });
+          toast.success('Attendance Session Starting', {
+            description: '30-second preparation phase has begun.',
+          });
+
+          // Close modal and trigger navigation
+          setIsOpen(false);
+          navigate({
+            to: '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId',
+            params: {
+              lecturerCourseId: CourseId,
+              attendanceSessionId: sessionId,
             },
-          },
-        );
-        toast.success('Attendance Session Starting', {
-          description: '30-second preparation phase has begun.',
-        });
-
-        // Close modal and trigger navigation
-        setIsOpen(false);
-        navigate({
-          to: '/dashboard/$role/$lecturerCourseId/$attendanceSessionId',
-          params: {
-            lecturerCourseId: CourseId,
-            role: 'lecturer',
-            attendanceSessionId: sessionId,
-          },
+          });
+        } catch (error) {
+          toast.error('Failed to create session', {
+            description:
+              error instanceof Error ? error.message : 'Please try again.',
+          });
+        } finally {
+          setIsCreatingSession(false);
+        }
+      },
+      onError: () => {
+        setIsCreatingSession(false);
+        toast.error('Location access required', {
+          description:
+            'Please enable location access to start an attendance session.',
         });
       },
     });
@@ -97,6 +115,7 @@ const AttendanceSessionModal = ({
   };
 
   const handleStartSession = () => {
+    setIsCreatingSession(true);
     getPosition();
   };
 
@@ -218,9 +237,18 @@ const AttendanceSessionModal = ({
             <Button
               onClick={handleStartSession}
               className="flex-1"
-              disabled={requireCode && !attendanceCode.trim()}
+              disabled={
+                (requireCode && !attendanceCode.trim()) || isCreatingSession
+              }
             >
-              Start Session
+              {isCreatingSession ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating Session...
+                </>
+              ) : (
+                'Start Session'
+              )}
             </Button>
           </div>
         </div>

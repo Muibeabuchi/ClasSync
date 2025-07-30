@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -23,8 +23,11 @@ import {
   AlertTriangle,
   BookOpen,
   Loader2,
-  // MapPin,
+  MapPin,
   Navigation,
+  // Target,
+  // MapPinOff,
+  Radar,
 } from 'lucide-react';
 import { SessionTimer } from '@/components/attendance/SessionTimer';
 import { toast } from 'sonner';
@@ -38,6 +41,27 @@ import { cn } from '@/lib/utils';
 //   onBack: () => void;
 // }
 
+// Utility function to calculate distance between two coordinates using Haversine formula
+const calculateDistance = (
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number => {
+  const R = 6371e3; // Earth's radius in meters
+  const φ1 = (lat1 * Math.PI) / 180;
+  const φ2 = (lat2 * Math.PI) / 180;
+  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // Distance in meters
+};
+
 const AttendanceCheckIn = () => {
   const { data: activeCourses = [] } =
     useGetStudentCoursesWithActiveAttendance();
@@ -47,8 +71,43 @@ const AttendanceCheckIn = () => {
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<any>(null);
+  const [distances, setDistances] = useState<Record<string, number>>({});
+  const [isWithinRange, setIsWithinRange] = useState<Record<string, boolean>>(
+    {},
+  );
 
   const { mutateAsync: takeAttendance } = useStudentTakeAttendance();
+
+  // Calculate distances and range status for all active sessions
+  const calculateDistancesAndRange = (coords: GeolocationCoordinates) => {
+    if (!coords || activeCourses.length === 0) return;
+
+    const newDistances: Record<string, number> = {};
+    const newRangeStatus: Record<string, boolean> = {};
+
+    activeCourses.forEach((course) => {
+      if (
+        course?.session?.location &&
+        (course.session.status === 'pending' ||
+          course.session.status === 'active')
+      ) {
+        const distance = calculateDistance(
+          coords.latitude,
+          coords.longitude,
+          course.session.location.lat,
+          course.session.location.long,
+        );
+
+        const maxDistance = course.session.radius || 100;
+
+        newDistances[course.session._id] = distance;
+        newRangeStatus[course.session._id] = distance <= maxDistance;
+      }
+    });
+
+    setDistances(newDistances);
+    setIsWithinRange(newRangeStatus);
+  };
 
   const {
     isGeolocationAvailable,
@@ -60,18 +119,30 @@ const AttendanceCheckIn = () => {
     positionOptions: {
       enableHighAccuracy: true,
       timeout: 15000,
-      maximumAge: 60000,
+      maximumAge: 30000,
     },
     userDecisionTimeout: 10000,
-    suppressLocationOnMount: false, // Allow automatic GPS request
-    watchPosition: false, // Don't continuously watch position
+    suppressLocationOnMount: false,
+    watchPosition: true, // Enable continuous tracking
     onSuccess: (position) => {
       console.log('GPS position obtained:', position.coords);
+      // Calculate distances whenever location updates
+      calculateDistancesAndRange(position.coords);
     },
     onError: (error) => {
       console.error('GPS error:', error);
+      // Clear distances on error
+      setDistances({});
+      setIsWithinRange({});
     },
   });
+
+  // Effect to calculate distances when activeCourses change
+  useEffect(() => {
+    if (coords && activeCourses.length > 0) {
+      calculateDistancesAndRange(coords);
+    }
+  }, [activeCourses, calculateDistancesAndRange, coords]);
 
   // More flexible GPS ready check
   const gpsReady =
@@ -95,6 +166,19 @@ const AttendanceCheckIn = () => {
 
   const handleCheckIn = async (code?: string) => {
     if (!selectedSession || !currentCourse) return;
+
+    // Check if we're within range before proceeding
+    if (
+      currentCourse.session.status === 'active' &&
+      gpsReady &&
+      distances[selectedSession] !== undefined &&
+      !isWithinRange[selectedSession]
+    ) {
+      toast.error('Too far from session', {
+        description: 'Move closer to the classroom to check in.',
+      });
+      return;
+    }
 
     setIsCheckingIn(true);
 
@@ -278,6 +362,7 @@ const AttendanceCheckIn = () => {
             {/* Active Course Sessions */}
             <div className="space-y-4">
               {activeCourses.map((course) => {
+                if (!course) return;
                 const isCurrentlyChecking =
                   isCheckingIn && selectedSession === course?.session._id;
                 const canCheckIn =
@@ -335,6 +420,79 @@ const AttendanceCheckIn = () => {
                           </div>
                         )}
 
+                        {/* Distance Indicator - Show for both pending and active sessions with GPS */}
+                        {(course?.session.status === 'pending' ||
+                          course?.session.status === 'active') &&
+                          gpsReady &&
+                          coords && (
+                            <div className="space-y-2">
+                              {distances[course.session._id] !== undefined ? (
+                                <div
+                                  className={cn(
+                                    'flex items-center justify-between p-3 rounded-lg border',
+                                    isWithinRange[course.session._id]
+                                      ? 'bg-green-50 border-green-200'
+                                      : 'bg-red-50 border-red-200',
+                                  )}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {isWithinRange[course.session._id] ? (
+                                      <CheckCircle className="h-4 w-4 text-green-600" />
+                                    ) : (
+                                      <AlertTriangle className="h-4 w-4 text-red-600" />
+                                    )}
+                                    <span
+                                      className={cn(
+                                        'text-sm font-medium',
+                                        isWithinRange[course.session._id]
+                                          ? 'text-green-800'
+                                          : 'text-red-800',
+                                      )}
+                                    >
+                                      {isWithinRange[course.session._id]
+                                        ? 'Within range'
+                                        : 'Too far from session'}
+                                    </span>
+                                  </div>
+                                  <div className="text-right">
+                                    <div
+                                      className={cn(
+                                        'text-sm font-mono',
+                                        isWithinRange[course.session._id]
+                                          ? 'text-green-600'
+                                          : 'text-red-600',
+                                      )}
+                                    >
+                                      {distances[course.session._id] < 1000
+                                        ? `${Math.round(distances[course.session._id])}m`
+                                        : `${(distances[course.session._id] / 1000).toFixed(1)}km`}
+                                    </div>
+                                    {!isWithinRange[course.session._id] && (
+                                      <div className="text-xs text-muted-foreground">
+                                        Move{' '}
+                                        {Math.max(
+                                          0,
+                                          distances[course.session._id] -
+                                            (course.session.radius || 100),
+                                        ) < 1000
+                                          ? `${Math.round(Math.max(0, distances[course.session._id] - (course.session.radius || 100)))}m`
+                                          : `${(Math.max(0, distances[course.session._id] - (course.session.radius || 100)) / 1000).toFixed(1)}km`}{' '}
+                                        closer
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg border">
+                                  <Radar className="h-4 w-4 text-gray-500" />
+                                  <span className="text-sm text-gray-600">
+                                    Calculating distance...
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
                         {/* Session Info */}
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                           <div className="flex items-center gap-1">
@@ -351,9 +509,28 @@ const AttendanceCheckIn = () => {
 
                         {/* Check-in Button */}
                         <Button
-                          className="w-full"
+                          className={cn(
+                            'w-full',
+                            canCheckIn &&
+                              gpsReady &&
+                              (isWithinRange[course?.session._id] ||
+                                distances[course?.session._id] === undefined) &&
+                              'bg-green-600 hover:bg-green-700',
+                            !isWithinRange[course?.session._id] &&
+                              course?.session.status === 'active' &&
+                              gpsReady &&
+                              distances[course?.session._id] !== undefined &&
+                              'bg-red-600 hover:bg-red-700',
+                          )}
                           variant={canCheckIn ? 'default' : 'secondary'}
-                          disabled={!canCheckIn || !isGeolocationAvailable}
+                          disabled={
+                            !canCheckIn ||
+                            !isGeolocationAvailable ||
+                            (course?.session.status === 'active' &&
+                              gpsReady &&
+                              distances[course?.session._id] !== undefined &&
+                              !isWithinRange[course?.session._id])
+                          }
                           onClick={() => handleCheckInClick(course)}
                         >
                           {isCurrentlyChecking ? (
@@ -375,6 +552,21 @@ const AttendanceCheckIn = () => {
                             <>
                               <Navigation className="h-4 w-4 mr-2" />
                               GPS Not Available
+                            </>
+                          ) : !gpsReady ? (
+                            <>
+                              <Navigation className="h-4 w-4 mr-2" />
+                              Waiting for GPS
+                            </>
+                          ) : distances[course.session._id] === undefined ? (
+                            <>
+                              <Radar className="h-4 w-4 mr-2" />
+                              Calculating Distance...
+                            </>
+                          ) : !isWithinRange[course?.session._id] ? (
+                            <>
+                              <MapPin className="h-4 w-4 mr-2" />
+                              Move Closer to Check In
                             </>
                           ) : (
                             <>

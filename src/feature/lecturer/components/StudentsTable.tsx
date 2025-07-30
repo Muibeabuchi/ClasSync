@@ -65,10 +65,9 @@ interface Student {
 
 interface StudentsTableProps {
   students: Student[];
-  onRefresh?: () => void;
 }
 
-export const StudentsTable = ({ students, onRefresh }: StudentsTableProps) => {
+export const StudentsTable = ({ students }: StudentsTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -461,7 +460,6 @@ export const StudentsTable = ({ students, onRefresh }: StudentsTableProps) => {
           setSelectedStudent(null);
         }}
         onSuccess={() => {
-          onRefresh?.();
           // Clear selection after successful unlink
           setRowSelection({});
         }}
