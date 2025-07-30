@@ -39,6 +39,29 @@ function RouteComponent() {
   const { data: dashboardStats } = useGetStudentDashboardStats();
   const isMobile = useIsMobile();
 
+  // Text truncation utility
+  const truncateText = (
+    text: string,
+    mobileLimit: number = 15,
+    desktopLimit: number = 25,
+  ) => {
+    if (text.length <= mobileLimit) return text;
+
+    // For display purposes, we'll show different lengths based on screen size
+    // This is handled via CSS classes, but we'll provide both versions
+    return {
+      mobile:
+        text.length > mobileLimit
+          ? text.substring(0, mobileLimit) + '...'
+          : text,
+      desktop:
+        text.length > desktopLimit
+          ? text.substring(0, desktopLimit) + '...'
+          : text,
+      full: text,
+    };
+  };
+
   // Mock notifications data - will be replaced when notifications API is ready
   const mockNotifications = [
     {
@@ -187,68 +210,84 @@ function RouteComponent() {
               </Button>
             </div>
             <div className="space-y-3">
-              {dashboardStats?.recentCourses?.slice(0, 2).map((course) => (
-                <Card
-                  key={course.id}
-                  className="mobile-tap-feedback touch-manipulation"
-                >
-                  <CardContent className="mobile-p-md">
-                    <div className="space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="mobile-text-base font-semibold leading-tight">
-                            {course.name}
-                          </h3>
-                          <p className="mobile-text-sm text-muted-foreground mt-1">
-                            {course.code} • {course.lecturer}
-                          </p>
+              {dashboardStats?.recentCourses &&
+              dashboardStats.recentCourses.length > 0 ? (
+                dashboardStats.recentCourses.slice(0, 2).map((course) => {
+                  const courseNameDisplay = truncateText(course.name, 15, 25);
+
+                  return (
+                    <Card
+                      key={course.id}
+                      className="mobile-tap-feedback touch-manipulation"
+                    >
+                      <CardContent className="mobile-p-md">
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              {typeof courseNameDisplay === 'object' ? (
+                                <h3
+                                  className="text-sm font-semibold leading-tight"
+                                  title={courseNameDisplay.full}
+                                >
+                                  {courseNameDisplay.mobile}
+                                </h3>
+                              ) : (
+                                <h3 className="text-sm font-semibold leading-tight">
+                                  {courseNameDisplay}
+                                </h3>
+                              )}
+                              <p className="text-xs text-muted-foreground mt-1 truncate">
+                                {course.code} • {course.lecturer}
+                              </p>
+                            </div>
+                            <Badge
+                              variant="secondary"
+                              className="shrink-0 mobile-text-xs"
+                            >
+                              {course.status === 'active'
+                                ? 'Active'
+                                : course.status}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className="mobile-text-sm text-muted-foreground">
+                              {course.attendedSessions}/{course.totalSessions}{' '}
+                              sessions
+                            </span>
+                            <span
+                              className={cn(
+                                'mobile-text-sm font-medium',
+                                course.attendance >= 90
+                                  ? 'text-chart-2'
+                                  : course.attendance >= 75
+                                    ? 'text-chart-5'
+                                    : 'text-destructive',
+                              )}
+                            >
+                              {course.attendance}%
+                            </span>
+                          </div>
+
+                          <div className="w-full bg-muted rounded-full h-2">
+                            <div
+                              className={cn(
+                                'h-2 rounded-full transition-all duration-300',
+                                course.attendance >= 90
+                                  ? 'bg-chart-2'
+                                  : course.attendance >= 75
+                                    ? 'bg-chart-5'
+                                    : 'bg-destructive',
+                              )}
+                              style={{ width: `${course.attendance}%` }}
+                            />
+                          </div>
                         </div>
-                        <Badge
-                          variant="secondary"
-                          className="shrink-0 mobile-text-xs"
-                        >
-                          {course.status === 'active'
-                            ? 'Active'
-                            : course.status}
-                        </Badge>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="mobile-text-sm text-muted-foreground">
-                          {course.attendedSessions}/{course.totalSessions}{' '}
-                          sessions
-                        </span>
-                        <span
-                          className={cn(
-                            'mobile-text-sm font-medium',
-                            course.attendance >= 90
-                              ? 'text-chart-2'
-                              : course.attendance >= 75
-                                ? 'text-chart-5'
-                                : 'text-destructive',
-                          )}
-                        >
-                          {course.attendance}%
-                        </span>
-                      </div>
-
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div
-                          className={cn(
-                            'h-2 rounded-full transition-all duration-300',
-                            course.attendance >= 90
-                              ? 'bg-chart-2'
-                              : course.attendance >= 75
-                                ? 'bg-chart-5'
-                                : 'bg-destructive',
-                          )}
-                          style={{ width: `${course.attendance}%` }}
-                        />
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )) || (
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              ) : (
                 <Card className="mobile-tap-feedback">
                   <CardContent className="mobile-p-md text-center py-8">
                     <BookOpen className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
@@ -454,57 +493,72 @@ function RouteComponent() {
               <div className="space-y-4">
                 {dashboardStats?.recentCourses &&
                 dashboardStats.recentCourses.length > 0 ? (
-                  dashboardStats.recentCourses.map((course) => (
-                    <div
-                      key={course.id}
-                      className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold">{course.name}</h3>
-                          <p className="text-sm text-muted-foreground">
-                            {course.code} • {course.lecturer}
-                          </p>
+                  dashboardStats.recentCourses.map((course) => {
+                    const courseNameDisplay = truncateText(course.name, 15, 25);
+
+                    return (
+                      <div
+                        key={course.id}
+                        className="p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex-1 min-w-0">
+                            {typeof courseNameDisplay === 'object' ? (
+                              <h3
+                                className="font-semibold"
+                                title={courseNameDisplay.full}
+                              >
+                                {courseNameDisplay.desktop}
+                              </h3>
+                            ) : (
+                              <h3 className="font-semibold">
+                                {courseNameDisplay}
+                              </h3>
+                            )}
+                            <p className="text-sm text-muted-foreground truncate">
+                              {course.code} • {course.lecturer}
+                            </p>
+                          </div>
+                          <Badge variant="secondary">
+                            {course.status === 'active'
+                              ? 'Active'
+                              : course.status}
+                          </Badge>
                         </div>
-                        <Badge variant="secondary">
-                          {course.status === 'active'
-                            ? 'Active'
-                            : course.status}
-                        </Badge>
-                      </div>
 
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          {course.attendedSessions}/{course.totalSessions}{' '}
-                          sessions
-                        </span>
-                        <span
-                          className={`font-medium ${
-                            course.attendance >= 90
-                              ? 'text-chart-2'
-                              : course.attendance >= 75
-                                ? 'text-chart-5'
-                                : 'text-destructive'
-                          }`}
-                        >
-                          {course.attendance}%
-                        </span>
-                      </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">
+                            {course.attendedSessions}/{course.totalSessions}{' '}
+                            sessions
+                          </span>
+                          <span
+                            className={`font-medium ${
+                              course.attendance >= 90
+                                ? 'text-chart-2'
+                                : course.attendance >= 75
+                                  ? 'text-chart-5'
+                                  : 'text-destructive'
+                            }`}
+                          >
+                            {course.attendance}%
+                          </span>
+                        </div>
 
-                      <div className="w-full bg-muted rounded-full h-2 mt-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            course.attendance >= 90
-                              ? 'bg-chart-2'
-                              : course.attendance >= 75
-                                ? 'bg-chart-5'
-                                : 'bg-destructive'
-                          }`}
-                          style={{ width: `${course.attendance}%` }}
-                        ></div>
+                        <div className="w-full bg-muted rounded-full h-2 mt-2">
+                          <div
+                            className={`h-2 rounded-full ${
+                              course.attendance >= 90
+                                ? 'bg-chart-2'
+                                : course.attendance >= 75
+                                  ? 'bg-chart-5'
+                                  : 'bg-destructive'
+                            }`}
+                            style={{ width: `${course.attendance}%` }}
+                          ></div>
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center py-8">
                     <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
