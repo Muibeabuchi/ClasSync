@@ -30,6 +30,12 @@ const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
     course.attendanceStats.attendanceRate,
   );
 
+  // Truncate course name to 15 characters
+  const truncatedCourseName =
+    course.courseName.length > 15
+      ? `${course.courseName.substring(0, 15)}...`
+      : course.courseName;
+
   const getStatusColor = (status: StudentCourseType['status']) => {
     switch (status) {
       case 'active':
@@ -49,17 +55,13 @@ const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
     return 'text-destructive';
   };
 
-  // Helper function to format time range
-  const formatTimeRange = (startTime: string, endTime: string): string => {
-    const formatTime = (time: string) => {
-      const [hours, minutes] = time.split(':');
-      const hour24 = parseInt(hours);
-      const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-      const ampm = hour24 >= 12 ? 'PM' : 'AM';
-      return `${hour12}:${minutes} ${ampm}`;
-    };
-
-    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  // Helper function to format time
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour24 = parseInt(hours);
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    return `${hour12}:${minutes} ${ampm}`;
   };
 
   // Get next scheduled class
@@ -111,10 +113,10 @@ const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
               <CardTitle
-                className="text-lg font-semibold text-foreground truncate"
+                className="text-lg font-semibold text-foreground"
                 title={course.courseName}
               >
-                {course.courseName}
+                {truncatedCourseName}
               </CardTitle>
               <CardDescription className="text-sm text-muted-foreground font-medium">
                 {course.courseCode}
@@ -195,7 +197,8 @@ const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
                     Next: {nextClass.day}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {formatTimeRange(nextClass.startTime, nextClass.endTime)}
+                    {formatTime(nextClass.startTime)} -{' '}
+                    {formatTime(nextClass.endTime)}
                   </p>
                 </div>
               </div>

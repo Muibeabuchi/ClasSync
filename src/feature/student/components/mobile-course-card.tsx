@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { GetStudentsCoursesReturnType } from 'convex/schema';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Clock, Users } from 'lucide-react';
+import { Clock, Users, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 type StudentCourseType = NonNullable<GetStudentsCoursesReturnType[number]>;
@@ -26,6 +26,12 @@ const MobileCourseCard = ({
   const attendancePercentage = Math.round(
     course.attendanceStats.attendanceRate,
   );
+
+  // Truncate course name to 15 characters
+  const truncatedCourseName =
+    course.courseName.length > 15
+      ? `${course.courseName.substring(0, 15)}...`
+      : course.courseName;
 
   const getStatusColor = (status: StudentCourseType['status']) => {
     switch (status) {
@@ -46,6 +52,57 @@ const MobileCourseCard = ({
     return 'text-destructive';
   };
 
+  // Helper function to format time
+  const formatTime = (time: string) => {
+    const [hours, minutes] = time.split(':');
+    const hour24 = parseInt(hours);
+    const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    return `${hour12}:${minutes} ${ampm}`;
+  };
+
+  // Get next scheduled class
+  const getNextClass = () => {
+    if (!course.schedule || course.schedule.length === 0) return null;
+
+    const today = new Date();
+    const currentDay = today.toLocaleDateString('en-US', { weekday: 'long' });
+    const currentTime = today.toTimeString().slice(0, 5); // HH:MM format
+
+    // Find today's classes that haven't started yet
+    const todayClasses = course.schedule.filter(
+      (s) => s.day === currentDay && s.startTime > currentTime,
+    );
+    if (todayClasses.length > 0) {
+      return todayClasses[0]; // Return the next class today
+    }
+
+    // Find next week's classes
+    const weekDays = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    const currentDayIndex = today.getDay();
+
+    for (let i = 1; i <= 7; i++) {
+      const nextDayIndex = (currentDayIndex + i) % 7;
+      const nextDay = weekDays[nextDayIndex];
+      const nextDayClasses = course.schedule.filter((s) => s.day === nextDay);
+      if (nextDayClasses.length > 0) {
+        return nextDayClasses[0]; // Return the first class of the next day
+      }
+    }
+
+    return null;
+  };
+
+  const nextClass = getNextClass();
+
   return (
     <Card
       className={cn(
@@ -61,10 +118,10 @@ const MobileCourseCard = ({
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <CardTitle
-              className="mobile-text-lg font-semibold text-foreground truncate"
+              className="mobile-text-lg font-semibold text-foreground"
               title={course.courseName}
             >
-              {course.courseName}
+              {truncatedCourseName}
             </CardTitle>
             <CardDescription className="mobile-text-sm text-muted-foreground font-medium">
               {course.courseCode}
@@ -173,6 +230,24 @@ const MobileCourseCard = ({
             />
           </div>
         </div>
+
+        {/* Next Class Schedule */}
+        {nextClass && (
+          <div className="flex items-center gap-2 p-2 bg-muted/30 rounded-lg border border-border/30">
+            <div className="p-1 bg-primary/10 rounded-md">
+              <Calendar className="h-3 w-3 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="mobile-text-xs font-medium text-foreground">
+                Next: {nextClass.day}
+              </p>
+              <p className="mobile-text-xs text-muted-foreground">
+                {formatTime(nextClass.startTime)} -{' '}
+                {formatTime(nextClass.endTime)}
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 pt-2 border-t border-border/50">
