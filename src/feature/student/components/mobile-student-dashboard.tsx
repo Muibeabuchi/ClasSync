@@ -1,9 +1,10 @@
 import { MobileBottomNavigation } from '@/components/mobile/MobileBottomNavigation';
 import { Outlet } from '@tanstack/react-router';
+import { useGetPendingJoinRequestsCount } from '../api/join-requests';
 
 const MobileStudentDashboard = () => {
-  // Mock notification count - replace with real data when available
-  const unreadNotifications = 3;
+  // Get pending join requests count for badge
+  const pendingRequestsCount = useGetPendingJoinRequestsCount();
 
   return (
     <div className="h-[100dvh] flex flex-col bg-background">
@@ -13,7 +14,7 @@ const MobileStudentDashboard = () => {
       </div>
 
       {/* Fixed bottom navigation */}
-      <MobileBottomNavigation notificationCount={unreadNotifications} />
+      <MobileBottomNavigation notificationCount={pendingRequestsCount} />
     </div>
   );
 };

@@ -35,12 +35,18 @@ interface LecturerSidebarProps {
 }
 
 const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
 
   const signOut = useSignOut();
 
   const handleSignOut = () => {
     signOut();
+  };
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   return (
@@ -87,9 +93,7 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
                         return (
                           <SidebarMenuButton
                             isActive={isActive}
-                            // onClick={() => {
-                            //   // handleSidebarState(false);
-                            // }}
+                            onClick={handleLinkClick}
                             tooltip={
                               state === 'collapsed' ? item.label : undefined
                             }

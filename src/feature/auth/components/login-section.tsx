@@ -33,7 +33,7 @@ const LoginPage = ({ isLoading }: { isLoading: boolean }) => {
               <div className="w-12 h-12 bg-primary-foreground/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <GraduationCap className="w-7 h-7" />
               </div>
-              <h1 className="text-3xl font-bold">Class Sync</h1>
+              <h1 className="text-3xl font-bold">Classynk</h1>
             </div>
 
             {/* Tagline */}

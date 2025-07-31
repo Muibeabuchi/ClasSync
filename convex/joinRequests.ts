@@ -4,7 +4,10 @@ import {
   lecturerQuery,
   lecturerMutation,
 } from './middlewares/lecturerMiddleware';
-import { StudentMutationMiddleware } from './middlewares/studentMiddleware';
+import {
+  StudentMutationMiddleware,
+  StudentQueryMiddleware,
+} from './middlewares/studentMiddleware';
 
 export const rejectJoinRequest = lecturerMutation({
   args: {
@@ -69,9 +72,20 @@ export const getAllJoinRequestsForLecturer = lecturerQuery({
         const course = await ctx.db.get(request.courseId);
         if (!course) throw new ConvexError('Course does not exist');
 
+        // Get profile image URL if available
+        let profileImageUrl = null;
+        if (student.student_passport_photo_id) {
+          profileImageUrl = await ctx.storage.getUrl(
+            student.student_passport_photo_id,
+          );
+        }
+
         return {
           ...request,
-          student,
+          student: {
+            ...student,
+            profileImage: profileImageUrl,
+          },
           course,
         };
       }),
@@ -179,19 +193,126 @@ export const linkStudentToAttendanceEntry = courseMutation({
   },
 });
 
-// export const getUnlinkedStudentsForCourse = query({
-//   args: { courseId: v.id('courses') },
-//   handler: async (ctx, args) => {
-//     const userId = await getAuthUserId(ctx);
-//     if (!userId) {
-//       return [];
-//     }
+// Student-specific join request functions
 
-//     const course = await ctx.db.get(args.courseId);
-//     if (!course || course.lecturerId !== userId) {
-//       throw new Error('Unauthorized');
-//     }
+export const getMyJoinRequests = StudentQueryMiddleware({
+  args: {},
+  handler: async (ctx) => {
+    const studentId = ctx.user._id;
 
-//     return course.studentsData.filter((student) => !student.isLinked);
-//   },
-// });
+    // Get all join requests for this student
+    const requests = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_studentId', (q) => q.eq('studentId', studentId))
+      .order('desc')
+      .collect();
+
+    // Populate with course and lecturer data
+    const populatedRequests = await Promise.all(
+      requests.map(async (request) => {
+        const course = await ctx.db.get(request.courseId);
+        if (!course) {
+          throw new ConvexError('Course not found');
+        }
+
+        const lecturer = await ctx.db.get(request.lecturerId);
+        if (!lecturer) {
+          throw new ConvexError('Lecturer not found');
+        }
+
+        // Get lecturer profile image URL if available
+        let lecturerProfileImageUrl = null;
+        if (lecturer.lecturerPassportImage) {
+          lecturerProfileImageUrl = await ctx.storage.getUrl(
+            lecturer.lecturerPassportImage,
+          );
+        }
+
+        return {
+          ...request,
+          course: {
+            ...course,
+          },
+          lecturer: {
+            ...lecturer,
+            profileImage: lecturerProfileImageUrl,
+          },
+        };
+      }),
+    );
+
+    return populatedRequests;
+  },
+});
+
+export const cancelJoinRequest = StudentMutationMiddleware({
+  args: {
+    requestId: v.id('joinRequests'),
+  },
+  handler: async (ctx, args) => {
+    const studentId = ctx.user._id;
+
+    // Get the join request
+    const request = await ctx.db.get(args.requestId);
+    if (!request) {
+      throw new ConvexError('Join request not found');
+    }
+
+    // Verify the student owns this request
+    if (request.studentId !== studentId) {
+      throw new ConvexError(
+        'Unauthorized: You can only cancel your own join requests',
+      );
+    }
+
+    // Only allow cancellation of pending requests
+    if (request.status !== 'pending') {
+      throw new ConvexError('Only pending join requests can be cancelled');
+    }
+
+    // Delete the request
+    await ctx.db.delete(args.requestId);
+
+    return {
+      success: true,
+      message: 'Join request cancelled successfully',
+    };
+  },
+});
+
+export const deleteJoinRequest = StudentMutationMiddleware({
+  args: {
+    requestId: v.id('joinRequests'),
+  },
+  handler: async (ctx, args) => {
+    const studentId = ctx.user._id;
+
+    // Get the join request
+    const request = await ctx.db.get(args.requestId);
+    if (!request) {
+      throw new ConvexError('Join request not found');
+    }
+
+    // Verify the student owns this request
+    if (request.studentId !== studentId) {
+      throw new ConvexError(
+        'Unauthorized: You can only delete your own join requests',
+      );
+    }
+
+    // Only allow deletion of rejected requests or approved requests (for cleanup)
+    if (request.status === 'pending') {
+      throw new ConvexError(
+        'Cannot delete pending requests. Use cancel instead.',
+      );
+    }
+
+    // Delete the request
+    await ctx.db.delete(args.requestId);
+
+    return {
+      success: true,
+      message: 'Join request deleted successfully',
+    };
+  },
+});

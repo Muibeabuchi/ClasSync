@@ -57,11 +57,11 @@ const navigationItems = [
     to: '/dashboard/student/attendance',
   },
   {
-    id: 'notifications',
-    label: 'Notifications',
+    id: 'join-requests',
+    label: 'Join Requests',
     icon: Bell,
-    badge: '3',
-    to: '/dashboard/student/notifications',
+    badge: null,
+    to: '/dashboard/student/join-requests',
   },
 ];
 
@@ -70,12 +70,18 @@ interface StudentSidebarProps {
 }
 
 const StudentSidebar = ({ userData }: StudentSidebarProps) => {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
 
   const signOut = useSignOut();
 
   const handleSignOut = () => {
     signOut();
+  };
+
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   return (
@@ -109,7 +115,7 @@ const StudentSidebar = ({ userData }: StudentSidebarProps) => {
                       asChild
                       tooltip={state === 'collapsed' ? item.label : undefined}
                     >
-                      <Link to={item.to}>
+                      <Link to={item.to} onClick={handleLinkClick}>
                         <Icon className="h-4 w-4" />
                         <span>{item.label}</span>
                         {item.badge && state === 'expanded' && (
@@ -166,13 +172,28 @@ const StudentSidebar = ({ userData }: StudentSidebarProps) => {
                 sideOffset={4}
               >
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard/student/profile">
+                  <Link
+                    to="/dashboard/student/notifications"
+                    onClick={handleLinkClick}
+                  >
+                    <Bell className="h-4 w-4 mr-2" />
+                    Notifications
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/dashboard/student/profile"
+                    onClick={handleLinkClick}
+                  >
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/dashboard/student/settings">
+                  <Link
+                    to="/dashboard/student/settings"
+                    onClick={handleLinkClick}
+                  >
                     <Settings className="h-4 w-4 mr-2" />
                     Settings
                   </Link>

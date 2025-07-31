@@ -62,7 +62,7 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
   //   // isModalOpen,
   //   // setIsModalOpen,
   // ] = useState(false);
-  const [isBindingModalOpen, setIsBindingModalOpen] = useState(true);
+  const [isBindingModalOpen, setIsBindingModalOpen] = useState(false);
   // const [
   //   // isRejectModalOpen,
   //   // setIsRejectModalOpen,
@@ -175,24 +175,27 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          {/* <Button
-            variant="ghost"
-            size="icon"
-            // onClick={onBack}
-            className="hover:scale-110 transition-transform"
-          >
-            <ArrowLeft className="h-4 w-4" />
-          </Button> */}
-          <div>
-            <h1 className="text-2xl font-bold">Join Requests</h1>
-            <p className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center space-x-2 md:space-x-4 min-w-0 flex-1">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl md:text-2xl font-bold">Join Requests</h1>
+              <Badge
+                variant="secondary"
+                className="size-4 bg-transparent text-foreground border-foreground p-3 ml-2 font-semibold  text-base md:hidden rounded-full border  flex-shrink-0"
+              >
+                {lecturerJoinRequests.length}
+              </Badge>
+            </div>
+            <p className="text-xs md:text-sm text-muted-foreground mt-1">
               Review and approve student join requests
             </p>
           </div>
         </div>
-        <Badge variant="secondary" className="px-3 py-1">
+        <Badge
+          variant="secondary"
+          className="hidden md:flex px-3 py-1 flex-shrink-0"
+        >
           {lecturerJoinRequests.length} pending
         </Badge>
       </div>
@@ -227,42 +230,54 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
       {lecturerJoinRequests.length === 0 ? (
         <EmptyRequestsState />
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-3 md:gap-4">
           {lecturerJoinRequests.map((request) => (
             <Card
               key={request._id}
-              className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-gradient-to-r from-background to-muted/30"
+              className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-gradient-to-r from-background to-muted/30 active:scale-[0.98] md:active:scale-100"
               onClick={() => {
                 openRequestModal(request);
                 setIsBindingModalOpen(true);
               }}
             >
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <Avatar className="h-10 w-10 ring-2 ring-muted">
-                      {/* <AvatarImage src={request.student.profileImage} /> */}
-                      <AvatarFallback className="text-xs font-medium">
-                        {request.student.fullName
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')}
-                      </AvatarFallback>
+              <CardContent className="p-3 md:p-4">
+                <div className="flex items-start md:items-center justify-between gap-3">
+                  <div className="flex items-start md:items-center space-x-3 min-w-0 flex-1">
+                    <Avatar className="h-10 w-10 md:h-12 md:w-12 ring-2 ring-muted flex-shrink-0">
+                      {request.student.profileImage ? (
+                        <img
+                          src={request.student.profileImage}
+                          alt={request.student.fullName}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <AvatarFallback className="text-xs md:text-sm font-medium">
+                          {request.student.fullName
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')}
+                        </AvatarFallback>
+                      )}
                     </Avatar>
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-medium text-sm">
+                    <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                        <h3 className="font-medium text-sm md:text-base truncate">
                           {request.student.fullName}
                         </h3>
-                        <Badge variant="outline" className="text-xs px-2 py-0">
+                        <Badge
+                          variant="outline"
+                          className="text-xs px-2 py-0 self-start md:self-auto"
+                        >
                           {request.student.registrationNumber}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{request.course.courseName}</span>
-                        <span>•</span>
+                      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 text-xs text-muted-foreground">
+                        <span className="truncate font-medium">
+                          {request.course.courseName}
+                        </span>
+                        <span className="hidden md:inline">•</span>
                         <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
+                          <Clock className="h-3 w-3 flex-shrink-0" />
                           {getTimeAgo(
                             new Date(request._creationTime).toLocaleString(),
                           )}
@@ -270,7 +285,7 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-start md:items-center gap-2 flex-shrink-0">
                     <Badge
                       variant={
                         request.status === 'pending' ? 'secondary' : 'default'

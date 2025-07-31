@@ -203,6 +203,7 @@ const applicationTables = {
 
   joinRequests: defineTable({
     studentId: v.id('userProfiles'),
+    uniqueCode: v.optional(v.string()),
     lecturerId: v.id('userProfiles'),
     courseId: v.id('courses'),
     status: v.union(
@@ -214,6 +215,7 @@ const applicationTables = {
     message: v.optional(v.string()),
   })
     .index('by_student_by_courseId', ['studentId', 'courseId'])
+    .index('by_studentId', ['studentId'])
     .index('by_lecturerId_by_courseId', ['lecturerId', 'courseId'])
     .index('by_lecturerId', ['lecturerId'])
     .index('by_status', ['status']),

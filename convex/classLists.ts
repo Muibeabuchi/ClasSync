@@ -1,4 +1,4 @@
-import { v } from 'convex/values';
+import { ConvexError, v } from 'convex/values';
 import {
   LecturerCourseQuery,
   classListQuery,
@@ -391,13 +391,25 @@ export const getClassListsWithAvailableStudents = LecturerCourseQuery({
   },
   handler: async (ctx, args) => {
     const lecturerId = ctx.user._id;
+    const course = ctx.course;
 
-    // Get all class lists for the lecturer
-    const classLists = await ctx.db
-      .query('classLists')
-      .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId))
-      .order('desc')
-      .collect();
+    // Get only class lists that are attached to this specific course
+    const courseClassListIds = course.classListIds || [];
+
+    if (courseClassListIds.length === 0) {
+      return []; // No class lists attached to this course
+    }
+
+    // Get class lists that are attached to this course
+    const classLists = await Promise.all(
+      courseClassListIds.map(async (classListId) => {
+        const classList = await ctx.db.get(classListId);
+        return classList;
+      }),
+    );
+
+    // Filter out null results
+    const validClassLists = classLists.filter(Boolean);
 
     // Get all students already in the course attendance list
     const existingCourseAttendees = await ctx.db
@@ -414,7 +426,8 @@ export const getClassListsWithAvailableStudents = LecturerCourseQuery({
 
     // Process each class list and filter out students already in the course
     const classListsWithAvailableStudents = await Promise.all(
-      classLists.map(async (classList) => {
+      validClassLists.map(async (classList) => {
+        if (!classList) throw new ConvexError('ClassList does not exist');
         // Get all students in this class list
         const allClassListStudents = await ctx.db
           .query('classListStudents')

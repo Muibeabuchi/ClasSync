@@ -19,7 +19,7 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { useGetLecturerCourses } from '@/feature/course/api/get-lecturer-courses';
 import type { Id } from 'convex/_generated/dataModel';
-import { useEffect } from 'react';
+// import { useEffect } from 'react';
 
 interface LecturerDashboardContentProps {
   fullName: string | undefined;
@@ -35,17 +35,17 @@ const LecturerDashboardContent = ({
   }));
   const navigate = useNavigate();
 
-  useEffect(() => {
-    async function fetchIp() {
-      const ip = await fetch('https://api.ipify.org?format=json')
-        .then((res) => res.json())
-        .then((data) => data.ip);
+  // useEffect(() => {
+  //   async function fetchIp() {
+  //     const ip = await fetch('https://api.ipify.org?format=json')
+  //       .then((res) => res.json())
+  //       .then((data) => data.ip);
 
-      console.log({ ip });
-    }
+  //     console.log({ ip });
+  //   }
 
-    fetchIp();
-  }, []);
+  //   fetchIp();
+  // }, []);
 
   const handleCourseNavigation = (courseId: Id<'courses'>) => {
     navigate({
@@ -61,12 +61,18 @@ const LecturerDashboardContent = ({
     });
   };
 
+  const truncatedCourseName = (course: { courseName: string }) => {
+    return course.courseName.length > 30
+      ? `${course.courseName.substring(0, 25)}...`
+      : course.courseName;
+  };
+
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Welcome Header */}
       <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight gradient-text">
-          Welcome back {fullName}
+          Welcome back <strong className="text-primary"> {fullName}</strong>
         </h1>
         <p className="text-muted-foreground text-lg">
           {`Here's what's happening with your courses today`}
@@ -74,66 +80,82 @@ const LecturerDashboardContent = ({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="glass-card hover:scale-[1.02] transition-transform duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+        <Card className="glass-card hover:scale-[1.02] transition-all duration-300 hover:shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 px-4 pt-4">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Total Courses
             </CardTitle>
-            <BookOpen className="h-5 w-5 text-primary" />
+            <div className="p-2 rounded-full bg-primary/10">
+              <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">12</div>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-foreground mb-1">
+              12
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
+              <TrendingUp className="h-3 w-3 text-green-500" />
               +2 from last semester
             </p>
           </CardContent>
         </Card>
 
-        <Card className="glass-card hover:scale-[1.02] transition-transform duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="glass-card hover:scale-[1.02] transition-all duration-300 hover:shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 px-4 pt-4">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Total Students
             </CardTitle>
-            <Users className="h-5 w-5 text-primary" />
+            <div className="p-2 rounded-full bg-primary/10">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">342</div>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-foreground mb-1">
+              342
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
+              <TrendingUp className="h-3 w-3 text-green-500" />
               +18 this month
             </p>
           </CardContent>
         </Card>
 
-        <Card className="glass-card hover:scale-[1.02] transition-transform duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="glass-card hover:scale-[1.02] transition-all duration-300 hover:shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 px-4 pt-4">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               Avg Attendance
             </CardTitle>
-            <Activity className="h-5 w-5 text-primary" />
+            <div className="p-2 rounded-full bg-primary/10">
+              <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">87%</div>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-foreground mb-1">
+              87%
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="h-3 w-3" />
+              <TrendingUp className="h-3 w-3 text-green-500" />
               +5% from last week
             </p>
           </CardContent>
         </Card>
 
-        <Card className="glass-card hover:scale-[1.02] transition-transform duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
+        <Card className="glass-card hover:scale-[1.02] transition-all duration-300 hover:shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 px-4 pt-4">
+            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
               {`Today's Classes`}
             </CardTitle>
-            <Calendar className="h-5 w-5 text-primary" />
+            <div className="p-2 rounded-full bg-primary/10">
+              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">3</div>
+          <CardContent className="px-4 pb-4">
+            <div className="text-xl sm:text-2xl font-bold text-foreground mb-1">
+              3
+            </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <Clock className="h-3 w-3" />
+              <Clock className="h-3 w-3 text-blue-500" />
               Next at 10:00 AM
             </p>
           </CardContent>
@@ -146,17 +168,17 @@ const LecturerDashboardContent = ({
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" />
+                {/* <BookOpen className="h-5 w-5 text-primary" /> */}
                 Recent Courses
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-xs sm:text-base">
                 Your most active courses this week
               </CardDescription>
             </div>
             <Button
               variant="ghost"
               size="sm"
-              className="text-primary hover:text-primary"
+              className="text-primary hover:text-primary text-xs sm:text-sm"
               onClick={handleCoursesNavigation}
             >
               View All <ArrowRight className="h-4 w-4 ml-1" />
@@ -173,8 +195,8 @@ const LecturerDashboardContent = ({
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full `} />
                     <div>
-                      <p className="font-medium text-foreground">
-                        {course.name}
+                      <p className="font-medium text-foreground text-xs sm:text-base">
+                        {truncatedCourseName({ courseName: course.name })}
                       </p>
                       {/* <p className="text-sm text-muted-foreground">
                         {course.students} students

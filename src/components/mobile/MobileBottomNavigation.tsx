@@ -1,11 +1,11 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { Home, BookOpen, CheckCircle, Inbox, User } from 'lucide-react';
+import { Home, BookOpen, CheckCircle, Bell, User } from 'lucide-react';
 import { Link, useRouterState } from '@tanstack/react-router';
 
 export interface BottomNavItem {
-  id: 'home' | 'courses' | 'checkin' | 'inbox' | 'profile';
+  id: 'home' | 'courses' | 'checkin' | 'requests' | 'profile';
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
@@ -13,7 +13,7 @@ export interface BottomNavItem {
 }
 
 export interface MobileBottomNavigationProps {
-  notificationCount?: number;
+  notificationCount?: number; // Now represents join requests count for students
   className?: string;
 }
 
@@ -37,10 +37,10 @@ const navigationItems: Omit<BottomNavItem, 'badge'>[] = [
     to: '/dashboard/student/attendance',
   },
   {
-    id: 'inbox',
-    label: 'Inbox',
-    icon: Inbox,
-    to: '/dashboard/student/notifications',
+    id: 'requests',
+    label: 'Requests',
+    icon: Bell,
+    to: '/dashboard/student/join-requests',
   },
   {
     id: 'profile',
@@ -60,7 +60,9 @@ export const MobileBottomNavigation: React.FC<MobileBottomNavigationProps> = ({
   const items: BottomNavItem[] = navigationItems.map((item) => ({
     ...item,
     badge:
-      item.id === 'inbox' && notificationCount ? notificationCount : undefined,
+      item.id === 'requests' && notificationCount
+        ? notificationCount
+        : undefined,
   }));
 
   return (

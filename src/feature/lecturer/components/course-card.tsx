@@ -17,16 +17,13 @@ import {
 
 import type { Doc, Id } from 'convex/_generated/dataModel';
 import {
-  BookOpen,
   MoreVertical,
-  // Edit,
   Trash2,
-  // FileText,
-  // Users,
-  // Clock,
-  AlertCircle,
   Archive,
   RotateCcw,
+  Users,
+  FileText,
+  Activity,
 } from 'lucide-react';
 import { useState } from 'react';
 import { ArchiveConfirmationModal } from './ArchiveConfirmationModal';
@@ -61,29 +58,39 @@ export const CourseCard = ({
   const deleteMutation = useDeleteCourse();
 
   const isArchived = course.status === 'archived';
+
+  // Helper function to truncate course name on mobile
+  const getTruncatedCourseName = (name: string) => {
+    if (name.length <= 25) return name;
+    return name.substring(0, 25) + '...';
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
         return (
-          <Badge className="bg-green-100 text-green-800 hover:bg-green-100 font-medium px-3 py-1">
+          <Badge className="bg-green-100 text-green-800 hover:bg-green-100 font-medium px-3 py-1 rounded-full">
             Active
           </Badge>
         );
       case 'archived':
         return (
-          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100 font-medium px-3 py-1">
+          <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100 font-medium px-3 py-1 rounded-full">
             Archived
           </Badge>
         );
       case 'completed':
         return (
-          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 font-medium px-3 py-1">
+          <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100 font-medium px-3 py-1 rounded-full">
             Completed
           </Badge>
         );
       default:
         return (
-          <Badge variant="outline" className="font-medium px-3 py-1">
+          <Badge
+            variant="outline"
+            className="font-medium px-3 py-1 rounded-full"
+          >
             {status}
           </Badge>
         );
@@ -148,47 +155,62 @@ export const CourseCard = ({
 
   return (
     <Card
-      className={`group relative overflow-hidden border hover:shadow-xl transition-all duration-300   ${
-        isArchived ? 'opacity-75 hover:opacity-90' : ''
+      className={`group relative overflow-hidden border hover:shadow-md transition-all duration-200 cursor-pointer ${
+        isArchived ? 'opacity-75 hover:opacity-90' : 'hover:border-primary/20'
       }`}
-      // onClick={handleViewCourse}
+      onClick={!isArchived ? handleViewCourse : undefined}
     >
       {/* Header */}
-      <CardHeader className="p-8 pb-6">
-        <div className="flex items-start justify-between mb-6">
+      <CardHeader className="p-4 pb-3">
+        <div className="flex items-start justify-between mb-3">
           <div className="flex-1 min-w-0">
             <CardTitle
-              className={`text-xl font-semibold mb-2 transition-colors ${
+              className={`text-base sm:text-lg font-semibold mb-1 transition-colors ${
                 isArchived
                   ? 'text-muted-foreground'
                   : 'group-hover:text-primary'
               }`}
+              title={course.courseName}
             >
-              {course.courseName}
+              <span className="sm:hidden">
+                {getTruncatedCourseName(course.courseName)}
+              </span>
+              <span className="hidden sm:inline truncate">
+                {course.courseName}
+              </span>
             </CardTitle>
-            <CardDescription className="text-base font-medium">
+            <CardDescription className="text-xs sm:text-sm font-medium text-muted-foreground">
               {course.courseCode}
             </CardDescription>
           </div>
 
-          <div className="flex items-center gap-4 ml-6">
+          <div className="flex items-center gap-2 ml-3">
+            {/* Pending Requests Notification */}
+            {!isArchived &&
+            course?.stats?.pendingRequests &&
+            course?.stats?.pendingRequests > 0 ? (
+              <div className="relative">
+                <div className="flex items-center justify-center w-5 h-5 bg-orange-100 text-orange-600 rounded-full text-xs font-semibold">
+                  {course.stats.pendingRequests > 9
+                    ? '9+'
+                    : course.stats.pendingRequests}
+                </div>
+                <div className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></div>
+              </div>
+            ) : null}
+
             {getStatusBadge(course.status)}
             <DropdownMenu>
               <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-10 w-10 p-0 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200"
+                  className="h-8 w-8 p-0 rounded-full opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200"
                 >
-                  <MoreVertical className="h-5 w-5" />
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-52">
-                {/* <DropdownMenuItem disabled={isArchived}>
-                  <Edit className="h-4 w-4 mr-3" />
-                  View Course
-                </DropdownMenuItem> */}
-                {/* <DropdownMenuSeparator /> */}
+              <DropdownMenuContent align="end" className="w-48">
                 {isArchived ? (
                   <DropdownMenuItem
                     onClick={(e) => {
@@ -199,12 +221,12 @@ export const CourseCard = ({
                   >
                     {unarchiveMutation.isPending ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-3" />
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
                         Unarchiving...
                       </>
                     ) : (
                       <>
-                        <RotateCcw className="h-4 w-4 mr-3" />
+                        <RotateCcw className="h-4 w-4 mr-2" />
                         Unarchive Course
                       </>
                     )}
@@ -219,12 +241,12 @@ export const CourseCard = ({
                   >
                     {archiveMutation.isPending ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-3" />
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
                         Archiving...
                       </>
                     ) : (
                       <>
-                        <Archive className="h-4 w-4 mr-3" />
+                        <Archive className="h-4 w-4 mr-2" />
                         Archive Course
                       </>
                     )}
@@ -241,12 +263,12 @@ export const CourseCard = ({
                 >
                   {deleteMutation.isPending ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-3" />
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
                       Deleting...
                     </>
                   ) : (
                     <>
-                      <Trash2 className="h-4 w-4 mr-3" />
+                      <Trash2 className="h-4 w-4 mr-2" />
                       Delete Course
                     </>
                   )}
@@ -257,41 +279,60 @@ export const CourseCard = ({
         </div>
 
         {/* Statistics */}
-        <div className="grid grid-cols-3 gap-8">
-          <div className="text-center">
+        <div className="flex flex-col gap-2 sm:grid sm:grid-cols-3 sm:gap-4">
+          <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 sm:flex-col sm:justify-center">
+            <div className="flex items-center gap-2 sm:gap-1 sm:mb-1">
+              <FileText className="h-3 w-3 text-muted-foreground" />
+              <div className="text-xs text-muted-foreground font-medium sm:hidden">
+                Lists
+              </div>
+            </div>
             <div
-              className={`text-2xl font-bold mb-1 ${
-                isArchived ? 'text-muted-foreground' : ''
+              className={`text-sm sm:text-base font-semibold ${
+                isArchived ? 'text-muted-foreground' : 'text-foreground'
               }`}
             >
               {course.stats?.classlistCount || 0}
             </div>
-            <div className="text-sm text-muted-foreground font-medium">
-              Classlists
+            <div className="hidden sm:block text-xs text-muted-foreground font-medium">
+              Lists
             </div>
           </div>
-          <div className="text-center">
+
+          <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 sm:flex-col sm:justify-center">
+            <div className="flex items-center gap-2 sm:gap-1 sm:mb-1">
+              <Users className="h-3 w-3 text-muted-foreground" />
+              <div className="text-xs text-muted-foreground font-medium sm:hidden">
+                Students
+              </div>
+            </div>
             <div
-              className={`text-2xl font-bold mb-1 ${
-                isArchived ? 'text-muted-foreground' : ''
+              className={`text-sm sm:text-base font-semibold ${
+                isArchived ? 'text-muted-foreground' : 'text-foreground'
               }`}
             >
               {course.stats?.totalStudents || 0}
             </div>
-            <div className="text-sm text-muted-foreground font-medium">
+            <div className="hidden sm:block text-xs text-muted-foreground font-medium">
               Students
             </div>
           </div>
 
-          <div className="text-center">
+          <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30 sm:flex-col sm:justify-center">
+            <div className="flex items-center gap-2 sm:gap-1 sm:mb-1">
+              <Activity className="h-3 w-3 text-muted-foreground" />
+              <div className="text-xs text-muted-foreground font-medium sm:hidden">
+                Sessions
+              </div>
+            </div>
             <div
-              className={`text-2xl font-bold mb-1 ${
-                isArchived ? 'text-muted-foreground' : ''
+              className={`text-sm sm:text-base font-semibold ${
+                isArchived ? 'text-muted-foreground' : 'text-foreground'
               }`}
             >
               {course.stats?.sessionsHeld || 0}
             </div>
-            <div className="text-sm text-muted-foreground font-medium">
+            <div className="hidden sm:block text-xs text-muted-foreground font-medium">
               Sessions
             </div>
           </div>
@@ -299,44 +340,21 @@ export const CourseCard = ({
       </CardHeader>
 
       {/* Content */}
-      <CardContent className="px-8 pb-8">
-        {/* Pending Requests Alert */}
-        {!isArchived &&
-        course?.stats?.pendingRequests &&
-        course?.stats?.pendingRequests > 0 ? (
-          <button
-            className="flex items-center justify-between p-4 border rounded-xl mb-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-full">
-                <AlertCircle className="h-4 w-4" />
-              </div>
-              <span className="text-sm font-medium">
-                {course.stats.pendingRequests} pending request
-                {course.stats.pendingRequests !== 1 ? 's' : ''}
-              </span>
-            </div>
-            <Button size="sm" variant="ghost" className="h-9 px-4 font-medium">
-              Review
-            </Button>
-          </button>
-        ) : null}
-
+      <CardContent className="p-4 pt-0">
         {/* Action Button */}
         <Button
           onClick={(e) => {
             e.stopPropagation();
             handleViewCourse();
           }}
-          className={` cursor-pointer w-full h-12 text-base font-medium rounded-xl transition-all duration-200 ${
-            isArchived ? 'cursor-not-allowed' : 'shadow-sm'
+          className={`w-full h-9 text-sm font-medium transition-all duration-200 ${
+            isArchived ? 'cursor-not-allowed' : ''
           }`}
           disabled={isArchived}
           variant={isArchived ? 'secondary' : 'default'}
+          size="sm"
         >
-          <BookOpen className="h-5 w-5 mr-3" />
-          {isArchived ? 'Course Archived' : 'Open Course'}
+          {isArchived ? 'Archived' : 'Open Course'}
         </Button>
       </CardContent>
       {/* Confirmation Modals */}

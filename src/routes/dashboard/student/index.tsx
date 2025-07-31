@@ -24,11 +24,11 @@ export const Route = createFileRoute('/dashboard/student/')({
   component: RouteComponent,
   async loader({ context }) {
     // Prefetch student dashboard stats and courses
-    await context.queryClient.ensureQueryData(
-      convexQuery(api.courses.getStudentDashboardStats, {}),
-    );
     context.queryClient.prefetchQuery(
       convexQuery(api.courses.getStudentCourses, {}),
+    );
+    await context.queryClient.ensureQueryData(
+      convexQuery(api.courses.getStudentDashboardStats, {}),
     );
     await context.queryClient.ensureQueryData(AuthQueryOptions.getCurrentUser);
   },
@@ -97,17 +97,38 @@ function RouteComponent() {
     return (
       <Authenticated>
         <div className="space-y-6 p-4">
-          {/* Mobile Welcome Header */}
-          <div className="text-center mobile-space-md">
-            <Avatar className="h-16 w-16 mx-auto mobile-space-sm">
+          {/* Mobile Header with Avatar and Bell Icon */}
+          <div className="flex items-center justify-between mb-4">
+            <Avatar className="h-10 w-10">
               <AvatarImage src={userData?.userImage} />
-              <AvatarFallback className="mobile-text-lg">
+              <AvatarFallback className="text-sm">
                 {userData?.fullName
                   ?.split(' ')
                   .map((n) => n[0])
                   .join('')}
               </AvatarFallback>
             </Avatar>
+            <Button
+              variant="ghost"
+              size="sm"
+              asChild
+              className="relative p-2 mobile-tap-feedback"
+            >
+              <Link to="/dashboard/student/notifications">
+                <Bell className="h-5 w-5" />
+                {/* Mock notification badge - replace with real count */}
+                <Badge
+                  variant="destructive"
+                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-semibold flex items-center justify-center"
+                >
+                  3
+                </Badge>
+              </Link>
+            </Button>
+          </div>
+
+          {/* Mobile Welcome Header */}
+          <div className="text-left mobile-space-md">
             <h1 className="mobile-text-2xl font-bold text-foreground leading-tight">
               Welcome back, {userData?.fullName?.split(' ')[0]}
             </h1>
