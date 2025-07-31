@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   CardContent,
@@ -79,35 +79,38 @@ const AttendanceCheckIn = () => {
   const { mutateAsync: takeAttendance } = useStudentTakeAttendance();
 
   // Calculate distances and range status for all active sessions
-  const calculateDistancesAndRange = (coords: GeolocationCoordinates) => {
-    if (!coords || activeCourses.length === 0) return;
+  const calculateDistancesAndRange = useCallback(
+    (coords: GeolocationCoordinates) => {
+      if (!coords || activeCourses.length === 0) return;
 
-    const newDistances: Record<string, number> = {};
-    const newRangeStatus: Record<string, boolean> = {};
+      const newDistances: Record<string, number> = {};
+      const newRangeStatus: Record<string, boolean> = {};
 
-    activeCourses.forEach((course) => {
-      if (
-        course?.session?.location &&
-        (course.session.status === 'pending' ||
-          course.session.status === 'active')
-      ) {
-        const distance = calculateDistance(
-          coords.latitude,
-          coords.longitude,
-          course.session.location.lat,
-          course.session.location.long,
-        );
+      activeCourses.forEach((course) => {
+        if (
+          course?.session?.location &&
+          (course.session.status === 'pending' ||
+            course.session.status === 'active')
+        ) {
+          const distance = calculateDistance(
+            coords.latitude,
+            coords.longitude,
+            course.session.location.lat,
+            course.session.location.long,
+          );
 
-        const maxDistance = course.session.radius || 100;
+          const maxDistance = course.session.radius || 100;
 
-        newDistances[course.session._id] = distance;
-        newRangeStatus[course.session._id] = distance <= maxDistance;
-      }
-    });
+          newDistances[course.session._id] = distance;
+          newRangeStatus[course.session._id] = distance <= maxDistance;
+        }
+      });
 
-    setDistances(newDistances);
-    setIsWithinRange(newRangeStatus);
-  };
+      setDistances(newDistances);
+      setIsWithinRange(newRangeStatus);
+    },
+    [activeCourses],
+  );
 
   const {
     isGeolocationAvailable,
