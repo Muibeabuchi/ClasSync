@@ -22,8 +22,20 @@ export const createCourse = lecturerMutation({
     courseName: v.string(),
     initialCourseCode: v.string(),
     classListIds: v.array(v.id('classLists')),
+    schedule: v.optional(
+      v.array(
+        v.object({
+          day: v.string(),
+          startTime: v.string(),
+          endTime: v.string(),
+        }),
+      ),
+    ),
   },
-  handler: async (ctx, { courseName, initialCourseCode, classListIds }) => {
+  handler: async (
+    ctx,
+    { courseName, initialCourseCode, classListIds, schedule },
+  ) => {
     const lecturerId = ctx.user._id;
 
     const courseCode = CoursesModel.generateCourseCode(initialCourseCode);
@@ -34,6 +46,7 @@ export const createCourse = lecturerMutation({
       courseCode: courseCode,
       status: 'active',
       classListIds,
+      schedule,
     });
 
     // const [classListStudents] = await Promise.all(
@@ -177,6 +190,15 @@ export const updateCourse = courseMutation({
   args: {
     courseName: v.optional(v.string()),
     status: v.optional(lecturerCourseStatusSchema),
+    schedule: v.optional(
+      v.array(
+        v.object({
+          day: v.string(),
+          startTime: v.string(),
+          endTime: v.string(),
+        }),
+      ),
+    ),
   },
   async handler(ctx, args) {
     const course = ctx.course;
@@ -187,7 +209,62 @@ export const updateCourse = courseMutation({
     await ctx.db.patch(args.courseId, {
       courseName: args.courseName ?? course.courseName,
       status: args.status ?? course.status,
+      schedule: args.schedule ?? course.schedule,
     });
+  },
+});
+
+export const updateCourseSchedule = courseMutation({
+  args: {
+    schedule: v.array(
+      v.object({
+        day: v.string(),
+        startTime: v.string(),
+        endTime: v.string(),
+      }),
+    ),
+  },
+  async handler(ctx, args) {
+    const course = ctx.course;
+
+    // Check if course is archived
+    if (course.status === 'archived') {
+      throw new ConvexError('Cannot update schedule for archived courses');
+    }
+
+    await ctx.db.patch(course._id, {
+      schedule: args.schedule,
+    });
+
+    return { success: true, message: 'Course schedule updated successfully' };
+  },
+});
+
+export const deleteScheduleItem = courseMutation({
+  args: {
+    day: v.string(),
+  },
+  async handler(ctx, args) {
+    const course = ctx.course;
+
+    // Check if course is archived
+    if (course.status === 'archived') {
+      throw new ConvexError('Cannot delete schedule from archived courses');
+    }
+
+    // Remove the specific day from the schedule
+    const updatedSchedule = (course.schedule || []).filter(
+      (item) => item.day !== args.day,
+    );
+
+    await ctx.db.patch(course._id, {
+      schedule: updatedSchedule,
+    });
+
+    return {
+      success: true,
+      message: `${args.day} schedule deleted successfully`,
+    };
   },
 });
 
@@ -852,6 +929,7 @@ export const getStudentCourses = StudentQueryMiddleware({
           courseName: course.courseName,
           courseCode: course.courseCode,
           status: course.status,
+          schedule: course.schedule || [],
           lecturer: {
             id: lecturer._id,
             name: lecturer.fullName,
@@ -1156,6 +1234,7 @@ export const getCourseDetails = LecturerCourseQuery({
         name: course.courseName,
         code: course.courseCode,
         status: course.status,
+        schedule: course.schedule || [],
         enrolledCount: students.length,
         description: `Course managed by ${ctx.user.fullName}`, // You can add a description field to the schema if needed
       },

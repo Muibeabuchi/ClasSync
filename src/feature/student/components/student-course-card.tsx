@@ -12,6 +12,7 @@ import {
   // Eye,
   // MoreVertical,
   Clock,
+  Calendar,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -48,13 +49,71 @@ const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
     return 'text-destructive';
   };
 
+  // Helper function to format time range
+  const formatTimeRange = (startTime: string, endTime: string): string => {
+    const formatTime = (time: string) => {
+      const [hours, minutes] = time.split(':');
+      const hour24 = parseInt(hours);
+      const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+      const ampm = hour24 >= 12 ? 'PM' : 'AM';
+      return `${hour12}:${minutes} ${ampm}`;
+    };
+
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  };
+
+  // Get next scheduled class
+  const getNextClass = () => {
+    if (!course.schedule || course.schedule.length === 0) return null;
+
+    const today = new Date();
+    const currentDay = today.toLocaleDateString('en-US', { weekday: 'long' });
+    const currentTime = today.toTimeString().slice(0, 5); // HH:MM format
+
+    // Find today's classes that haven't started yet
+    const todayClasses = course.schedule.filter(
+      (s) => s.day === currentDay && s.startTime > currentTime,
+    );
+    if (todayClasses.length > 0) {
+      return todayClasses[0]; // Return the next class today
+    }
+
+    // Find next week's classes
+    const weekDays = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
+    const currentDayIndex = today.getDay();
+
+    for (let i = 1; i <= 7; i++) {
+      const nextDayIndex = (currentDayIndex + i) % 7;
+      const nextDay = weekDays[nextDayIndex];
+      const nextDayClasses = course.schedule.filter((s) => s.day === nextDay);
+      if (nextDayClasses.length > 0) {
+        return nextDayClasses[0]; // Return the first class of the next day
+      }
+    }
+
+    return null;
+  };
+
+  const nextClass = getNextClass();
+
   return (
     <article className="group relative">
       <Card className="h-full  transition-all duration-200 hover:scale-[1.02] hover:shadow-lg border-border/50 hover:border-primary">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-lg font-semibold text-foreground truncate">
+              <CardTitle
+                className="text-lg font-semibold text-foreground truncate"
+                title={course.courseName}
+              >
                 {course.courseName}
               </CardTitle>
               <CardDescription className="text-sm text-muted-foreground font-medium">
@@ -126,6 +185,21 @@ const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
                 style={{ width: `${attendancePercentage}%` }}
               />
             </div>
+
+            {/* Next Class Schedule */}
+            {nextClass && (
+              <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-lg">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium text-foreground">
+                    Next: {nextClass.day}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {formatTimeRange(nextClass.startTime, nextClass.endTime)}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between pt-2 gap-2">

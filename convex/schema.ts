@@ -47,6 +47,12 @@ export const lecturerCourseStatusSchema = v.union(
   v.literal('completed'),
 );
 
+export const lectureScheduleSchema = v.object({
+  day: v.string(),
+  startTime: v.string(),
+  endTime: v.string(),
+});
+
 export const classListStudentSchema = v.object({
   classlistPosition: v.number(),
   studentName: v.string(),
@@ -169,6 +175,7 @@ const applicationTables = {
     lecturerId: v.id('userProfiles'),
     classListIds: v.array(v.id('classLists')), // Reference to ClassLists
     status: lecturerCourseStatusSchema,
+    schedule: v.optional(v.array(lectureScheduleSchema)), // Lecture schedule
   })
     .index('by_lecturer', ['lecturerId'])
     .index('by_courseCode', ['courseCode']),
@@ -354,3 +361,4 @@ export default defineSchema({
 // applicationTables.userProfiles.validator.fields[""]
 
 export type BackendUserRoleType = Infer<typeof userRoleSchema>;
+export type LectureScheduleType = Infer<typeof lectureScheduleSchema>;

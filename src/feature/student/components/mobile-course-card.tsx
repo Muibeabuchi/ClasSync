@@ -60,7 +60,10 @@ const MobileCourseCard = ({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <CardTitle className="mobile-text-lg font-semibold text-foreground truncate">
+            <CardTitle
+              className="mobile-text-lg font-semibold text-foreground truncate"
+              title={course.courseName}
+            >
               {course.courseName}
             </CardTitle>
             <CardDescription className="mobile-text-sm text-muted-foreground font-medium">

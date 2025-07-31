@@ -26,6 +26,8 @@ import {
   Edit2,
   Check,
   X,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import AttendanceSessionModal from './AttendanceSessionModal';
 import { StudentsTable } from './StudentsTable';
@@ -34,12 +36,16 @@ import { useNavigate } from '@tanstack/react-router';
 import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 import { ArchiveConfirmationModal } from './ArchiveConfirmationModal';
 import { UnarchiveConfirmationModal } from './UnarchiveConfirmationModal';
+import { DeleteScheduleConfirmationModal } from './DeleteScheduleConfirmationModal';
+import CourseScheduleModal from './CourseScheduleModal';
+import { toast } from 'sonner';
 import {
   useArchiveCourse,
   useUnarchiveCourse,
   useDeleteCourse,
   useUpdateCourse,
 } from '../hooks/useCourseActions';
+import { useDeleteScheduleItem } from '@/feature/course/api/delete-schedule-item';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -68,6 +74,11 @@ const CourseDetailPage = ({
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showArchiveModal, setShowArchiveModal] = useState(false);
   const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+  const [showDeleteScheduleModal, setShowDeleteScheduleModal] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] = useState<{
+    day: string;
+    timeRange: string;
+  } | null>(null);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editedCourseName, setEditedCourseName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -78,6 +89,7 @@ const CourseDetailPage = ({
   const unarchiveMutation = useUnarchiveCourse();
   const deleteMutation = useDeleteCourse();
   const updateCourseMutation = useUpdateCourse();
+  const deleteScheduleItem = useDeleteScheduleItem();
 
   // Extract data from courseDetails prop
   const courseData = courseDetails?.course || {
@@ -86,6 +98,7 @@ const CourseDetailPage = ({
     code: 'Loading...',
     enrolledCount: 0,
     description: 'Loading...',
+    schedule: [],
   };
 
   const students = courseDetails?.students || [];
@@ -245,6 +258,48 @@ const CourseDetailPage = ({
     navigate({
       to: '/dashboard/lecturer/courses',
     });
+  };
+
+  // Helper function to format time range
+  const formatTimeRange = (startTime: string, endTime: string): string => {
+    const formatTime = (time: string) => {
+      const [hours, minutes] = time.split(':');
+      const hour24 = parseInt(hours);
+      const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+      const ampm = hour24 >= 12 ? 'PM' : 'AM';
+      return `${hour12}:${minutes} ${ampm}`;
+    };
+
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  };
+
+  // Handle showing delete confirmation for schedule items
+  const handleShowDeleteScheduleConfirmation = (
+    day: string,
+    startTime: string,
+    endTime: string,
+  ) => {
+    const timeRange = formatTimeRange(startTime, endTime);
+    setScheduleToDelete({ day, timeRange });
+    setShowDeleteScheduleModal(true);
+  };
+
+  // Handle deleting individual schedule items
+  const handleDeleteScheduleItem = async () => {
+    if (!scheduleToDelete) return;
+
+    try {
+      await deleteScheduleItem.mutateAsync({
+        courseId,
+        day: scheduleToDelete.day,
+      });
+      toast.success('Schedule deleted successfully');
+      setShowDeleteScheduleModal(false);
+      setScheduleToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete schedule item:', error);
+      toast.error('Failed to delete schedule item');
+    }
   };
 
   return (
@@ -523,65 +578,162 @@ const CourseDetailPage = ({
 
         <TabsContent value="overview" className="space-y-6 animate-fade-in">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart className="h-5 w-5" />
-                  Class Analytics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <p className="text-2xl font-bold">
-                      {courseData.enrolledCount}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Total Students
-                    </p>
-                  </div>
-                  <div className="text-center p-3 bg-muted rounded-lg">
-                    <p className="text-2xl font-bold">{avgAttendance}%</p>
-                    <p className="text-xs text-muted-foreground">
-                      Avg Attendance
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  {bestStudent && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <TrendingUp className="h-4 w-4" />
-                      <span className="font-medium">
-                        Best: {bestStudent.name}
-                      </span>
-                      <Badge variant="secondary">
-                        {bestStudent.attendanceRate}%
-                      </Badge>
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart className="h-5 w-5" />
+                    Class Analytics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold">
+                        {courseData.enrolledCount}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Total Students
+                      </p>
                     </div>
-                  )}
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold">{avgAttendance}%</p>
+                      <p className="text-xs text-muted-foreground">
+                        Avg Attendance
+                      </p>
+                    </div>
+                  </div>
 
-                  {worstStudent && (
+                  <div className="space-y-2">
+                    {bestStudent && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <TrendingUp className="h-4 w-4" />
+                        <span className="font-medium">
+                          Best: {bestStudent.name}
+                        </span>
+                        <Badge variant="secondary">
+                          {bestStudent.attendanceRate}%
+                        </Badge>
+                      </div>
+                    )}
+
+                    {worstStudent && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="font-medium">
+                          Needs Attention: {worstStudent.name}
+                        </span>
+                        <Badge variant="destructive">
+                          {worstStudent.attendanceRate}%
+                        </Badge>
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-2 text-sm">
                       <AlertTriangle className="h-4 w-4" />
-                      <span className="font-medium">
-                        Needs Attention: {worstStudent.name}
+                      <span>
+                        {lowAttendanceCount} students below 50% attendance
                       </span>
-                      <Badge variant="destructive">
-                        {worstStudent.attendanceRate}%
-                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Course Schedule Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Lecture Schedule
+                    </CardTitle>
+                    {!isArchived && (
+                      <CourseScheduleModal
+                        courseId={courseId}
+                        courseName={courseData.name}
+                        currentSchedule={courseData.schedule || []}
+                        disabled={isArchived}
+                        onSuccess={() => {
+                          // Data will update automatically via Convex reactivity
+                        }}
+                      >
+                        <Button variant="outline" size="sm">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Manage
+                        </Button>
+                      </CourseScheduleModal>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {courseData.schedule && courseData.schedule.length > 0 ? (
+                    <div className="space-y-2">
+                      {courseData.schedule.map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-2 bg-muted/30 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors group"
+                        >
+                          {/* Day Badge */}
+                          <Badge
+                            variant="secondary"
+                            className="shrink-0 min-w-12 justify-center text-xs"
+                          >
+                            {item.day.slice(0, 3)}
+                          </Badge>
+
+                          {/* Time Display */}
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className="text-sm text-muted-foreground truncate">
+                              {formatTimeRange(item.startTime, item.endTime)}
+                            </span>
+                          </div>
+
+                          {/* Delete Button - Only show for non-archived courses */}
+                          {!isArchived && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleShowDeleteScheduleConfirmation(
+                                  item.day,
+                                  item.startTime,
+                                  item.endTime,
+                                )
+                              }
+                              className="h-6 w-6 p-0 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all"
+                              title={`Remove ${item.day} schedule`}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground mb-3">
+                        No schedule set
+                      </p>
+                      {!isArchived && (
+                        <CourseScheduleModal
+                          courseId={courseId}
+                          courseName={courseData.name}
+                          currentSchedule={[]}
+                          disabled={isArchived}
+                        >
+                          <Button variant="outline" size="sm">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Add Schedule
+                          </Button>
+                        </CourseScheduleModal>
+                      )}
                     </div>
                   )}
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span>
-                      {lowAttendanceCount} students below 50% attendance
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
 
             <Card className="lg:col-span-2">
               <CardHeader>
@@ -641,6 +793,18 @@ const CourseDetailPage = ({
         courseName={courseData.name}
         onConfirm={handleUnarchive}
         isLoading={unarchiveMutation.isPending}
+      />
+
+      <DeleteScheduleConfirmationModal
+        isOpen={showDeleteScheduleModal}
+        onClose={() => {
+          setShowDeleteScheduleModal(false);
+          setScheduleToDelete(null);
+        }}
+        onConfirm={handleDeleteScheduleItem}
+        dayName={scheduleToDelete?.day || ''}
+        timeRange={scheduleToDelete?.timeRange || ''}
+        isLoading={deleteScheduleItem.isPending}
       />
     </div>
   );
