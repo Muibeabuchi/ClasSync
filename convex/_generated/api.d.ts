@@ -23,6 +23,10 @@ import type * as lib_zodHelpers from "../lib/zodHelpers.js";
 import type * as middlewares_authenticatedMiddleware from "../middlewares/authenticatedMiddleware.js";
 import type * as middlewares_lecturerMiddleware from "../middlewares/lecturerMiddleware.js";
 import type * as middlewares_studentMiddleware from "../middlewares/studentMiddleware.js";
+import type * as migrations_001_add_course_schedule_field from "../migrations/001_add_course_schedule_field.js";
+import type * as migrations_005_production_preparation from "../migrations/005_production_preparation.js";
+import type * as migrations_006_attendance_data_integrity from "../migrations/006_attendance_data_integrity.js";
+import type * as migrations_007_final_production_checks from "../migrations/007_final_production_checks.js";
 import type * as models_attendanceModel from "../models/attendanceModel.js";
 import type * as models_attendanceRecordsModel from "../models/attendanceRecordsModel.js";
 import type * as models_authModel from "../models/authModel.js";
@@ -71,6 +75,10 @@ declare const fullApi: ApiFromModules<{
   "middlewares/authenticatedMiddleware": typeof middlewares_authenticatedMiddleware;
   "middlewares/lecturerMiddleware": typeof middlewares_lecturerMiddleware;
   "middlewares/studentMiddleware": typeof middlewares_studentMiddleware;
+  "migrations/001_add_course_schedule_field": typeof migrations_001_add_course_schedule_field;
+  "migrations/005_production_preparation": typeof migrations_005_production_preparation;
+  "migrations/006_attendance_data_integrity": typeof migrations_006_attendance_data_integrity;
+  "migrations/007_final_production_checks": typeof migrations_007_final_production_checks;
   "models/attendanceModel": typeof models_attendanceModel;
   "models/attendanceRecordsModel": typeof models_attendanceRecordsModel;
   "models/authModel": typeof models_authModel;
@@ -530,6 +538,91 @@ export declare const components: {
     };
     time: {
       getServerTime: FunctionReference<"mutation", "internal", {}, number>;
+    };
+  };
+  migrations: {
+    lib: {
+      cancel: FunctionReference<
+        "mutation",
+        "internal",
+        { name: string },
+        {
+          batchSize?: number;
+          cursor?: string | null;
+          error?: string;
+          isDone: boolean;
+          latestEnd?: number;
+          latestStart: number;
+          name: string;
+          next?: Array<string>;
+          processed: number;
+          state: "inProgress" | "success" | "failed" | "canceled" | "unknown";
+        }
+      >;
+      cancelAll: FunctionReference<
+        "mutation",
+        "internal",
+        { sinceTs?: number },
+        Array<{
+          batchSize?: number;
+          cursor?: string | null;
+          error?: string;
+          isDone: boolean;
+          latestEnd?: number;
+          latestStart: number;
+          name: string;
+          next?: Array<string>;
+          processed: number;
+          state: "inProgress" | "success" | "failed" | "canceled" | "unknown";
+        }>
+      >;
+      clearAll: FunctionReference<
+        "mutation",
+        "internal",
+        { before?: number },
+        null
+      >;
+      getStatus: FunctionReference<
+        "query",
+        "internal",
+        { limit?: number; names?: Array<string> },
+        Array<{
+          batchSize?: number;
+          cursor?: string | null;
+          error?: string;
+          isDone: boolean;
+          latestEnd?: number;
+          latestStart: number;
+          name: string;
+          next?: Array<string>;
+          processed: number;
+          state: "inProgress" | "success" | "failed" | "canceled" | "unknown";
+        }>
+      >;
+      migrate: FunctionReference<
+        "mutation",
+        "internal",
+        {
+          batchSize?: number;
+          cursor?: string | null;
+          dryRun: boolean;
+          fnHandle: string;
+          name: string;
+          next?: Array<{ fnHandle: string; name: string }>;
+        },
+        {
+          batchSize?: number;
+          cursor?: string | null;
+          error?: string;
+          isDone: boolean;
+          latestEnd?: number;
+          latestStart: number;
+          name: string;
+          next?: Array<string>;
+          processed: number;
+          state: "inProgress" | "success" | "failed" | "canceled" | "unknown";
+        }
+      >;
     };
   };
 };

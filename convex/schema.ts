@@ -266,92 +266,34 @@ const applicationTables = {
     .index('by_attendanceSessionId', ['attendanceSessionId'])
     .index('by_studentId', ['studentId'])
     .index('by_studentId_by_courseId', ['studentId', 'courseId']),
-
-  // ? ==================== WILL LOOK AT THIS LATER ========================  //
-
-  // Notifications
-  // notifications: defineTable({
-  //   userId: v.id('users'),
-  //   type: v.union(
-  //     v.literal('join_approved'),
-  //     v.literal('join_rejected'),
-  //     v.literal('session_created'),
-  //     v.literal('course_completed'),
-  //     v.literal('attendance_reminder'),
-  //   ),
-  //   title: v.string(),
-  //   message: v.string(),
-  //   data: v.optional(
-  //     v.object({
-  //       courseId: v.optional(v.id('courses')),
-  //       sessionId: v.optional(v.id('attendanceSessions')),
-  //       requestId: v.optional(v.id('joinRequests')),
-  //     }),
-  //   ),
-  //   isRead: v.boolean(),
-  //   // createdAt: v.number(),
-  // })
-  //   .index('by_user', ['userId'])
-  //   .index('by_read', ['isRead']),
-
-  // ? ============================== NOTHING HERE TO SEE ========================== //
-
-  // Course completion reports
-  // courseReports: defineTable({
-  //   courseId: v.id('courses'),
-  //   reportType: v.union(
-  //     v.literal('completion'),
-  //     v.literal('analytics'),
-  //     v.literal('attendance'),
-  //   ),
-  //   data: v.object({
-  //     totalStudents: v.number(),
-  //     totalSessions: v.number(),
-  //     averageAttendance: v.number(),
-  //     topPerformers: v.array(
-  //       v.object({
-  //         studentId: v.string(),
-  //         studentName: v.string(),
-  //         attendancePercentage: v.number(),
-  //       }),
-  //     ),
-  //     bottomPerformers: v.array(
-  //       v.object({
-  //         studentId: v.string(),
-  //         studentName: v.string(),
-  //         attendancePercentage: v.number(),
-  //       }),
-  //     ),
-  //     sessionBreakdown: v.array(
-  //       v.object({
-  //         sessionId: v.string(),
-  //         sessionName: v.string(),
-  //         date: v.number(),
-  //         attendanceCount: v.number(),
-  //         attendancePercentage: v.number(),
-  //       }),
-  //     ),
-  //   }),
-  //   generatedAt: v.number(),
-  //   generatedBy: v.id('users'),
-  // })
-  //   .index('by_course', ['courseId'])
-  //   .index('by_type', ['reportType']),
-
-  // Messages (existing)
-  // messages: defineTable({
-  //   senderId: v.id('users'),
-  //   recipientId: v.id('users'),
-  //   subject: v.string(),
-  //   content: v.string(),
-  //   isRead: v.boolean(),
-  //   sentAt: v.number(),
-  //   courseId: v.optional(v.id('courses')),
-  // })
-  //   .index('by_recipient', ['recipientId'])
-  //   .index('by_sender', ['senderId'])
-  //   .index('by_course', ['courseId']),
 };
+
+// ? ==================== WILL LOOK AT THIS LATER ========================  //
+
+// Notifications
+// notifications: defineTable({
+//   userId: v.id('users'),
+//   type: v.union(
+//     v.literal('join_approved'),
+//     v.literal('join_rejected'),
+//     v.literal('session_created'),
+//     v.literal('course_completed'),
+//     v.literal('attendance_reminder'),
+//   ),
+//   title: v.string(),
+//   message: v.string(),
+//   data: v.optional(
+//     v.object({
+//       courseId: v.optional(v.id('courses')),
+//       sessionId: v.optional(v.id('attendanceSessions')),
+//       requestId: v.optional(v.id('joinRequests')),
+//     }),
+//   ),
+//   isRead: v.boolean(),
+//   // createdAt: v.number(),
+// })
+//   .index('by_user', ['userId'])
+//   .index('by_read', ['isRead']),
 
 export default defineSchema({
   // ...authTables,
