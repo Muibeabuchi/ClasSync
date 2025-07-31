@@ -18,6 +18,7 @@ import type { Id } from 'convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { useGeolocated } from 'react-geolocated';
 import { useNavigate } from '@tanstack/react-router';
+import { LecturerLocationStabilityMessage } from '@/components/attendance/LecturerLocationStabilityMessage';
 
 interface AttendanceSessionModalProps {
   courseId: Id<'courses'>;
@@ -154,6 +155,12 @@ const AttendanceSessionModal = ({
               <div>• 30 seconds active time (students can check-in)</div>
             </div>
           </div>
+
+          {/* Location Stability Message */}
+          <LecturerLocationStabilityMessage
+            isVisible={true}
+            variant="compact"
+          />
 
           {/* Location Settings */}
           <div className="space-y-3">

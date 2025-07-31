@@ -21,7 +21,7 @@ import {
 import { SessionTimer } from '@/components/attendance/SessionTimer';
 import { toast } from 'sonner';
 import { useGetStudentCoursesWithActiveAttendance } from '@/feature/course/api/get-student-courses-with-active-attendance';
-import { useGeolocated } from 'react-geolocated';
+import { useOptimizedGPS } from '@/hooks/useOptimizedGPS';
 import { useStudentTakeAttendance } from '@/feature/attendance/api';
 import { cn } from '@/lib/utils';
 import type { Id } from 'convex/_generated/dataModel';
@@ -56,13 +56,20 @@ interface CompactGPSStatusProps {
   error?: string;
 }
 
-const CompactGPSStatus: React.FC<CompactGPSStatusProps> = ({
-  isAvailable,
-  isEnabled,
-  // isLoading,
-  error,
-}) => {
+const CompactGPSStatus: React.FC<
+  CompactGPSStatusProps & { hasActiveSessions: boolean; isTracking: boolean }
+> = ({ isAvailable, isEnabled, error, hasActiveSessions, isTracking }) => {
   const getStatusInfo = () => {
+    if (!hasActiveSessions) {
+      return {
+        icon: MapPinOff,
+        color: 'text-gray-600',
+        bgColor: 'bg-gray-100',
+        borderColor: 'border-gray-200',
+        text: 'GPS Off',
+      };
+    }
+
     if (!isAvailable || !isEnabled || error) {
       return {
         icon: MapPinOff,
@@ -73,12 +80,22 @@ const CompactGPSStatus: React.FC<CompactGPSStatusProps> = ({
       };
     }
 
+    if (isTracking) {
+      return {
+        icon: Target,
+        color: 'text-green-600',
+        bgColor: 'bg-green-100',
+        borderColor: 'border-green-200',
+        text: 'GPS Tracking',
+      };
+    }
+
     return {
-      icon: Target,
-      color: 'text-green-600',
-      bgColor: 'bg-green-100',
-      borderColor: 'border-green-200',
-      text: 'GPS Ready',
+      icon: Navigation,
+      color: 'text-yellow-600',
+      bgColor: 'bg-yellow-100',
+      borderColor: 'border-yellow-200',
+      text: 'Getting GPS',
     };
   };
 
@@ -458,27 +475,21 @@ const MobileAttendanceCheckIn: React.FC = () => {
     setIsWithinRange(newRangeStatus);
   };
 
+  // Only enable GPS tracking when there are active sessions
+  const hasActiveSessions = activeCourses.length > 0;
+
   const {
     isGeolocationAvailable,
     isGeolocationEnabled,
-    // getPosition,
     coords,
     positionError,
-  } = useGeolocated({
-    positionOptions: {
-      enableHighAccuracy: true,
-      timeout: 10000,
-      maximumAge: 30000,
-    },
-    userDecisionTimeout: 5000,
-    suppressLocationOnMount: false,
-    watchPosition: true, // Enable continuous tracking
-    onSuccess: (position) => {
-      // Calculate distances whenever location updates
-      calculateDistancesAndRange(position.coords);
-    },
+    isTracking,
+    getPosition,
+  } = useOptimizedGPS({
+    enableTracking: hasActiveSessions,
+    onLocationUpdate: calculateDistancesAndRange,
     onError: (error) => {
-      console.error('Geolocation error:', error);
+      console.error('GPS error:', error);
       // Clear distances on error
       setDistances({});
       setIsWithinRange({});
@@ -601,8 +612,9 @@ const MobileAttendanceCheckIn: React.FC = () => {
             <CompactGPSStatus
               isAvailable={isGeolocationAvailable}
               isEnabled={isGeolocationEnabled}
-              // isLoading={isGeolocationLoading}
               error={positionError?.message}
+              hasActiveSessions={hasActiveSessions}
+              isTracking={isTracking}
             />
           </div>
 

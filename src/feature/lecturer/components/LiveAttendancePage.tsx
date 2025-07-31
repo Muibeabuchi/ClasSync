@@ -16,6 +16,7 @@ import type {
 } from 'convex/schema';
 import { toast } from 'sonner';
 import { useNavigate } from '@tanstack/react-router';
+import { LecturerLocationStabilityMessage } from '@/components/attendance/LecturerLocationStabilityMessage';
 
 interface LiveAttendancePageProps {
   attendanceSession: GetAttendanceSessionReturnType;
@@ -118,6 +119,12 @@ const LiveAttendancePage = ({
           // <Button onClick={handleEndSession}>View Full Log</Button>
         )} */}
       </div>
+
+      {/* Location Stability Message - Show during active sessions */}
+      <LecturerLocationStabilityMessage
+        isVisible={sessionState === 'pending' || sessionState === 'active'}
+        variant="default"
+      />
 
       {/* Session State Card */}
       <Card

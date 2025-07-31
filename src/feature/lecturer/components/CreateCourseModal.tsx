@@ -302,11 +302,11 @@ const CreateCourseModal = ({ children, onSuccess }: CreateCourseModalProps) => {
       <Button
         type="submit"
         form="course-form"
-        disabled={!form.formState.isValid}
+        disabled={form.formState.isSubmitting}
         className="w-full sm:w-auto"
       >
         <Plus className="h-4 w-4 mr-2" />
-        Create Course
+        {form.formState.isSubmitting ? 'Creating...' : 'Create Course'}
       </Button>
     </div>
   );

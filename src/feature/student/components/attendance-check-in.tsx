@@ -32,7 +32,7 @@ import {
 import { SessionTimer } from '@/components/attendance/SessionTimer';
 import { toast } from 'sonner';
 import { useGetStudentCoursesWithActiveAttendance } from '@/feature/course/api/get-student-courses-with-active-attendance';
-import { useGeolocated } from 'react-geolocated';
+import { useOptimizedGPS } from '@/hooks/useOptimizedGPS';
 import { useStudentTakeAttendance } from '@/feature/attendance/api';
 import type { Id } from 'convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
@@ -112,26 +112,19 @@ const AttendanceCheckIn = () => {
     [activeCourses],
   );
 
+  // Only enable GPS tracking when there are active sessions
+  const hasActiveSessions = activeCourses.length > 0;
+
   const {
     isGeolocationAvailable,
     isGeolocationEnabled,
     coords,
     getPosition,
     positionError,
-  } = useGeolocated({
-    positionOptions: {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 30000,
-    },
-    userDecisionTimeout: 10000,
-    suppressLocationOnMount: false,
-    watchPosition: true, // Enable continuous tracking
-    onSuccess: (position) => {
-      console.log('GPS position obtained:', position.coords);
-      // Calculate distances whenever location updates
-      calculateDistancesAndRange(position.coords);
-    },
+    isTracking,
+  } = useOptimizedGPS({
+    enableTracking: hasActiveSessions,
+    onLocationUpdate: calculateDistancesAndRange,
     onError: (error) => {
       console.error('GPS error:', error);
       // Clear distances on error
@@ -292,49 +285,64 @@ const AttendanceCheckIn = () => {
             <div
               className={cn(
                 'flex items-center gap-2 px-3 py-2 rounded-full border shadow-sm',
-                gpsReady
+                hasActiveSessions && gpsReady
                   ? 'bg-green-100 border-green-200'
-                  : 'bg-yellow-100 border-yellow-200',
+                  : hasActiveSessions && !gpsReady
+                    ? 'bg-yellow-100 border-yellow-200'
+                    : 'bg-gray-100 border-gray-200',
               )}
             >
               <Navigation
                 className={cn(
                   'h-4 w-4',
-                  gpsReady ? 'text-green-600' : 'text-yellow-600',
+                  hasActiveSessions && gpsReady
+                    ? 'text-green-600'
+                    : hasActiveSessions && !gpsReady
+                      ? 'text-yellow-600'
+                      : 'text-gray-600',
                 )}
               />
               <span
                 className={cn(
                   'text-sm font-medium',
-                  gpsReady ? 'text-green-800' : 'text-yellow-800',
+                  hasActiveSessions && gpsReady
+                    ? 'text-green-800'
+                    : hasActiveSessions && !gpsReady
+                      ? 'text-yellow-800'
+                      : 'text-gray-800',
                 )}
               >
-                {!isGeolocationAvailable
-                  ? 'GPS unavailable'
-                  : !isGeolocationEnabled
-                    ? 'Enable GPS'
-                    : positionError
-                      ? 'GPS error'
-                      : coords
-                        ? 'GPS ready'
-                        : 'Getting GPS...'}
+                {!hasActiveSessions
+                  ? 'GPS off'
+                  : !isGeolocationAvailable
+                    ? 'GPS unavailable'
+                    : !isGeolocationEnabled
+                      ? 'Enable GPS'
+                      : positionError
+                        ? 'GPS error'
+                        : coords && isTracking
+                          ? 'GPS tracking'
+                          : 'Getting GPS...'}
               </span>
-              {coords && (
+              {coords && hasActiveSessions && (
                 <span className="text-xs text-muted-foreground">
                   ±{Math.round(coords.accuracy)}m
                 </span>
               )}
             </div>
-            {!coords && isGeolocationAvailable && isGeolocationEnabled && (
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={getPosition}
-                className="text-xs"
-              >
-                Retry GPS
-              </Button>
-            )}
+            {hasActiveSessions &&
+              !coords &&
+              isGeolocationAvailable &&
+              isGeolocationEnabled && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={getPosition}
+                  className="text-xs"
+                >
+                  Retry GPS
+                </Button>
+              )}
           </div>
         </div>
 
