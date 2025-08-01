@@ -1,7 +1,14 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import { Home, BookOpen, CheckCircle, Bell, User } from 'lucide-react';
+import {
+  Home,
+  BookOpen,
+  CheckCircle,
+  // Bell,
+  User,
+  UserPlus,
+} from 'lucide-react';
 import { Link, useRouterState } from '@tanstack/react-router';
 
 export interface BottomNavItem {
@@ -39,7 +46,7 @@ const navigationItems: Omit<BottomNavItem, 'badge'>[] = [
   {
     id: 'requests',
     label: 'Requests',
-    icon: Bell,
+    icon: UserPlus,
     to: '/dashboard/student/join-requests',
   },
   {
