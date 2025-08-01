@@ -23,7 +23,10 @@ function RouteComponent() {
 
   return (
     <Authenticated>
-      <LecturerDashboardContent fullName={data?.fullName} />
+      <LecturerDashboardContent
+        fullName={data?.fullName}
+        userImage={data?.userImage}
+      />
     </Authenticated>
   );
 }

@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   BookOpen,
   Users,
@@ -27,10 +28,12 @@ import type { Id } from 'convex/_generated/dataModel';
 
 interface LecturerDashboardContentProps {
   fullName: string | undefined;
+  userImage?: string;
 }
 
 const LecturerDashboardContent = ({
   fullName,
+  userImage,
 }: LecturerDashboardContentProps) => {
   const { data: dashboardStats } = useLecturerDashboardStats();
   const { data: recentCourses } = useLecturerRecentCourses(5);
@@ -71,13 +74,24 @@ const LecturerDashboardContent = ({
   return (
     <div className="space-y-8 animate-fade-in-up">
       {/* Welcome Header */}
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight gradient-text">
-          Welcome back <strong className="text-primary"> {fullName}</strong>
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          {`Here's what's happening with your courses today`}
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight gradient-text">
+            Welcome back <strong className="text-primary"> {fullName}</strong>
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            {`Here's what's happening with your courses today`}
+          </p>
+        </div>
+        <Avatar className="h-12 w-12">
+          <AvatarImage src={userImage} />
+          <AvatarFallback>
+            {fullName
+              ?.split(' ')
+              .map((n) => n[0])
+              .join('')}
+          </AvatarFallback>
+        </Avatar>
       </div>
 
       {/* Stats Cards */}
