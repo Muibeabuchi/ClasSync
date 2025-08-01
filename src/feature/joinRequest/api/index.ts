@@ -11,16 +11,16 @@ export const useGetLecturerJoinRequests = () =>
 export const useRequestToJoinCourseClassList = () =>
   useMutation({
     mutationFn: useConvexMutation(api.joinRequests.createJoinRequest),
-    onSuccess: () => {
-      toast.success('Join request sent', {
-        description: 'Your request has been sent to the lecturer for review',
-      });
-    },
-    onError: (error) => {
-      toast.error('Failed to send request', {
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    },
+    // onSuccess: () => {
+    //   toast.success('Join request sent', {
+    //     description: 'Your request has been sent to the lecturer for review',
+    //   });
+    // },
+    // onError: (error) => {
+    //   toast.error('Failed to send request', {
+    //     description: error instanceof Error ? error.message : 'Unknown error',
+    //   });
+    // },
   });
 
 export const useAcceptJoinRequest = () =>
@@ -28,16 +28,16 @@ export const useAcceptJoinRequest = () =>
     mutationFn: useConvexMutation(
       api.joinRequests.linkStudentToAttendanceEntry,
     ),
-    onSuccess: () => {
-      toast.success('Student approved', {
-        description: 'Student has been successfully added to the course',
-      });
-    },
-    onError: (error) => {
-      toast.error('Failed to approve student', {
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    },
+    // onSuccess: () => {
+    //   toast.success('Student approved', {
+    //     description: 'Student has been successfully added to the course',
+    //   });
+    // },
+    // onError: (error) => {
+    //   toast.error('Failed to approve student', {
+    //     description: error instanceof Error ? error.message : 'Unknown error',
+    //   });
+    // },
   });
 
 export const useRejectJoinRequest = () =>
@@ -48,9 +48,9 @@ export const useRejectJoinRequest = () =>
         description: 'The join request has been rejected successfully',
       });
     },
-    onError: (error) => {
-      toast.error('Failed to reject request', {
-        description: error instanceof Error ? error.message : 'Unknown error',
-      });
-    },
+    // onError: (error) => {
+    //   toast.error('Failed to reject request', {
+    //     description: error instanceof Error ? error.message : 'Unknown error',
+    //   });
+    // },
   });
