@@ -84,28 +84,31 @@ const MobileStudentSettings = () => {
     children?: React.ReactNode;
     action?: () => void;
   }) => (
-    <button
-      className={`flex items-center justify-between p-4 ${
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+    <div
+      className={`flex items-center justify-between w-full p-4 ${
         action ? 'cursor-pointer active:bg-muted/50' : ''
-      } transition-colors`}
+      } transition-colors text-left`}
       onClick={action}
     >
-      <div className="flex items-center space-x-3 flex-1">
-        <div className="p-2 bg-muted rounded-full">
+      <div className="flex items-center space-x-3 flex-1 min-w-0">
+        <div className="p-2 bg-muted rounded-full flex-shrink-0">
           <Icon className="h-4 w-4" />
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm">{title}</p>
           {description && (
-            <p className="text-xs text-muted-foreground mt-1">{description}</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-tight">
+              {description}
+            </p>
           )}
         </div>
       </div>
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 flex-shrink-0">
         {children}
         {action && <ChevronRight className="h-4 w-4 text-muted-foreground" />}
       </div>
-    </button>
+    </div>
   );
 
   return (
@@ -224,8 +227,8 @@ const MobileStudentSettings = () => {
           <Card className="mx-4 mb-6">
             <CardContent className="p-0">
               <div className="p-4">
-                <div className="flex items-center space-x-3 mb-3">
-                  <div className="p-2 bg-muted rounded-full">
+                <div className="flex items-center space-x-3 mb-2">
+                  <div className="p-2 bg-muted rounded-full flex-shrink-0">
                     {getThemeIcon(theme)}
                   </div>
                   <div className="flex-1">
@@ -238,7 +241,7 @@ const MobileStudentSettings = () => {
                     setTheme(value as 'light' | 'dark' | 'system')
                   }
                 >
-                  <SelectTrigger className="min-h-[48px]">
+                  <SelectTrigger className="w-full min-h-[48px]">
                     <SelectValue>
                       <div className="flex items-center gap-2">
                         {getThemeIcon(theme)}
