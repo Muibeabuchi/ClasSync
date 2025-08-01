@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+// import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
   Select,
@@ -19,20 +19,20 @@ import {
   Monitor,
   Download,
   Trash2,
-  Save,
+  // Save,
   BookOpen,
-  ArrowLeft,
+  // ArrowLeft,
   MessageSquare,
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTheme } from '@/components/theme-provider';
 
-interface MobileStudentSettingsProps {
-  onBack?: () => void;
-}
+// interface MobileStudentSettingsProps {
+//   onBack?: () => void;
+// }
 
-const MobileStudentSettings = ({ onBack }: MobileStudentSettingsProps) => {
+const MobileStudentSettings = () => {
   const { theme, setTheme } = useTheme();
 
   const [settings, setSettings] = useState({
@@ -44,9 +44,9 @@ const MobileStudentSettings = ({ onBack }: MobileStudentSettingsProps) => {
     },
   });
 
-  const handleSave = () => {
-    toast.success('Settings saved successfully');
-  };
+  // const handleSave = () => {
+  //   toast.success('Settings saved successfully');
+  // };
 
   const updateNotificationSetting = (key: string, value: boolean) => {
     setSettings((prev) => ({
@@ -111,7 +111,7 @@ const MobileStudentSettings = ({ onBack }: MobileStudentSettingsProps) => {
   return (
     <div className="min-h-[100dvh] bg-background">
       {/* Mobile Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b px-4 py-3">
+      {/* <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b px-4 py-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             {onBack && (
@@ -131,7 +131,7 @@ const MobileStudentSettings = ({ onBack }: MobileStudentSettingsProps) => {
             Save
           </Button>
         </div>
-      </div>
+      </div> */}
 
       <div className="pb-20">
         {/* Notifications Section */}

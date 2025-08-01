@@ -41,6 +41,7 @@ const MobileStudentProfile = ({
   // Form state for editable fields
   const [formData, setFormData] = useState({
     fullName: '',
+    registrationNumber: '',
   });
 
   // Update form data when user data loads
@@ -48,19 +49,28 @@ const MobileStudentProfile = ({
     if (userData) {
       setFormData({
         fullName: userData.fullName || '',
+        registrationNumber: userData.registrationNumber || '',
       });
     }
   }, [userData]);
 
   const handleSave = async () => {
     if (!userData) return;
-    if (formData.fullName !== userData.fullName) {
+
+    // Check if any data has actually changed
+    const hasChanges =
+      formData.fullName !== userData.fullName ||
+      formData.registrationNumber !== (userData.registrationNumber || '');
+
+    if (!hasChanges) {
       setIsEditing(false);
       return;
     }
+
     try {
       await updateProfileMutation.mutateAsync({
         fullName: formData.fullName,
+        registrationNumber: formData.registrationNumber || undefined,
       });
       setIsEditing(false);
     } catch (error) {
@@ -242,13 +252,42 @@ const MobileStudentProfile = ({
                 />
               </div>
             </div>
+
+            {/* Registration Number */}
             <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
+              <Label
+                htmlFor="registrationNumber"
+                className="mobile-text-sm font-medium"
+              >
+                Registration Number
+              </Label>
+              <Input
+                id="registrationNumber"
+                type="text"
+                inputMode="text"
+                placeholder="e.g., 202312345"
+                value={formData.registrationNumber}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    registrationNumber: e.target.value,
+                  })
+                }
+                disabled={!isEditing || updateProfileMutation.isPending}
+                className="min-h-[48px]"
+              />
+            </div>
+
+            {/* Gender */}
+            <div className="space-y-2">
+              <Label htmlFor="gender" className="mobile-text-sm font-medium">
+                Gender
+              </Label>
               <Input
                 id="gender"
                 value={userData.gender || 'Not specified'}
                 disabled
-                className="bg-muted"
+                className="bg-muted min-h-[48px]"
               />
             </div>
           </CardContent>

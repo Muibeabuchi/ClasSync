@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User, Camera, Upload, Loader2 } from 'lucide-react';
+import { User, Camera, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   useGetCurrentUser,
@@ -33,6 +33,7 @@ const StudentProfile = () => {
   // Form state for editable fields
   const [formData, setFormData] = useState({
     fullName: '',
+    registrationNumber: '',
   });
 
   // Update form data when user data loads
@@ -40,6 +41,7 @@ const StudentProfile = () => {
     if (userData) {
       setFormData({
         fullName: userData.fullName || '',
+        registrationNumber: userData.registrationNumber || '',
       });
     }
   }, [userData]);
@@ -47,12 +49,20 @@ const StudentProfile = () => {
   const handleSave = async () => {
     if (!userData) return;
 
+    // Check if any data has actually changed
+    const hasChanges =
+      formData.fullName !== userData.fullName ||
+      formData.registrationNumber !== (userData.registrationNumber || '');
+
+    if (!hasChanges) {
+      setIsEditing(false);
+      return;
+    }
+
     try {
       await updateProfileMutation.mutateAsync({
-        fullName:
-          formData.fullName !== userData.fullName
-            ? formData.fullName
-            : undefined,
+        fullName: formData.fullName,
+        registrationNumber: formData.registrationNumber || undefined,
       });
       setIsEditing(false);
     } catch (error) {
@@ -197,6 +207,22 @@ const StudentProfile = () => {
                     disabled={!isEditing || updateProfileMutation.isPending}
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="registrationNumber">Registration Number</Label>
+                <Input
+                  id="registrationNumber"
+                  placeholder="e.g., 202312345"
+                  value={formData.registrationNumber}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      registrationNumber: e.target.value,
+                    })
+                  }
+                  disabled={!isEditing || updateProfileMutation.isPending}
+                />
               </div>
 
               <div className="space-y-2">

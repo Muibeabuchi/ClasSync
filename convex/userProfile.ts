@@ -78,6 +78,7 @@ export const updateUserRole = AuthenticatedUserMutation({
 export const updateUserProfile = AuthenticatedUserMutation({
   args: {
     fullName: v.optional(v.string()),
+    registrationNumber: v.optional(v.string()),
     // email: v.optional(v.string()),
     // gender: v.optional(studentGenderSchema),
   },
@@ -87,9 +88,17 @@ export const updateUserProfile = AuthenticatedUserMutation({
   },
   async handler(ctx, args) {
     try {
-      await ctx.db.patch(ctx.userId, {
-        fullName: args.fullName,
-      });
+      // Build update object with only provided fields
+      const updateData: any = {};
+      if (args.fullName !== undefined) {
+        updateData.fullName = args.fullName;
+      }
+      if (args.registrationNumber !== undefined) {
+        updateData.registrationNumber = args.registrationNumber;
+      }
+
+      await ctx.db.patch(ctx.userId, updateData);
+
       return {
         success: true,
         message: 'Profile updated successfully',

@@ -9,11 +9,11 @@ export const Route = createFileRoute('/dashboard/student/profile')({
   component: RouteComponent,
   async loader({ context }) {
     // Prefetch user data and profile image for profile page
-    await context.queryClient.ensureQueryData(
-      StudentProfileQueryOptions.getCurrentUser,
-    );
     context.queryClient.prefetchQuery(
       StudentProfileQueryOptions.getUserProfileImage,
+    );
+    await context.queryClient.ensureQueryData(
+      StudentProfileQueryOptions.getCurrentUser,
     );
   },
 });

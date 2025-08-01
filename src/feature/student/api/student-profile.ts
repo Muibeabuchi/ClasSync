@@ -28,7 +28,12 @@ export const useUpdateUserProfile = () => {
     },
     onError: (error) => {
       console.error('Profile update error:', error);
-      toast.error('Failed to update profile. Please try again.');
+      // Handle specific error messages from backend
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : 'Failed to update profile. Please try again.';
+      toast.error(errorMessage);
     },
   });
 };

@@ -1,18 +1,15 @@
-import { useState } from 'react';
+// import { useState } from 'react';
 import MobileStudentProfile from './mobile-student-profile';
-import MobileStudentSettings from './mobile-student-settings';
+// import MobileStudentSettings from './mobile-student-settings';
+import { useNavigate } from '@tanstack/react-router';
 
 const MobileStudentProfileContainer = () => {
-  const [currentView, setCurrentView] = useState<'profile' | 'settings'>(
-    'profile',
-  );
-
-  if (currentView === 'settings') {
-    return <MobileStudentSettings onBack={() => setCurrentView('profile')} />;
-  }
+  const navigate = useNavigate();
 
   return (
-    <MobileStudentProfile onOpenSettings={() => setCurrentView('settings')} />
+    <MobileStudentProfile
+      onOpenSettings={() => navigate({ to: '/dashboard/student/settings' })}
+    />
   );
 };
 
