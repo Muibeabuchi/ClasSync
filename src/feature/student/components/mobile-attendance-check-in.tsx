@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -306,17 +306,17 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
 
         {/* Attendance Code Input */}
         {course?.session.attendanceCode && showCodeInput && (
-          <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="space-y-3 p-4  rounded-lg border ">
             <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-blue-600" />
+              <AlertCircle className="h-4 w-4 " />
               <Label
                 htmlFor="attendance-code"
-                className="mobile-text-sm font-medium text-blue-800"
+                className="mobile-text-sm font-medium "
               >
                 Attendance Code Required
               </Label>
             </div>
-            <p className="mobile-text-xs text-blue-700 mb-2">
+            <p className="mobile-text-xs  mb-2">
               Please enter the attendance code provided by your lecturer before
               taking attendance.
             </p>
@@ -326,7 +326,7 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
               placeholder="Enter 6-digit code"
               value={attendanceCode}
               onChange={(e) => setAttendanceCode(e.target.value.toUpperCase())}
-              className="text-center font-mono text-xl h-12 border-blue-300 focus:border-blue-500"
+              className="text-center font-mono text-xl h-12"
               maxLength={6}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && attendanceCode.trim()) {
@@ -334,7 +334,7 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
                 }
               }}
             />
-            <p className="mobile-text-xs text-blue-600">
+            <p className="mobile-text-xs ">
               Ask your lecturer for the 6-digit attendance code if you
               don&apos;t have it.
             </p>
@@ -445,35 +445,38 @@ const MobileAttendanceCheckIn: React.FC = () => {
   const { mutateAsync: takeAttendance } = useStudentTakeAttendance();
 
   // Calculate distances and range status for all active sessions
-  const calculateDistancesAndRange = (coords: GeolocationCoordinates) => {
-    if (!coords || activeCourses.length === 0) return;
+  const calculateDistancesAndRange = useCallback(
+    (coords: GeolocationCoordinates) => {
+      if (!coords || activeCourses.length === 0) return;
 
-    const newDistances: Record<string, number> = {};
-    const newRangeStatus: Record<string, boolean> = {};
+      const newDistances: Record<string, number> = {};
+      const newRangeStatus: Record<string, boolean> = {};
 
-    activeCourses.forEach((course) => {
-      if (
-        course?.session?.location &&
-        (course.session.status === 'pending' ||
-          course.session.status === 'active')
-      ) {
-        const distance = calculateDistance(
-          coords.latitude,
-          coords.longitude,
-          course.session.location.lat,
-          course.session.location.long,
-        );
+      activeCourses.forEach((course) => {
+        if (
+          course?.session?.location &&
+          (course.session.status === 'pending' ||
+            course.session.status === 'active')
+        ) {
+          const distance = calculateDistance(
+            coords.latitude,
+            coords.longitude,
+            course.session.location.lat,
+            course.session.location.long,
+          );
 
-        const maxDistance = course.session.radius || 100;
+          const maxDistance = course.session.radius || 100;
 
-        newDistances[course.session._id] = distance;
-        newRangeStatus[course.session._id] = distance <= maxDistance;
-      }
-    });
+          newDistances[course.session._id] = distance;
+          newRangeStatus[course.session._id] = distance <= maxDistance;
+        }
+      });
 
-    setDistances(newDistances);
-    setIsWithinRange(newRangeStatus);
-  };
+      setDistances(newDistances);
+      setIsWithinRange(newRangeStatus);
+    },
+    [activeCourses],
+  );
 
   // Only enable GPS tracking when there are active sessions
   const hasActiveSessions = activeCourses.length > 0;
@@ -484,7 +487,7 @@ const MobileAttendanceCheckIn: React.FC = () => {
     coords,
     positionError,
     isTracking,
-    getPosition,
+    // getPosition,
   } = useOptimizedGPS({
     enableTracking: hasActiveSessions,
     onLocationUpdate: calculateDistancesAndRange,

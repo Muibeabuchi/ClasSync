@@ -138,19 +138,24 @@ const AttendanceSessionModal = ({
             <Clock className="h-5 w-5 text-primary" />
             Start Attendance Session
           </DialogTitle>
-          <DialogDescription>
-            Configure your attendance session for <strong>{courseName}</strong>
+          <DialogDescription className="truncate">
+            Configure your attendance session for{' '}
+            <strong>
+              {courseName.length > 30
+                ? courseName.substring(0, 30) + '...'
+                : courseName}
+            </strong>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Session Info */}
-          <div className="bg-blue-50 p-4 rounded-lg space-y-2">
+          <div className="bg-primary/10 p-4 rounded-lg space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <Clock className="h-4 w-4 text-blue-600" />
+              <Clock className="h-4 w-4 text-primary" />
               Session Duration: 1 minute total
             </div>
-            <div className="text-xs text-gray-600 space-y-1">
+            <div className="text-xs text-muted-foreground space-y-1">
               <div>{`• 30 seconds prep time (students see "Get Ready")`}</div>
               <div>• 30 seconds active time (students can check-in)</div>
             </div>
@@ -179,7 +184,7 @@ const AttendanceSessionModal = ({
               />
               <Badge variant="outline">{locationRadius}m</Badge>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Students must be within this radius to check-in
             </p>
           </div>
@@ -225,7 +230,7 @@ const AttendanceSessionModal = ({
                     </Button>
                   )}
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Students will need to enter this code during check-in
                 </p>
               </div>

@@ -19,12 +19,12 @@ export const LecturerLocationStabilityMessage = ({
     return (
       <div
         className={cn(
-          'flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm',
+          'flex items-center gap-2 px-3 py-2  border animate-pulse rounded-lg text-sm',
           className,
         )}
       >
-        <MapPin className="h-4 w-4 text-blue-600 flex-shrink-0" />
-        <span className="text-blue-800 font-medium">
+        <MapPin className="h-4 w-4 flex-shrink-0" />
+        <span className="font-medium">
           Stay in position during attendance session
         </span>
       </div>
@@ -37,7 +37,7 @@ export const LecturerLocationStabilityMessage = ({
       <AlertDescription className="text-blue-800">
         <strong>Location Stability:</strong> Please remain in your current
         location while the attendance session is active. Moving around may
-        affect students' ability to check in successfully.
+        affect students&apos; ability to check in successfully.
       </AlertDescription>
     </Alert>
   );
