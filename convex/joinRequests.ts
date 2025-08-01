@@ -244,7 +244,7 @@ export const getMyJoinRequests = StudentQueryMiddleware({
     const requests = await ctx.db
       .query('joinRequests')
       .withIndex('by_studentId', (q) => q.eq('studentId', studentId))
-      .filter((q) => q.neq(q.field('status'), 'approved'))
+      // .filter((q) => q.neq(q.field('status'), 'approved'))
       .order('desc')
       .collect();
 

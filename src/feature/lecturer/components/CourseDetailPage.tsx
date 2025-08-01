@@ -309,7 +309,7 @@ const CourseDetailPage = ({
         <div className="flex items-center space-x-4">
           <Button
             variant="link"
-            className="cursor-pointer hover:bg-muted-foreground"
+            className="cursor-pointer hover:bg-muted-foreground sm:hidden"
             onClick={handleNavigate}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

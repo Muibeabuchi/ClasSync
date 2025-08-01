@@ -407,7 +407,7 @@ const JoinRequestsPage: React.FC = () => {
           )}
 
           {/* Approved Requests */}
-          {approvedRequests.length > 0 && (
+          {/* {approvedRequests.length > 0 && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-600" />
@@ -425,7 +425,7 @@ const JoinRequestsPage: React.FC = () => {
                 ))}
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Rejected Requests */}
           {rejectedRequests.length > 0 && (

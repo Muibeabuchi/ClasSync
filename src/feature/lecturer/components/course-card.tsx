@@ -5,7 +5,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
-  CardContent,
+  // CardContent,
 } from '@/components/ui/card';
 import {
   DropdownMenu,
@@ -175,8 +175,8 @@ export const CourseCard = ({
               <span className="sm:hidden">
                 {getTruncatedCourseName(course.courseName)}
               </span>
-              <span className="hidden sm:inline truncate">
-                {course.courseName}
+              <span className="hidden text-sm sm:inline truncate">
+                {getTruncatedCourseName(course.courseName)}
               </span>
             </CardTitle>
             <CardDescription className="text-xs sm:text-sm font-medium text-muted-foreground">
@@ -338,25 +338,8 @@ export const CourseCard = ({
           </div>
         </div>
       </CardHeader>
-
       {/* Content */}
-      <CardContent className="p-4 pt-0">
-        {/* Action Button */}
-        <Button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleViewCourse();
-          }}
-          className={`w-full h-9 text-sm font-medium transition-all duration-200 ${
-            isArchived ? 'cursor-not-allowed' : ''
-          }`}
-          disabled={isArchived}
-          variant={isArchived ? 'secondary' : 'default'}
-          size="sm"
-        >
-          {isArchived ? 'Archived' : 'Open Course'}
-        </Button>
-      </CardContent>
+
       {/* Confirmation Modals */}
       <ArchiveConfirmationModal
         isOpen={showArchiveModal}
@@ -365,7 +348,6 @@ export const CourseCard = ({
         courseName={course.courseName}
         isLoading={archiveMutation.isPending}
       />
-
       <UnarchiveConfirmationModal
         isOpen={showUnarchiveModal}
         onClose={handleUnarchiveModalClose}
@@ -373,7 +355,6 @@ export const CourseCard = ({
         courseName={course.courseName}
         isLoading={unarchiveMutation.isPending}
       />
-
       <DeleteConfirmationModal
         isOpen={showDeleteModal}
         onClose={handleDeleteModalClose}

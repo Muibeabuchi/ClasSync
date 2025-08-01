@@ -10,6 +10,7 @@ import type { Id } from 'convex/_generated/dataModel';
 
 export const Route = createFileRoute('/dashboard/lecturer/courses')({
   component: RouteComponent,
+  pendingComponent: LecturerCoursesPageSkeleton,
   loader: async ({ context }) => {
     context.queryClient.prefetchQuery(
       convexQuery(api.classLists.getMyClassLists, {}),
@@ -23,11 +24,7 @@ export const Route = createFileRoute('/dashboard/lecturer/courses')({
 function RouteComponent() {
   const navigate = useNavigate();
 
-  const { data: lecturerCoursesWithStats, isLoading: loadingCoursesWithStats } =
-    useGetLecturerCoursesWithStats();
-
-  const isLoading =
-    loadingCoursesWithStats || lecturerCoursesWithStats === undefined;
+  const { data: lecturerCoursesWithStats } = useGetLecturerCoursesWithStats();
 
   const handleCourseNavigate = (courseId: Id<'courses'>) => {
     navigate({
@@ -36,10 +33,8 @@ function RouteComponent() {
     });
   };
 
-  if (isLoading) return <LecturerCoursesPageSkeleton />;
   return (
     <LecturerCoursesPage
-      isLoading={loadingCoursesWithStats}
       handleCourseNavigate={handleCourseNavigate}
       lecturerCoursesWithStats={lecturerCoursesWithStats}
     />

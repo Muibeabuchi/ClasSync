@@ -13,11 +13,11 @@ import { CourseCard } from './course-card';
 interface LecturerCoursesPageProps {
   lecturerCoursesWithStats: GetLecturerCoursesWithStatsReturnType;
   handleCourseNavigate: (courseId: Id<'courses'>) => void;
-  isLoading: boolean;
+  // isLoading: boolean;
 }
 
 const LecturerCoursesPage = ({
-  isLoading,
+  // isLoading,
   lecturerCoursesWithStats,
   handleCourseNavigate,
 }: LecturerCoursesPageProps) => {
@@ -40,13 +40,7 @@ const LecturerCoursesPage = ({
       </div>
 
       {/* Courses Grid */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <CourseCardSkeleton key={i} />
-          ))}
-        </div>
-      ) : lecturerCoursesWithStats.length > 0 ? (
+      {lecturerCoursesWithStats.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {lecturerCoursesWithStats.map((course) => (
             <CourseCard

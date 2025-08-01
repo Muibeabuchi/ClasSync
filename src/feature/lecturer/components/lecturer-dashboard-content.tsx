@@ -7,6 +7,8 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   BookOpen,
   Users,
@@ -17,9 +19,11 @@ import {
   Activity,
 } from 'lucide-react';
 import { useNavigate } from '@tanstack/react-router';
-import { useGetLecturerCourses } from '@/feature/course/api/get-lecturer-courses';
+import {
+  useLecturerDashboardStats,
+  useLecturerRecentCourses,
+} from '@/feature/lecturer/api/dashboard';
 import type { Id } from 'convex/_generated/dataModel';
-// import { useEffect } from 'react';
 
 interface LecturerDashboardContentProps {
   fullName: string | undefined;
@@ -28,11 +32,8 @@ interface LecturerDashboardContentProps {
 const LecturerDashboardContent = ({
   fullName,
 }: LecturerDashboardContentProps) => {
-  const { data: lecturerCourses } = useGetLecturerCourses();
-  const recentCourses = lecturerCourses?.map((course) => ({
-    id: course._id,
-    name: course.courseName,
-  }));
+  const { data: dashboardStats } = useLecturerDashboardStats();
+  const { data: recentCourses } = useLecturerRecentCourses(5);
   const navigate = useNavigate();
 
   // useEffect(() => {
@@ -80,83 +81,85 @@ const LecturerDashboardContent = ({
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="glass-card hover:scale-[1.02] transition-all duration-300 hover:shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 px-4 pt-4">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 pt-3">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
               Total Courses
             </CardTitle>
-            <div className="p-2 rounded-full bg-primary/10">
-              <BookOpen className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <div className="p-1.5 rounded-full bg-primary/10">
+              <BookOpen className="h-3 w-3 text-primary" />
             </div>
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-xl sm:text-2xl font-bold text-foreground mb-1">
-              12
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold text-foreground mb-1">
+              {dashboardStats.totalCourses}
             </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <TrendingUp className="h-3 w-3 text-green-500" />
-              +2 from last semester
+              {dashboardStats.activeCourses} active
             </p>
           </CardContent>
         </Card>
 
         <Card className="glass-card hover:scale-[1.02] transition-all duration-300 hover:shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 px-4 pt-4">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 pt-3">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
               Total Students
             </CardTitle>
-            <div className="p-2 rounded-full bg-primary/10">
-              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <div className="p-1.5 rounded-full bg-primary/10">
+              <Users className="h-3 w-3 text-primary" />
             </div>
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-xl sm:text-2xl font-bold text-foreground mb-1">
-              342
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold text-foreground mb-1">
+              {dashboardStats.totalStudents}
             </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <TrendingUp className="h-3 w-3 text-green-500" />
-              +18 this month
+              Across all courses
             </p>
           </CardContent>
         </Card>
 
         <Card className="glass-card hover:scale-[1.02] transition-all duration-300 hover:shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 px-4 pt-4">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 pt-3">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
               Avg Attendance
             </CardTitle>
-            <div className="p-2 rounded-full bg-primary/10">
-              <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <div className="p-1.5 rounded-full bg-primary/10">
+              <Activity className="h-3 w-3 text-primary" />
             </div>
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-xl sm:text-2xl font-bold text-foreground mb-1">
-              87%
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold text-foreground mb-1">
+              {dashboardStats.averageAttendanceRate}%
             </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
-              <TrendingUp className="h-3 w-3 text-green-500" />
-              +5% from last week
+              <Activity className="h-3 w-3 text-blue-500" />
+              {dashboardStats.completedSessions} sessions held
             </p>
           </CardContent>
         </Card>
 
         <Card className="glass-card hover:scale-[1.02] transition-all duration-300 hover:shadow-lg border-0 bg-gradient-to-br from-background to-muted/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 px-4 pt-4">
-            <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 pt-3">
+            <CardTitle className="text-xs font-medium text-muted-foreground">
               {`Today's Classes`}
             </CardTitle>
-            <div className="p-2 rounded-full bg-primary/10">
-              <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <div className="p-1.5 rounded-full bg-primary/10">
+              <Calendar className="h-3 w-3 text-primary" />
             </div>
           </CardHeader>
-          <CardContent className="px-4 pb-4">
-            <div className="text-xl sm:text-2xl font-bold text-foreground mb-1">
-              3
+          <CardContent className="px-3 pb-3">
+            <div className="text-lg font-bold text-foreground mb-1">
+              {dashboardStats.todaysClasses}
             </div>
             <p className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3 text-blue-500" />
-              Next at 10:00 AM
+              {dashboardStats.nextClassTime
+                ? `Next at ${dashboardStats.nextClassTime}`
+                : 'No more classes today'}
             </p>
           </CardContent>
         </Card>
@@ -185,29 +188,56 @@ const LecturerDashboardContent = ({
             </Button>
           </CardHeader>
           <CardContent className="space-y-4 flex flex-col">
-            {recentCourses?.map((course) => (
-              <button
-                key={course.id}
-                className="space-y-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer"
-                onClick={() => handleCourseNavigation(course.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full `} />
-                    <div>
-                      <p className="font-medium text-foreground text-xs sm:text-base">
-                        {truncatedCourseName({ courseName: course.name })}
-                      </p>
-                      {/* <p className="text-sm text-muted-foreground">
-                        {course.students} students
-                      </p> */}
+            {recentCourses?.length === 0 ? (
+              <div className="text-center py-8">
+                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No courses yet</p>
+                <p className="text-sm text-muted-foreground">
+                  Create your first course to get started
+                </p>
+              </div>
+            ) : (
+              recentCourses?.map((course) => (
+                <button
+                  key={course.id}
+                  className="space-y-3 p-4 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors cursor-pointer text-left"
+                  onClick={() => handleCourseNavigation(course.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-3 h-3 rounded-full ${
+                          course.hasActiveSession
+                            ? 'bg-green-500'
+                            : course.progress > 0
+                              ? 'bg-blue-500'
+                              : 'bg-gray-400'
+                        }`}
+                      />
+                      <div>
+                        <p className="font-medium text-foreground text-xs sm:text-base">
+                          {truncatedCourseName({ courseName: course.name })}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {course.students} students
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {course.hasActiveSession && (
+                        <Badge variant="default" className="text-xs">
+                          Active Session
+                        </Badge>
+                      )}
+                      <Badge variant="secondary" className="text-xs">
+                        {course.progress}%
+                      </Badge>
                     </div>
                   </div>
-                  {/* <Badge variant="secondary">{course.progress}%</Badge> */}
-                </div>
-                {/* <Progress value={course.progress} className="h-2" /> */}
-              </button>
-            ))}
+                  <Progress value={course.progress} className="h-2" />
+                </button>
+              ))
+            )}
           </CardContent>
         </Card>
       </div>
