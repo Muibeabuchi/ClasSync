@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardDescription,
@@ -24,6 +24,7 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [requestMessage] = useState('');
   const [uniqueCode, setUniqueCode] = useState('');
+  const [editableRegNumber, setEditableRegNumber] = useState('');
 
   const { data: currentUser } = useGetCurrentUser();
   const { data: searchResult, isLoading: isSearching } = useQuery(
@@ -33,9 +34,17 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
   const { mutateAsync: requestToJoin, isPending: isJoining } =
     useRequestToJoinCourseClassList();
 
+  // Initialize editable registration number when user data loads
+  useEffect(() => {
+    if (currentUser?.registrationNumber) {
+      setEditableRegNumber(currentUser.registrationNumber);
+    }
+  }, [currentUser]);
+
   const hasRegistrationNumber = Boolean(currentUser?.registrationNumber);
   const canSubmitRequest =
-    hasRegistrationNumber || uniqueCode.trim().length > 0;
+    (hasRegistrationNumber && editableRegNumber.trim().length > 0) ||
+    (!hasRegistrationNumber && uniqueCode.trim().length > 0);
 
   const handleSendRequest = async () => {
     if (!searchResult) return;
@@ -52,7 +61,7 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
         courseId: searchResult._id,
         lecturerId: searchResult.lecturer.id,
         message: requestMessage,
-        uniqueCode: hasRegistrationNumber ? undefined : uniqueCode,
+        uniqueCode: hasRegistrationNumber ? editableRegNumber : uniqueCode,
       });
 
       toast.success(
@@ -62,6 +71,10 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
       // Reset form
       setSearchTerm('');
       setUniqueCode('');
+      // Reset editable registration number to original value
+      if (currentUser?.registrationNumber) {
+        setEditableRegNumber(currentUser.registrationNumber);
+      }
 
       // Call success callback to close modal
       onSuccess?.();
@@ -142,17 +155,19 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
                 {hasRegistrationNumber ? (
                   <div className="space-y-2">
                     <Label htmlFor="regNumber" className="text-sm font-medium">
-                      Registration Number
+                      Registration Number{' '}
+                      <span className="text-destructive">*</span>
                     </Label>
                     <Input
                       id="regNumber"
-                      value={currentUser?.registrationNumber || ''}
-                      disabled
-                      className="bg-muted"
+                      placeholder="Enter your registration number"
+                      value={editableRegNumber}
+                      onChange={(e) => setEditableRegNumber(e.target.value)}
+                      disabled={isJoining}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Your registration number from your profile will be used to
-                      match you with the class list
+                      You can edit your registration number before sending the
+                      request
                     </p>
                   </div>
                 ) : (
@@ -172,7 +187,7 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
                       disabled={isJoining}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Since you don't have a registration number in your
+                      Since you don&apos;t have a registration number in your
                       profile, please enter the unique code your lecturer
                       provided
                     </p>

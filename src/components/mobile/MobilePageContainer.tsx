@@ -88,7 +88,7 @@ export const MobilePageContainer = forwardRef<
         className={cn(
           // Base layout - full screen with flex column
           'flex flex-col',
-          'h-[100dvh] w-full',
+          ' w-full',
           'bg-background',
           // Safe area handling
           'safe-area-inset',
@@ -118,6 +118,7 @@ export const MobilePageContainer = forwardRef<
               'bg-background/95 backdrop-blur-sm',
               'border-b border-border',
               'shrink-0',
+              'sticky z-99 top-0 left-0 right-0 w-full',
               // Safe area for notched devices
               'safe-area-top',
             )}

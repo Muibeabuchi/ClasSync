@@ -4,16 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import {
   BookOpen,
   Clock,
@@ -165,8 +163,8 @@ const MobileJoinRequestCard: React.FC<MobileJoinRequestCardProps> = ({
         {/* Actions */}
         <div className="flex gap-2 pt-2">
           {request.status === 'pending' && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <Drawer>
+              <DrawerTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
@@ -176,36 +174,40 @@ const MobileJoinRequestCard: React.FC<MobileJoinRequestCardProps> = ({
                   <XCircle className="h-4 w-4 mr-2" />
                   <span className="mobile-text-sm">Cancel</span>
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="mx-4">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="mobile-text-lg">
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader className="text-left">
+                  <DrawerTitle className="mobile-text-lg">
                     Cancel Join Request
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="mobile-text-sm">
+                  </DrawerTitle>
+                  <DrawerDescription className="mobile-text-sm">
                     Are you sure you want to cancel your request to join{' '}
                     <strong>{request.course.courseName}</strong>? This action
                     cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
-                  <AlertDialogCancel className="mobile-tap-feedback">
-                    Keep Request
-                  </AlertDialogCancel>
-                  <AlertDialogAction
+                  </DrawerDescription>
+                </DrawerHeader>
+                <DrawerFooter className="pt-2">
+                  <Button
                     onClick={() => onCancel(request._id)}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 mobile-tap-feedback"
+                    variant="destructive"
+                    className="mobile-tap-feedback"
+                    disabled={isLoading}
                   >
                     Cancel Request
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </Button>
+                  <DrawerTrigger asChild>
+                    <Button variant="outline" className="mobile-tap-feedback">
+                      Keep Request
+                    </Button>
+                  </DrawerTrigger>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
           )}
 
           {(request.status === 'rejected' || request.status === 'approved') && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
+            <Drawer>
+              <DrawerTrigger asChild>
                 <Button
                   variant="outline"
                   size="sm"
@@ -215,31 +217,35 @@ const MobileJoinRequestCard: React.FC<MobileJoinRequestCardProps> = ({
                   <Trash2 className="h-4 w-4 mr-2" />
                   <span className="mobile-text-sm">Delete</span>
                 </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent className="mx-4">
-                <AlertDialogHeader>
-                  <AlertDialogTitle className="mobile-text-lg">
+              </DrawerTrigger>
+              <DrawerContent>
+                <DrawerHeader className="text-left">
+                  <DrawerTitle className="mobile-text-lg">
                     Delete Join Request
-                  </AlertDialogTitle>
-                  <AlertDialogDescription className="mobile-text-sm">
+                  </DrawerTitle>
+                  <DrawerDescription className="mobile-text-sm">
                     Are you sure you want to delete this request for{' '}
                     <strong>{request.course.courseName}</strong>? This will
                     remove it from your request history.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
-                  <AlertDialogCancel className="mobile-tap-feedback">
-                    Keep Request
-                  </AlertDialogCancel>
-                  <AlertDialogAction
+                  </DrawerDescription>
+                </DrawerHeader>
+                <DrawerFooter className="pt-2">
+                  <Button
                     onClick={() => onDelete(request._id)}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 mobile-tap-feedback"
+                    variant="destructive"
+                    className="mobile-tap-feedback"
+                    disabled={isLoading}
                   >
                     Delete Request
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </Button>
+                  <DrawerTrigger asChild>
+                    <Button variant="outline" className="mobile-tap-feedback">
+                      Keep Request
+                    </Button>
+                  </DrawerTrigger>
+                </DrawerFooter>
+              </DrawerContent>
+            </Drawer>
           )}
         </div>
       </CardContent>
@@ -315,7 +321,7 @@ const MobileJoinRequestsPage: React.FC = () => {
       headerTitle="Join Requests"
       className="bg-gradient-to-b from-background to-muted/20"
     >
-      <div className="flex-1 p-4 pt-16 space-y-6">
+      <div className="flex-1 p-4 pt-4 space-y-6">
         {/* Summary Stats */}
         <div className="grid grid-cols-1 gap-3">
           <Card className="mobile-tap-feedback">
