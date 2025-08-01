@@ -319,50 +319,50 @@ const JoinRequestsPage: React.FC = () => {
       </div>
 
       {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Clock className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">
                   Pending
                 </p>
-                <p className="text-2xl font-bold">{pendingRequests.length}</p>
+                <p className="text-3xl font-bold">{pendingRequests.length}</p>
+              </div>
+              <div className="p-3 bg-muted rounded-xl">
+                <Clock className="h-6 w-6 text-muted-foreground" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-              <div>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">
                   Approved
                 </p>
-                <p className="text-2xl font-bold">{approvedRequests.length}</p>
+                <p className="text-3xl font-bold">{approvedRequests.length}</p>
+              </div>
+              <div className="p-3 bg-muted rounded-xl">
+                <CheckCircle className="h-6 w-6 text-muted-foreground" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="flex items-center p-6">
-            <div className="flex items-center space-x-4">
-              <div className="p-2 bg-red-100 rounded-lg">
-                <XCircle className="h-6 w-6 text-red-600" />
-              </div>
-              <div>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
                 <p className="text-sm font-medium text-muted-foreground">
                   Rejected
                 </p>
-                <p className="text-2xl font-bold">{rejectedRequests.length}</p>
+                <p className="text-3xl font-bold">{rejectedRequests.length}</p>
+              </div>
+              <div className="p-3 bg-muted rounded-xl">
+                <XCircle className="h-6 w-6 text-muted-foreground" />
               </div>
             </div>
           </CardContent>
@@ -389,7 +389,7 @@ const JoinRequestsPage: React.FC = () => {
           {pendingRequests.length > 0 && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Clock className="h-5 w-5 text-yellow-600" />
+                <Clock className="h-5 w-5 text-muted-foreground" />
                 Pending Requests ({pendingRequests.length})
               </h2>
               <div className="grid gap-4">
@@ -431,7 +431,7 @@ const JoinRequestsPage: React.FC = () => {
           {rejectedRequests.length > 0 && (
             <div className="space-y-4">
               <h2 className="text-lg font-semibold flex items-center gap-2">
-                <XCircle className="h-5 w-5 text-red-600" />
+                <XCircle className="h-5 w-5 text-muted-foreground" />
                 Rejected Requests ({rejectedRequests.length})
               </h2>
               <div className="grid gap-4">

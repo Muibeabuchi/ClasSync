@@ -87,7 +87,7 @@ const StudentSidebar = ({ userData }: StudentSidebarProps) => {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-2">
+        <div className="flex items-center gap-2 px-1 py-2">
           <div className=" p-1 rounded-sm bg-primary ">
             <BookOpen className="h-4 w-4 text-background" />
           </div>
@@ -111,20 +111,35 @@ const StudentSidebar = ({ userData }: StudentSidebarProps) => {
 
                 return (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      asChild
-                      tooltip={state === 'collapsed' ? item.label : undefined}
-                    >
-                      <Link to={item.to} onClick={handleLinkClick}>
-                        <Icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                        {/* {item.badge && state === 'expanded' && (
-                          <Badge variant="secondary" className="ml-auto">
-                            {item.badge}
-                          </Badge>
-                        )} */}
-                      </Link>
-                    </SidebarMenuButton>
+                    <Link to={item.to} activeOptions={{ exact: true }}>
+                      {({ isActive }) => {
+                        return (
+                          <SidebarMenuButton
+                            isActive={isActive}
+                            onClick={handleLinkClick}
+                            tooltip={
+                              state === 'collapsed' ? item.label : undefined
+                            }
+                            className={`
+                              transition-all duration-200 
+                              ${
+                                isActive
+                                  ? 'bg-primary/20 text-primary'
+                                  : 'hover:bg-accent hover:text-accent-foreground'
+                              }
+                            `}
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                            {/* {item.badge && state === 'expanded' && (
+                              <Badge variant="secondary" className="ml-auto">
+                                {item.badge}
+                              </Badge>
+                            )} */}
+                          </SidebarMenuButton>
+                        );
+                      }}
+                    </Link>
                   </SidebarMenuItem>
                 );
               })}

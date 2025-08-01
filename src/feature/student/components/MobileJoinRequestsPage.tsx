@@ -317,20 +317,20 @@ const MobileJoinRequestsPage: React.FC = () => {
     >
       <div className="flex-1 p-4 pt-16 space-y-6">
         {/* Summary Stats */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <Card className="mobile-tap-feedback">
             <CardContent className="mobile-p-md">
-              <div className="flex flex-col items-center text-center space-y-2">
-                <div className="mobile-p-sm bg-yellow-100 rounded-lg">
-                  <Clock className="h-4 w-4 text-yellow-600" />
-                </div>
-                <div>
-                  <p className="mobile-text-lg font-bold">
-                    {pendingRequests.length}
-                  </p>
-                  <p className="mobile-text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="mobile-text-sm font-medium text-muted-foreground">
                     Pending
                   </p>
+                  <p className="mobile-text-xl font-bold">
+                    {pendingRequests.length}
+                  </p>
+                </div>
+                <div className="mobile-p-sm bg-muted rounded-xl">
+                  <Clock className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
             </CardContent>
@@ -338,17 +338,17 @@ const MobileJoinRequestsPage: React.FC = () => {
 
           <Card className="mobile-tap-feedback">
             <CardContent className="mobile-p-md">
-              <div className="flex flex-col items-center text-center space-y-2">
-                <div className="mobile-p-sm bg-green-100 rounded-lg">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                </div>
-                <div>
-                  <p className="mobile-text-lg font-bold">
-                    {approvedRequests.length}
-                  </p>
-                  <p className="mobile-text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="mobile-text-sm font-medium text-muted-foreground">
                     Approved
                   </p>
+                  <p className="mobile-text-xl font-bold">
+                    {approvedRequests.length}
+                  </p>
+                </div>
+                <div className="mobile-p-sm bg-muted rounded-xl">
+                  <CheckCircle className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
             </CardContent>
@@ -356,17 +356,17 @@ const MobileJoinRequestsPage: React.FC = () => {
 
           <Card className="mobile-tap-feedback">
             <CardContent className="mobile-p-md">
-              <div className="flex flex-col items-center text-center space-y-2">
-                <div className="mobile-p-sm bg-red-100 rounded-lg">
-                  <XCircle className="h-4 w-4 text-red-600" />
-                </div>
-                <div>
-                  <p className="mobile-text-lg font-bold">
-                    {rejectedRequests.length}
-                  </p>
-                  <p className="mobile-text-xs text-muted-foreground">
+              <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                  <p className="mobile-text-sm font-medium text-muted-foreground">
                     Rejected
                   </p>
+                  <p className="mobile-text-xl font-bold">
+                    {rejectedRequests.length}
+                  </p>
+                </div>
+                <div className="mobile-p-sm bg-muted rounded-xl">
+                  <XCircle className="h-5 w-5 text-muted-foreground" />
                 </div>
               </div>
             </CardContent>
@@ -395,7 +395,7 @@ const MobileJoinRequestsPage: React.FC = () => {
             {pendingRequests.length > 0 && (
               <div className="space-y-3">
                 <h2 className="mobile-text-lg font-semibold flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-yellow-600" />
+                  <Clock className="h-5 w-5 text-muted-foreground" />
                   Pending ({pendingRequests.length})
                 </h2>
                 <div className="space-y-3">
@@ -412,32 +412,11 @@ const MobileJoinRequestsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Approved Requests */}
-            {approvedRequests.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="mobile-text-lg font-semibold flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  Approved ({approvedRequests.length})
-                </h2>
-                <div className="space-y-3">
-                  {approvedRequests.map((request) => (
-                    <MobileJoinRequestCard
-                      key={request._id}
-                      request={request}
-                      onCancel={handleCancel}
-                      onDelete={handleDelete}
-                      isLoading={isCancelling || isDeleting}
-                    />
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Rejected Requests */}
             {rejectedRequests.length > 0 && (
               <div className="space-y-3">
                 <h2 className="mobile-text-lg font-semibold flex items-center gap-2">
-                  <XCircle className="h-5 w-5 text-red-600" />
+                  <XCircle className="h-5 w-5 text-muted-foreground" />
                   Rejected ({rejectedRequests.length})
                 </h2>
                 <div className="space-y-3">
