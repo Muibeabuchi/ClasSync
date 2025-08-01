@@ -53,7 +53,7 @@ const JoinCourseSheet = ({ children }: JoinCourseSheetProps) => {
     return (
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-        <DrawerContent className="h-[400px]">
+        <DrawerContent className="h-full">
           <DrawerHeader>
             <DrawerTitle>Join New Course</DrawerTitle>
             <DrawerDescription>

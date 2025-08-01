@@ -7,12 +7,14 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Search, Send, Loader2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { Search, Send, Loader2, User, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from 'convex/_generated/api';
 import { useRequestToJoinCourseClassList } from '@/feature/joinRequest/api';
 import { useQuery } from '@tanstack/react-query';
 import { convexQuery } from '@convex-dev/react-query';
+import { useGetCurrentUser } from '@/feature/student/api/student-profile';
 
 interface JoinCourseModalProps {
   onSuccess?: () => void;
@@ -21,7 +23,9 @@ interface JoinCourseModalProps {
 const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [requestMessage] = useState('');
+  const [uniqueCode, setUniqueCode] = useState('');
 
+  const { data: currentUser } = useGetCurrentUser();
   const { data: searchResult, isLoading: isSearching } = useQuery(
     convexQuery(api.courses.searchCourse, { courseCode: searchTerm }),
   );
@@ -29,15 +33,26 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
   const { mutateAsync: requestToJoin, isPending: isJoining } =
     useRequestToJoinCourseClassList();
 
+  const hasRegistrationNumber = Boolean(currentUser?.registrationNumber);
+  const canSubmitRequest =
+    hasRegistrationNumber || uniqueCode.trim().length > 0;
+
   const handleSendRequest = async () => {
     if (!searchResult) return;
     if (searchResult.isMember) return;
+    if (!canSubmitRequest) {
+      toast.error(
+        'Please provide a unique code or complete your profile with a registration number',
+      );
+      return;
+    }
 
     try {
       await requestToJoin({
         courseId: searchResult._id,
         lecturerId: searchResult.lecturer.id,
         message: requestMessage,
+        uniqueCode: hasRegistrationNumber ? undefined : uniqueCode,
       });
 
       toast.success(
@@ -46,6 +61,7 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
 
       // Reset form
       setSearchTerm('');
+      setUniqueCode('');
 
       // Call success callback to close modal
       onSuccess?.();
@@ -88,47 +104,104 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
       )}
 
       {searchResult && !isSearching && (
-        <Card className="transition-all hover:shadow-md border-opacity-50">
-          <CardHeader className="pb-4">
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <CardTitle className="text-lg font-medium">
-                  {searchResult.courseName}
-                </CardTitle>
-                <CardDescription className="mt-1">
-                  {searchResult.courseCode}
-                </CardDescription>
+        <div className="space-y-4">
+          <Card className="transition-all hover:shadow-md border-opacity-50">
+            <CardHeader className="pb-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-lg font-medium">
+                    {searchResult.courseName}
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    {searchResult.courseCode}
+                  </CardDescription>
+                </div>
               </div>
-            </div>
-            <div className="mt-2 text-sm">
-              <span className="opacity-75">Lecturer: </span>
-              <span className="font-medium">{searchResult.lecturer.name}</span>
-            </div>
+              <div className="mt-2 text-sm">
+                <span className="opacity-75">Lecturer: </span>
+                <span className="font-medium">
+                  {searchResult.lecturer.name}
+                </span>
+              </div>
+            </CardHeader>
+          </Card>
 
-            <div className="pt-3">
-              <Button
-                className="w-full"
-                variant="default"
-                disabled={searchResult.isMember || isJoining}
-                onClick={handleSendRequest}
-              >
-                {isJoining ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Sending Request...
-                  </>
+          {/* Student Identification Section */}
+          {!searchResult.isMember && (
+            <Card className="border-dashed">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Student Identification
+                </CardTitle>
+                <CardDescription>
+                  Help your lecturer identify you from their class list
+                </CardDescription>
+              </CardHeader>
+              <div className="px-6 pb-6 space-y-4">
+                {hasRegistrationNumber ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="regNumber" className="text-sm font-medium">
+                      Registration Number
+                    </Label>
+                    <Input
+                      id="regNumber"
+                      value={currentUser?.registrationNumber || ''}
+                      disabled
+                      className="bg-muted"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Your registration number from your profile will be used to
+                      match you with the class list
+                    </p>
+                  </div>
                 ) : (
-                  <>
-                    <Send className="h-4 w-4 mr-2" />
-                    {searchResult.isMember
-                      ? 'Already Joined'
-                      : 'Request to Join'}
-                  </>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="uniqueCode"
+                      className="text-sm font-medium flex items-center gap-2"
+                    >
+                      <Key className="h-3 w-3" />
+                      Unique Code <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="uniqueCode"
+                      placeholder="Enter the unique code provided by your lecturer"
+                      value={uniqueCode}
+                      onChange={(e) => setUniqueCode(e.target.value)}
+                      disabled={isJoining}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Since you don't have a registration number in your
+                      profile, please enter the unique code your lecturer
+                      provided
+                    </p>
+                  </div>
                 )}
-              </Button>
-            </div>
-          </CardHeader>
-        </Card>
+              </div>
+            </Card>
+          )}
+
+          {/* Submit Button */}
+          <Button
+            className="w-full"
+            variant="default"
+            disabled={searchResult.isMember || isJoining || !canSubmitRequest}
+            onClick={handleSendRequest}
+          >
+            {isJoining ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Sending Request...
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 mr-2" />
+                {searchResult.isMember ? 'Already Joined' : 'Request to Join'}
+              </>
+            )}
+          </Button>
+        </div>
       )}
 
       {searchTerm && !searchResult && !isSearching && (

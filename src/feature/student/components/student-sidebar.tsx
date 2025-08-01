@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+// import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +22,7 @@ import {
   LogOut,
   User,
   Settings,
+  UserPlus,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -46,7 +47,6 @@ const navigationItems = [
     id: 'courses',
     label: 'My Courses',
     icon: BookOpen,
-    badge: '3',
     to: '/dashboard/student/courses',
   },
   {
@@ -59,7 +59,7 @@ const navigationItems = [
   {
     id: 'join-requests',
     label: 'Join Requests',
-    icon: Bell,
+    icon: UserPlus,
     badge: null,
     to: '/dashboard/student/join-requests',
   },
@@ -88,8 +88,8 @@ const StudentSidebar = ({ userData }: StudentSidebarProps) => {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex items-center gap-2 px-2 py-2">
-          <div className="bg-chart-2 p-1 rounded-sm">
-            <BookOpen className="h-4 w-4 text-primary-foreground" />
+          <div className=" p-1 rounded-sm bg-primary ">
+            <BookOpen className="h-4 w-4 text-background" />
           </div>
           {state === 'expanded' && (
             <div className="flex flex-col flex-1">
@@ -118,11 +118,11 @@ const StudentSidebar = ({ userData }: StudentSidebarProps) => {
                       <Link to={item.to} onClick={handleLinkClick}>
                         <Icon className="h-4 w-4" />
                         <span>{item.label}</span>
-                        {item.badge && state === 'expanded' && (
+                        {/* {item.badge && state === 'expanded' && (
                           <Badge variant="secondary" className="ml-auto">
                             {item.badge}
                           </Badge>
-                        )}
+                        )} */}
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

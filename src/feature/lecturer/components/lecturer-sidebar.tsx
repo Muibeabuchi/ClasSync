@@ -54,12 +54,12 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
       <SidebarHeader>
         <div className="flex items-center gap-3 px-1 py-0.5">
           <div
-            className={cn('bg-primary p-3 rounded-md shadow-lg', {
+            className={cn('bg-primary p-1 rounded-md shadow-lg', {
               'p-1 rounded-sm': state === 'collapsed',
             })}
           >
             <BookOpen
-              className={cn('size-5', {
+              className={cn('size-4 text-background', {
                 'size-4': state === 'collapsed',
               })}
             />
@@ -152,14 +152,9 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem
-                  // onClick={() => onPageChange('profile')}
-                  className="cursor-pointer"
-                >
-                  {/* <Link to="/" className='flex'> */}
+                <DropdownMenuItem className="cursor-pointer">
                   <User className="h-4 w-4 mr-2" />
                   Profile
-                  {/* </Link> */}
                 </DropdownMenuItem>
                 <ThemeDropdownToggle />
                 <DropdownMenuSeparator />

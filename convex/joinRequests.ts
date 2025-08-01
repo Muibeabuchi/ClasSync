@@ -8,6 +8,8 @@ import {
   StudentMutationMiddleware,
   StudentQueryMiddleware,
 } from './middlewares/studentMiddleware';
+import { internal } from './_generated/api';
+import { internalMutation } from './_generated/server';
 
 export const rejectJoinRequest = lecturerMutation({
   args: {
@@ -41,10 +43,36 @@ export const rejectJoinRequest = lecturerMutation({
       rejectionReason: args.rejectionReason,
     });
 
+    // schedule for the request to be deleted after 2 hrs
+    await ctx.scheduler.runAfter(
+      1000 * 60 * 60 * 2, // 2 hours
+      internal.joinRequests.deleteJoinRequestInternal,
+      {
+        requestId: args.joinRequestId,
+      },
+    );
+
     return {
       success: true,
       message: 'Join request rejected successfully',
     };
+  },
+});
+
+export const deleteJoinRequestInternal = internalMutation({
+  args: {
+    requestId: v.id('joinRequests'),
+  },
+  handler: async (ctx, args) => {
+    const request = await ctx.db.get(args.requestId);
+    if (request && request.status === 'rejected') {
+      await ctx.db.delete(args.requestId);
+      console.log(`Deleted rejected join request: ${args.requestId}`);
+    } else {
+      console.log(
+        `Join request ${args.requestId} not found or not in rejected status, skipping deletion.`,
+      );
+    }
   },
 });
 
@@ -100,9 +128,12 @@ export const createJoinRequest = StudentMutationMiddleware({
     courseId: v.id('courses'),
     lecturerId: v.id('userProfiles'),
     message: v.optional(v.string()),
+    uniqueCode: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const studentId = ctx.user._id;
+    const student = ctx.user;
+
     // Find course by join code
     const course = await ctx.db.get(args.courseId);
 
@@ -116,6 +147,7 @@ export const createJoinRequest = StudentMutationMiddleware({
       .withIndex('by_student_by_courseId', (q) =>
         q.eq('studentId', studentId).eq('courseId', course._id),
       )
+      .filter((q) => q.eq(q.field('status'), 'approved'))
       .first();
 
     if (existingRequest) {
@@ -134,11 +166,19 @@ export const createJoinRequest = StudentMutationMiddleware({
       throw new ConvexError('You are already enrolled in this course');
     }
 
+    // Validation: Student must have either registrationNumber or provide uniqueCode
+    if (!student.registrationNumber && !args.uniqueCode) {
+      throw new ConvexError(
+        'You must provide a unique code from your lecturer or complete your profile with a registration number',
+      );
+    }
+
     const requestId = await ctx.db.insert('joinRequests', {
       studentId,
       courseId: args.courseId,
       status: 'pending',
-      rejectionReason: args.message,
+      message: args.message,
+      uniqueCode: args.uniqueCode,
       lecturerId: args.lecturerId,
     });
 
@@ -204,6 +244,7 @@ export const getMyJoinRequests = StudentQueryMiddleware({
     const requests = await ctx.db
       .query('joinRequests')
       .withIndex('by_studentId', (q) => q.eq('studentId', studentId))
+      .filter((q) => q.neq(q.field('status'), 'approved'))
       .order('desc')
       .collect();
 
@@ -301,7 +342,7 @@ export const deleteJoinRequest = StudentMutationMiddleware({
     }
 
     // Only allow deletion of rejected requests or approved requests (for cleanup)
-    if (request.status === 'pending') {
+    if (request.status !== 'rejected') {
       throw new ConvexError(
         'Cannot delete pending requests. Use cancel instead.',
       );

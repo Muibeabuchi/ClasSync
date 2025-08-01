@@ -36,6 +36,7 @@ import type {
   GetLecturerJoinRequestsReturnType,
 } from 'convex/schema';
 import type { Id } from 'convex/_generated/dataModel';
+import { Input } from '@/components/ui/input';
 
 // interface Student {
 //   id: string;
@@ -173,12 +174,15 @@ const StudentBindingModal = ({
               Match Student to ClassList
             </DialogTitle>
             <DialogDescription>
-              Bind {request.student.fullName} to an existing student entry in
-              your class lists
+              Bind{' '}
+              <strong className="text-primary">
+                {request.student.fullName}
+              </strong>{' '}
+              to an existing student entry in your class lists
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 overflow-y-auto max-h-[60vh] px-6">
+          <div className="space-y-6 overflow-y-auto max-h-[60vh]">
             {content}
           </div>
 
@@ -254,14 +258,47 @@ const StudentRequestCard = ({
 }: {
   request: GetLecturerJoinRequestsReturnType[number];
 }) => (
-  <Card className="border-primary/20 bg-primary/5">
-    <CardHeader className="pb-2 px-3 md:px-6">
+  <Card className="border-primary/20 w-full bg-primary/5">
+    {/* <CardHeader className="pb-2 px-3 md:px-6">
       <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
         Join Request Details
       </CardTitle>
-    </CardHeader>
+    </CardHeader> */}
     <CardContent className="px-3 md:px-6">
       <div className="flex items-start space-x-2 md:space-x-3">
+        <div className="flex-1 min-w-0 space-y-1.5 md:space-y-2">
+          <div>
+            <h4 className="font-medium text-foreground text-sm md:text-base truncate leading-tight">
+              {request.student.fullName}
+            </h4>
+            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+              {request.student.registrationNumber && (
+                <>
+                  <span className="text-muted-foreground text-xs">
+                    Registration Number:
+                  </span>
+                  <span className="truncate">
+                    {request.student.registrationNumber}
+                  </span>
+                </>
+              )}
+            </div>
+          </div>
+          <div className="space-y-1 text-xs">
+            <div className="space-y-0.5 flex items-center gap-x-2">
+              <span className="text-muted-foreground text-xs">Email:</span>
+              <p className="font-medium truncate text-xs md:text-sm">
+                {request.student.email}
+              </p>
+            </div>
+            <div className="space-y-0.5 flex gap-x-2 items-center">
+              <span className="text-muted-foreground text-xs">Course:</span>
+              <p className="font-medium truncate text-xs md:text-sm">
+                {request.course.courseName}
+              </p>
+            </div>
+          </div>
+        </div>
         <Avatar className="h-8 w-8 md:h-10 md:w-10 ring-1 ring-primary/20 flex-shrink-0">
           {request.student.profileImage ? (
             <img
@@ -278,35 +315,6 @@ const StudentRequestCard = ({
             </AvatarFallback>
           )}
         </Avatar>
-        <div className="flex-1 min-w-0 space-y-1.5 md:space-y-2">
-          <div>
-            <h4 className="font-medium text-foreground text-sm md:text-base truncate leading-tight">
-              {request.student.fullName}
-            </h4>
-            <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-              {/* <GraduationCap className="h-3 w-3 flex-shrink-0" /> */}
-              {request.student.registrationNumber ?? (
-                <span className="truncate">
-                  {request.student.registrationNumber}
-                </span>
-              )}
-            </p>
-          </div>
-          <div className="space-y-1 text-xs">
-            <div className="space-y-0.5">
-              <span className="text-muted-foreground text-xs">Email</span>
-              <p className="font-medium truncate text-xs md:text-sm">
-                {request.student.email}
-              </p>
-            </div>
-            <div className="space-y-0.5">
-              <span className="text-muted-foreground text-xs">Course</span>
-              <p className="font-medium truncate text-xs md:text-sm">
-                {request.course.courseName}
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </CardContent>
   </Card>
@@ -344,79 +352,107 @@ const ClassListSelection = ({
     studentId: Id<'classListStudents'>,
     classListId: Id<'classLists'>,
   ) => void;
-}) => (
-  <div className="space-y-4">
-    <h3 className="font-semibold text-foreground text-sm md:text-base">
-      Select ClassList Entry to Bind
-    </h3>
-    <RadioGroup
-      value={`${selectedClassListId}-${selectedStudentId}`}
-      onValueChange={(value) => {
-        const [classListId, classListStudentId] = value.split('-');
-        onStudentSelect(
-          classListStudentId as Id<'classListStudents'>,
-          classListId as Id<'classLists'>,
-        );
-      }}
-    >
-      {classListsWithStudents?.map((classList) => (
-        <Card key={classList._id} className="border-border/50">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm md:text-base flex items-center gap-2 min-w-0">
-                <span className="text-base">📚</span>
-                <span className="truncate">{classList.classListName}</span>
-              </CardTitle>
-              <Badge variant="secondary" className="text-xs flex-shrink-0">
+}) => {
+  const [filterTerm, setFilterTerm] = useState('');
+  const filteredValues =
+    classListsWithStudents?.filter((classList) => {
+      // Filter by student name or registration number within the classList
+      return classList.classListStudents.some(
+        (student) =>
+          student.student.studentName
+            .toLowerCase()
+            .includes(filterTerm.toLowerCase()) ||
+          student.student.studentRegistrationNumber
+            .toLowerCase()
+            .includes(filterTerm.toLowerCase()),
+      );
+    }) || [];
+
+  console.log({ filteredValues });
+  return (
+    <>
+      <div className="space-y-4 pb-5">
+        <h3 className="font-semibold text-foreground text-sm md:text-base">
+          Select ClassList Entry to Bind
+        </h3>
+        <Input
+          onChange={(e) => setFilterTerm(e.target.value)}
+          value={filterTerm}
+          placeholder="Search by Registration/Unique number or Name"
+        />
+        <RadioGroup
+          value={`${selectedClassListId}-${selectedStudentId}`}
+          onValueChange={(value) => {
+            const [classListId, classListStudentId] = value.split('-');
+            onStudentSelect(
+              classListStudentId as Id<'classListStudents'>,
+              classListId as Id<'classLists'>,
+            );
+          }}
+        >
+          {filteredValues?.map((classList) => (
+            <Card key={classList._id} className=" border-border/50">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm md:text-base flex items-center gap-2 min-w-0">
+                    <span className="text-base">📚</span>
+                    <span className="truncate">{classList.classListName}</span>
+                  </CardTitle>
+                  {/* <Badge variant="secondary" className="text-xs flex-shrink-0">
                 {classList.classListStudents.length} available
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {classList.classListStudents.map((student) => (
-              <div
-                key={student._id}
-                className="flex items-center space-x-3 p-2 md:p-3 rounded-lg border border-border/30 hover:bg-accent/50 transition-colors"
-              >
-                <RadioGroupItem
-                  value={`${classList._id}-${student._id}`}
-                  id={`${classList._id}-${student._id}`}
-                  className="flex-shrink-0"
-                />
-                <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
-                  <AvatarFallback className="text-xs">
-                    {student.student.studentName
-                      .split(' ')
-                      .map((n) => n[0])
-                      .join('')}
-                  </AvatarFallback>
-                </Avatar>
-                <Label
-                  htmlFor={`${classList._id}-${student._id}`}
-                  className="flex-1 cursor-pointer min-w-0"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-xs md:text-sm truncate">
-                        {student.student.studentName}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {student.student.studentRegistrationNumber}
-                      </p>
-                    </div>
-                    <Badge variant="outline" className="text-xs flex-shrink-0">
-                      {student.student.studentGender}
-                    </Badge>
+              </Badge> */}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {classList.classListStudents.map((student) => (
+                  <div
+                    key={student._id}
+                    className="flex items-center space-x-3 p-2 md:p-3 rounded-lg border border-border/30 hover:bg-accent/50 transition-colors"
+                  >
+                    <RadioGroupItem
+                      value={`${classList._id}-${student._id}`}
+                      id={`${classList._id}-${student._id}`}
+                      className="flex-shrink-0"
+                    />
+                    <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+                      <AvatarFallback className="text-xs">
+                        {student.student.studentName
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Label
+                      htmlFor={`${classList._id}-${student._id}`}
+                      className="flex-1 cursor-pointer min-w-0"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-xs md:text-sm truncate">
+                            {student.student.studentName}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {student.student.studentRegistrationNumber}
+                          </p>
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className="text-xs flex-shrink-0"
+                        >
+                          {student.student.studentGender}
+                        </Badge>
+                      </div>
+                    </Label>
                   </div>
-                </Label>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      ))}
-    </RadioGroup>
-  </div>
-);
+                ))}
+              </CardContent>
+            </Card>
+          ))}
+        </RadioGroup>
+      </div>
+    </>
+  );
+};
 
 // Loading Skeleton Component
 export const StudentBindingModalSkeleton = ({

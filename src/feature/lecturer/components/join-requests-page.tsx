@@ -1,51 +1,37 @@
 import { useState } from 'react';
-// import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  //   CardDescription,
-  // CardHeader,
-  // CardTitle,
-} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-// import {
-//   Select,
-//   SelectContent,
-//   SelectItem,
-//   SelectTrigger,
-//   SelectValue,
-// } from '@/components/ui/select';
 import {
-  // ArrowLeft,
-  // Clock,
-  // Check,
-  // X,
-  // User,
-  // Mail,
-  // GraduationCap,
-  Clock,
-  // AlertTriangle,
-  UserPlus,
-} from 'lucide-react';
-
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogDescription,
-//   DialogFooter,
-//   DialogHeader,
-//   DialogTitle,
-// } from '@/components/ui/dialog';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Clock, UserPlus, Check, X, User, Key } from 'lucide-react';
 import { toast } from 'sonner';
 import type { GetLecturerJoinRequestsReturnType } from 'convex/schema';
 import type { Id } from 'convex/_generated/dataModel';
-// import { Label } from '@/components/ui/label';
-// import { Textarea } from '@/components/ui/textarea';
 import StudentBindingModal from './StudentBindingModal';
-// import { useLecturerClassListWithStudentsQuery } from '@/feature/classList/api/get-classList-with-Students';
-import { useAcceptJoinRequest } from '@/feature/joinRequest/api';
+import {
+  useAcceptJoinRequest,
+  useRejectJoinRequest,
+} from '@/feature/joinRequest/api';
 import { useGetClassListWithAvailableStudents } from '@/feature/classList/api/get-classlist-with-available-students';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface JoinRequestsPageProps {
   lecturerJoinRequests: GetLecturerJoinRequestsReturnType;
@@ -54,23 +40,13 @@ interface JoinRequestsPageProps {
 }
 
 const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
-  // const [selectedCourse, setSelectedCourse] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<
     GetLecturerJoinRequestsReturnType[number] | null
   >(null);
-  // const [
-  //   // isModalOpen,
-  //   // setIsModalOpen,
-  // ] = useState(false);
   const [isBindingModalOpen, setIsBindingModalOpen] = useState(false);
-  // const [
-  //   // isRejectModalOpen,
-  //   // setIsRejectModalOpen,
-  // ] = useState(false);
-  // const [rejectReason, setRejectReason] = useState('');
-  // const [requestStatuses, setRequestStatuses] = useState<
-  //   Record<string, 'pending' | 'approved' | 'rejected'>
-  // >({});
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const isMobile = useIsMobile();
 
   const {
     data: classListWithStudents,
@@ -79,60 +55,75 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
     courseId: selectedRequest ? selectedRequest.courseId : null,
   });
 
-  const { mutateAsync: acceptJoinRequest } = useAcceptJoinRequest();
+  const { mutateAsync: acceptJoinRequest, isPending: isAccepting } =
+    useAcceptJoinRequest();
+  const { mutateAsync: rejectJoinRequest, isPending: isRejecting } =
+    useRejectJoinRequest();
 
   const handleBindAndApprove = async ({
-    // requestId,
     selectedStudentId,
     classListId,
   }: {
-    // requestId: string;
     selectedStudentId: Id<'classListStudents'>;
     classListId: Id<'classLists'>;
   }) => {
     if (!selectedRequest) return;
-    console.log('studentId', { selectedStudentId });
-    console.log('classListId', { classListId });
-    // use the selectedRequest in useState
 
-    // ? selectedRequest
-    await acceptJoinRequest({
-      classListId,
-      classListStudentId: selectedStudentId,
-      courseId: selectedRequest.courseId,
-      requestId: selectedRequest._id,
-      studentId: selectedRequest.studentId,
-    });
+    try {
+      await acceptJoinRequest({
+        classListId,
+        classListStudentId: selectedStudentId,
+        courseId: selectedRequest.courseId,
+        requestId: selectedRequest._id,
+        studentId: selectedRequest.studentId,
+      });
 
-    toast.success('Student Successfully Matched', {
-      description:
-        'Student has been bound to the class list and approved for the course.',
-    });
+      toast.success('Student Successfully Matched', {
+        description:
+          'Student has been bound to the class list and approved for the course.',
+      });
 
-    setIsBindingModalOpen(false);
-    setSelectedRequest(null);
+      setIsBindingModalOpen(false);
+      setSelectedRequest(null);
+    } catch (error) {
+      toast.error('Failed to approve request', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
   };
 
-  // const handleConfirmReject = () => {
-  //   if (selectedRequest) {
-  //     setRequestStatuses((prev) => ({
-  //       ...prev,
-  //       [selectedRequest.id]: 'rejected',
-  //     }));
+  const handleAcceptRequest = (
+    request: GetLecturerJoinRequestsReturnType[number],
+  ) => {
+    setSelectedRequest(request);
+    setIsBindingModalOpen(true);
+  };
 
-  //     toast({
-  //       title: 'Request Rejected',
-  //       description: rejectReason
-  //         ? `Rejected: ${rejectReason}`
-  //         : 'Join request has been rejected',
-  //       variant: 'destructive',
-  //     });
-  //   }
+  const handleRejectRequest = (
+    request: GetLecturerJoinRequestsReturnType[number],
+  ) => {
+    setSelectedRequest(request);
+    setIsRejectModalOpen(true);
+  };
 
-  //   setIsRejectModalOpen(false);
-  //   setSelectedRequest(null);
-  //   setRejectReason('');
-  // };
+  const handleConfirmReject = async () => {
+    if (!selectedRequest) return;
+
+    try {
+      await rejectJoinRequest({
+        joinRequestId: selectedRequest._id,
+        rejectionReason: rejectReason.trim() || undefined,
+      });
+
+      setIsRejectModalOpen(false);
+      setSelectedRequest(null);
+      setRejectReason('');
+    } catch (error) {
+      toast.error('Failed to reject request', {
+        description: error instanceof Error ? error.message : 'Unknown error',
+      });
+    }
+  };
 
   const getTimeAgo = (timestamp: string) => {
     const now = new Date();
@@ -144,10 +135,10 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
     return `${Math.floor(diff / 1440)}d ago`;
   };
 
-  const openRequestModal = (request: any) => {
-    setSelectedRequest(request);
-    // setIsModalOpen(true);
-  };
+  // const openRequestModal = (request: any) => {
+  //   setSelectedRequest(request);
+  //   // setIsModalOpen(true);
+  // };
 
   // Empty state component
   const EmptyRequestsState = () => (
@@ -234,66 +225,113 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
           {lecturerJoinRequests.map((request) => (
             <Card
               key={request._id}
-              className="border-0 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer bg-gradient-to-r from-background to-muted/30 active:scale-[0.98] md:active:scale-100"
-              onClick={() => {
-                openRequestModal(request);
-                setIsBindingModalOpen(true);
-              }}
+              className="border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-r from-background to-muted/30"
             >
               <CardContent className="p-3 md:p-4">
-                <div className="flex items-start md:items-center justify-between gap-3">
-                  <div className="flex items-start md:items-center space-x-3 min-w-0 flex-1">
-                    <Avatar className="h-10 w-10 md:h-12 md:w-12 ring-2 ring-muted flex-shrink-0">
-                      {request.student.profileImage ? (
-                        <img
-                          src={request.student.profileImage}
-                          alt={request.student.fullName}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <AvatarFallback className="text-xs md:text-sm font-medium">
-                          {request.student.fullName
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
-                        <h3 className="font-medium text-sm md:text-base truncate">
-                          {request.student.fullName}
-                        </h3>
-                        <Badge
-                          variant="outline"
-                          className="text-xs px-2 py-0 self-start md:self-auto"
-                        >
-                          {request.student.registrationNumber}
-                        </Badge>
-                      </div>
-                      <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 text-xs text-muted-foreground">
-                        <span className="truncate font-medium">
-                          {request.course.courseName}
-                        </span>
-                        <span className="hidden md:inline">•</span>
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3 flex-shrink-0" />
-                          {getTimeAgo(
-                            new Date(request._creationTime).toLocaleString(),
-                          )}
-                        </span>
+                <div className="space-y-4">
+                  {/* Student Info */}
+                  <div className="flex items-start md:items-center justify-between gap-3">
+                    <div className="flex items-start md:items-center space-x-3 min-w-0 flex-1">
+                      <Avatar className="h-10 w-10 md:h-12 md:w-12 ring-2 ring-muted flex-shrink-0">
+                        {request.student.profileImage ? (
+                          <img
+                            src={request.student.profileImage}
+                            alt={request.student.fullName}
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <AvatarFallback className="text-xs md:text-sm font-medium">
+                            {request.student.fullName
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                          <h3 className="font-medium text-sm md:text-base truncate">
+                            {request.student.fullName}
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            {request.student.registrationNumber ? (
+                              <Badge
+                                variant="outline"
+                                className="text-xs px-2 py-0 self-start md:self-auto flex items-center gap-1"
+                              >
+                                <User className="h-3 w-3" />
+                                {request.student.registrationNumber}
+                              </Badge>
+                            ) : request.uniqueCode ? (
+                              <Badge
+                                variant="outline"
+                                className="text-xs px-2 py-0 self-start md:self-auto flex items-center gap-1"
+                              >
+                                <Key className="h-3 w-3" />
+                                {request.uniqueCode}
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs px-2 py-0 self-start md:self-auto"
+                              >
+                                No ID
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 text-xs text-muted-foreground">
+                          <span className="truncate font-medium">
+                            {request.course.courseName}
+                          </span>
+                          <span className="hidden md:inline">•</span>
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3 flex-shrink-0" />
+                            {getTimeAgo(
+                              new Date(request._creationTime).toLocaleString(),
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-start md:items-center gap-2 flex-shrink-0">
                     <Badge
                       variant={
                         request.status === 'pending' ? 'secondary' : 'default'
                       }
-                      className="text-xs px-2 py-1"
+                      className="text-xs rounded-full px-2 py-1 flex-shrink-0 animate-pulse"
                     >
                       {request.status}
                     </Badge>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAcceptRequest(request);
+                      }}
+                      disabled={isAccepting || isRejecting}
+                      className=""
+                    >
+                      <Check className="h-4 w-4 mr-2" />
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRejectRequest(request);
+                      }}
+                      disabled={isAccepting || isRejecting}
+                      className=""
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Reject
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -312,7 +350,117 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
         onOpenChange={setIsBindingModalOpen}
         request={selectedRequest}
       />
-      {/* Request Details Modal */}
+
+      {/* Reject Modal/Drawer */}
+      {isMobile ? (
+        <Drawer open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>Reject Join Request</DrawerTitle>
+              <DrawerDescription>
+                {selectedRequest && (
+                  <>
+                    Are you sure you want to reject{' '}
+                    <strong>{selectedRequest.student.fullName}</strong>&apos;s
+                    request to join{' '}
+                    <strong>{selectedRequest.course.courseName}</strong>?
+                  </>
+                )}
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="px-4 pb-4">
+              <div className="space-y-2">
+                <Label htmlFor="reject-reason">
+                  Reason for rejection (optional)
+                </Label>
+                <Textarea
+                  id="reject-reason"
+                  placeholder="Provide a reason for rejecting this request..."
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This reason will be shown to the student
+                </p>
+              </div>
+            </div>
+            <DrawerFooter>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmReject}
+                disabled={isRejecting}
+              >
+                {isRejecting ? 'Rejecting...' : 'Reject Request'}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsRejectModalOpen(false);
+                  setRejectReason('');
+                }}
+                disabled={isRejecting}
+              >
+                Cancel
+              </Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      ) : (
+        <Dialog open={isRejectModalOpen} onOpenChange={setIsRejectModalOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reject Join Request</DialogTitle>
+              <DialogDescription>
+                {selectedRequest && (
+                  <>
+                    Are you sure you want to reject{' '}
+                    <strong>{selectedRequest.student.fullName}</strong>&apos;s
+                    request to join{' '}
+                    <strong>{selectedRequest.course.courseName}</strong>?
+                  </>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reject-reason">
+                  Reason for rejection (optional)
+                </Label>
+                <Textarea
+                  id="reject-reason"
+                  placeholder="Provide a reason for rejecting this request..."
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  rows={3}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This reason will be shown to the student
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setIsRejectModalOpen(false);
+                  setRejectReason('');
+                }}
+                disabled={isRejecting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={handleConfirmReject}
+                disabled={isRejecting}
+              >
+                {isRejecting ? 'Rejecting...' : 'Reject Request'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };

@@ -38,6 +38,7 @@ import {
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import type { Id } from 'convex/_generated/dataModel';
+import { Link } from '@tanstack/react-router';
 
 interface JoinRequestCardProps {
   request: any; // Type from API
@@ -378,7 +379,7 @@ const JoinRequestsPage: React.FC = () => {
               You haven&apos;t made any course join requests yet.
             </p>
             <Button asChild>
-              <a href="/dashboard/student/courses">Browse Courses</a>
+              <Link to="/dashboard/student/courses">Browse Courses</Link>
             </Button>
           </CardContent>
         </Card>
