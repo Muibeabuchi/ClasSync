@@ -259,6 +259,12 @@ const applicationTables = {
       lat: v.number(),
       long: v.number(),
     }),
+    // New override-related fields
+    isManualOverride: v.optional(v.boolean()),
+    overrideTimestamp: v.optional(v.string()),
+    overrideReason: v.optional(v.string()),
+    overriddenBy: v.optional(v.id('userProfiles')),
+    originalStatus: v.optional(v.literal('absent')),
   })
     .index('by_attendanceSessionId_by_StudentId', [
       'attendanceSessionId',
@@ -267,7 +273,38 @@ const applicationTables = {
     .index('by_courseId', ['courseId'])
     .index('by_attendanceSessionId', ['attendanceSessionId'])
     .index('by_studentId', ['studentId'])
-    .index('by_studentId_by_courseId', ['studentId', 'courseId']),
+    .index('by_studentId_by_courseId', ['studentId', 'courseId'])
+    .index('by_isManualOverride', ['isManualOverride'])
+    .index('by_overriddenBy', ['overriddenBy']),
+
+  // Attendance Override Audit Logs
+  // Comprehensive audit logging for all manual attendance overrides
+  attendanceOverrideLogs: defineTable({
+    attendanceSessionId: v.id('attendanceSessions'),
+    studentId: v.id('userProfiles'),
+    lecturerId: v.id('userProfiles'),
+    courseId: v.id('courses'),
+    overrideTimestamp: v.string(),
+    justificationNote: v.string(),
+    originalStatus: v.literal('absent'),
+    newStatus: v.literal('present'),
+    sessionEndTime: v.number(),
+    overrideWindowHours: v.number(),
+  })
+    .index('by_session', ['attendanceSessionId'])
+    .index('by_lecturer', ['lecturerId'])
+    .index('by_student', ['studentId'])
+    .index('by_timestamp', ['overrideTimestamp'])
+    .index('by_courseId', ['courseId'])
+    .index('by_session_student', ['attendanceSessionId', 'studentId']),
+
+  // Lecturer Settings for Override Configuration
+  // Stores lecturer-specific settings for manual attendance overrides
+  lecturerSettings: defineTable({
+    lecturerId: v.id('userProfiles'),
+    overrideWindowHours: v.number(), // 1-24 hours, default 24
+    notifyOnOverride: v.optional(v.boolean()),
+  }).index('by_lecturer', ['lecturerId']),
 };
 
 // ? ==================== WILL LOOK AT THIS LATER ========================  //
@@ -306,3 +343,46 @@ export default defineSchema({
 
 export type BackendUserRoleType = Infer<typeof userRoleSchema>;
 export type LectureScheduleType = Infer<typeof lectureScheduleSchema>;
+
+// New types for manual attendance override system
+export type AttendanceOverrideLogType = {
+  _id: string;
+  attendanceSessionId: string;
+  studentId: string;
+  lecturerId: string;
+  courseId: string;
+  overrideTimestamp: string;
+  justificationNote: string;
+  originalStatus: 'absent';
+  newStatus: 'present';
+  sessionEndTime: number;
+  overrideWindowHours: number;
+  _creationTime: number;
+};
+
+export type LecturerSettingsType = {
+  _id: string;
+  lecturerId: string;
+  overrideWindowHours: number;
+  notifyOnOverride?: boolean;
+  _creationTime: number;
+};
+
+export type AttendanceRecordWithOverrideType = {
+  _id: string;
+  attendanceSessionId: string;
+  studentId: string;
+  courseId: string;
+  distance?: number;
+  checkedInAt: string;
+  location: {
+    lat: number;
+    long: number;
+  };
+  isManualOverride?: boolean;
+  overrideTimestamp?: string;
+  overrideReason?: string;
+  overriddenBy?: string;
+  originalStatus?: 'absent';
+  _creationTime: number;
+};

@@ -37,13 +37,18 @@ import type * as models_coursesModel from "../models/coursesModel.js";
 import type * as models_joinRequestModel from "../models/joinRequestModel.js";
 import type * as models_userprofileModel from "../models/userprofileModel.js";
 import type * as schemas_aiFixCsvTypes from "../schemas/aiFixCsvTypes.js";
+import type * as schemas_overrideValidation from "../schemas/overrideValidation.js";
 import type * as schemas_studentSchema from "../schemas/studentSchema.js";
 import type * as service_paystack from "../service/paystack.js";
+import type * as testManualOverride from "../testManualOverride.js";
+import type * as testOverrideEligibility from "../testOverrideEligibility.js";
+import type * as testOverrideTables from "../testOverrideTables.js";
 import type * as userProfile from "../userProfile.js";
 import type * as utils_buildPrompt from "../utils/buildPrompt.js";
 import type * as utils_dataNormalization from "../utils/dataNormalization.js";
 import type * as utils_genderInference from "../utils/genderInference.js";
 import type * as utils_headerMapping from "../utils/headerMapping.js";
+import type * as utils_overrideEligibility from "../utils/overrideEligibility.js";
 import type * as utils_rateLimiter from "../utils/rateLimiter.js";
 
 import type {
@@ -90,13 +95,18 @@ declare const fullApi: ApiFromModules<{
   "models/joinRequestModel": typeof models_joinRequestModel;
   "models/userprofileModel": typeof models_userprofileModel;
   "schemas/aiFixCsvTypes": typeof schemas_aiFixCsvTypes;
+  "schemas/overrideValidation": typeof schemas_overrideValidation;
   "schemas/studentSchema": typeof schemas_studentSchema;
   "service/paystack": typeof service_paystack;
+  testManualOverride: typeof testManualOverride;
+  testOverrideEligibility: typeof testOverrideEligibility;
+  testOverrideTables: typeof testOverrideTables;
   userProfile: typeof userProfile;
   "utils/buildPrompt": typeof utils_buildPrompt;
   "utils/dataNormalization": typeof utils_dataNormalization;
   "utils/genderInference": typeof utils_genderInference;
   "utils/headerMapping": typeof utils_headerMapping;
+  "utils/overrideEligibility": typeof utils_overrideEligibility;
   "utils/rateLimiter": typeof utils_rateLimiter;
 }>;
 declare const fullApiWithMounts: typeof fullApi;

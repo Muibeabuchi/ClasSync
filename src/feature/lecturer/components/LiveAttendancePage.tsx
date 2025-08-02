@@ -9,7 +9,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Clock, MapPin, Users, Copy } from 'lucide-react';
+import {
+  ArrowLeft,
+  Clock,
+  MapPin,
+  Users,
+  Copy,
+  AlertCircle,
+  CheckCircle2,
+  Timer,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react';
 import type {
   GetAttendanceSessionRecordsReturnType,
   GetAttendanceSessionReturnType,
@@ -17,17 +28,95 @@ import type {
 import { toast } from 'sonner';
 import { useNavigate } from '@tanstack/react-router';
 import { LecturerLocationStabilityMessage } from '@/components/attendance/LecturerLocationStabilityMessage';
+import {
+  AttendanceStatisticsCard,
+  AttendanceStatisticsCardSkeleton,
+} from '@/components/attendance/AttendanceStatisticsCard';
+import { StudentAttendanceRow } from '@/components/attendance/StudentAttendanceRow';
+import { useMediaQuery } from '@/hooks/use-media-query';
+import { cn } from '@/lib/utils';
+
+interface AttendanceStatistics {
+  totalEnrolledStudents: number;
+  totalAttendanceRecords: number;
+  automaticCheckIns: number;
+  manualOverrides: number;
+  absentStudents: number;
+  overallAttendancePercentage: number;
+  overrideWindowRemaining?: string;
+  canPerformOverrides?: boolean; // Make optional to handle both formats
+  overrideWindowExpired?: boolean;
+}
+
+interface OverrideEligibility {
+  canOverride: boolean;
+  reason: string;
+  timeRemaining: number;
+  windowExpiresAt: number;
+}
+
+// Enhanced record format from the override hook
+interface EnhancedAttendanceRecord {
+  student: {
+    _id: any;
+    fullName: string;
+    email: string;
+    registrationNumber: string;
+    gender?: string;
+  };
+  attendanceRecord: any;
+  status: 'present' | 'absent' | 'override';
+  isPresent: boolean;
+  isManualOverride: boolean;
+  overrideInfo?: any;
+  checkInInfo?: any;
+  visualIndicators: any;
+}
 
 interface LiveAttendancePageProps {
   attendanceSession: GetAttendanceSessionReturnType;
-  attendanceSessionRecords: GetAttendanceSessionRecordsReturnType;
+  attendanceSessionRecords:
+    | GetAttendanceSessionRecordsReturnType
+    | EnhancedAttendanceRecord[];
+  statistics?: AttendanceStatistics | null;
+  canPerformOverrides?: boolean;
+  overrideEligibility?: OverrideEligibility | null;
 }
 
 const LiveAttendancePage = ({
   attendanceSession,
   attendanceSessionRecords,
+  statistics,
+  canPerformOverrides = false,
+  overrideEligibility,
 }: LiveAttendancePageProps) => {
   const sessionState = attendanceSession.status;
+
+  // Mobile-first responsive breakpoints
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTablet = useMediaQuery('(max-width: 1024px)');
+  const isTouchDevice = useMediaQuery('(hover: none) and (pointer: coarse)');
+
+  // Collapsible sections for mobile
+  const [isStatisticsExpanded, setIsStatisticsExpanded] = useState(!isMobile);
+  const [isStudentListExpanded, setIsStudentListExpanded] = useState(true);
+
+  // Simple override time calculation (no monitoring)
+  const getSimpleOverrideTimeRemaining = () => {
+    if (!overrideEligibility) return null;
+
+    const hours = Math.floor(
+      overrideEligibility.timeRemaining / (1000 * 60 * 60),
+    );
+    const minutes = Math.floor(
+      (overrideEligibility.timeRemaining % (1000 * 60 * 60)) / (1000 * 60),
+    );
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
 
   const [timeRemaining, setTimeRemaining] = useState(() => {
     const endTime =
@@ -95,82 +184,225 @@ const LiveAttendancePage = ({
       },
     });
 
+  // Format override time remaining
+  const formatOverrideTimeRemaining = (timeRemaining: number) => {
+    const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
+    const minutes = Math.floor(
+      (timeRemaining % (1000 * 60 * 60)) / (1000 * 60),
+    );
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
+  };
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
+    <div
+      className={cn(
+        'min-h-screen bg-background',
+        // Mobile-first spacing and padding
+        'px-4 py-4 sm:px-6 sm:py-6 lg:px-8',
+        // Responsive container
+        'max-w-7xl mx-auto',
+        // Smooth animations
+        'animate-fade-in',
+      )}
+    >
+      {/* Mobile-First Header */}
+      <div
+        className={cn(
+          'flex flex-col gap-4 mb-6',
+          // Desktop layout
+          'lg:flex-row lg:items-center lg:justify-between',
+        )}
+      >
+        {/* Navigation and Title */}
+        <div className="flex items-start gap-3">
           <Button
-            variant="link"
-            className="cursor-pointer hover:bg-muted-foreground"
+            variant="ghost"
+            size={isMobile ? 'sm' : 'default'}
             onClick={handleNavigate}
+            className={cn(
+              'flex-shrink-0 transition-all duration-200',
+              // Touch-friendly sizing
+              isTouchDevice && 'min-h-[44px] min-w-[44px]',
+              // Active state for mobile
+              'active:scale-95',
+            )}
+            aria-label="Go back to course dashboard"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className={cn('h-4 w-4', isMobile && 'h-5 w-5')} />
+            {!isMobile && <span className="ml-2">Back</span>}
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Live Attendance Session</h1>
-            <p className="text-gray-600">
+
+          <div className="flex-1 min-w-0">
+            <h1
+              className={cn(
+                'font-bold text-foreground leading-tight',
+                // Responsive text sizing
+                'text-xl sm:text-2xl lg:text-3xl',
+                // Better line height for mobile
+                isMobile && 'leading-tight',
+              )}
+            >
+              Live Attendance Session
+            </h1>
+            <p
+              className={cn(
+                'text-muted-foreground mt-1 truncate',
+                // Responsive text sizing
+                'text-sm sm:text-base',
+                // Better contrast on mobile
+                isMobile && 'text-gray-700',
+              )}
+            >
               {sessionData.courseCode} - {sessionData.courseName}
             </p>
           </div>
         </div>
 
-        {/* {attendanceSession.status === 'complete' && (
-          // <Button onClick={handleEndSession}>View Full Log</Button>
-        )} */}
+        {/* Override Status Badge - Mobile optimized */}
+        {sessionState === 'complete' && overrideEligibility && (
+          <Badge
+            variant={overrideEligibility.canOverride ? 'default' : 'secondary'}
+            className={cn(
+              'flex items-center gap-2 transition-colors',
+              // Mobile-first sizing
+              'px-3 py-2 text-sm',
+              // Touch-friendly sizing
+              isTouchDevice && 'px-4 py-3 text-base',
+              // Status-based styling
+              overrideEligibility.canOverride
+                ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200'
+                : 'bg-gray-100 text-gray-600 border-gray-200',
+              // Full width on mobile
+              isMobile && 'w-full justify-center',
+            )}
+          >
+            {overrideEligibility.canOverride ? (
+              <>
+                <Timer className={cn('h-4 w-4', isMobile && 'h-5 w-5')} />
+                <span className="font-medium">
+                  Override:{' '}
+                  {formatOverrideTimeRemaining(
+                    overrideEligibility.timeRemaining,
+                  )}
+                </span>
+              </>
+            ) : (
+              <>
+                <AlertCircle className={cn('h-4 w-4', isMobile && 'h-5 w-5')} />
+                <span className="font-medium">Override Expired</span>
+              </>
+            )}
+          </Badge>
+        )}
       </div>
 
-      {/* Location Stability Message - Show during active sessions */}
-      <LecturerLocationStabilityMessage
-        isVisible={sessionState === 'pending' || sessionState === 'active'}
-        variant="default"
-      />
-
-      {/* Session State Card */}
-      <Card
-        className={`${
-          sessionState === 'pending'
-            ? 'border-yellow-500'
-            : sessionState === 'active'
-              ? 'border-green-500'
-              : 'border-gray-500'
-        } transition-all duration-500`}
+      {/* Location Stability Message - Mobile optimized */}
+      <div
+        className={cn(
+          'mb-4',
+          // Hide on mobile when space is limited
+          sessionState === 'complete' && isMobile && 'hidden',
+        )}
       >
-        <CardContent className="p-3 md:p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-3">
+        <LecturerLocationStabilityMessage
+          isVisible={sessionState === 'pending' || sessionState === 'active'}
+          variant={isMobile ? 'compact' : 'default'}
+        />
+      </div>
+
+      {/* Mobile-First Session State Card */}
+      <Card
+        className={cn(
+          'transition-all duration-500 mb-6',
+          // Status-based border colors
+          sessionState === 'pending' && 'border-yellow-500 bg-yellow-50/30',
+          sessionState === 'active' && 'border-green-500 bg-green-50/30',
+          sessionState === 'complete' && 'border-gray-300 bg-gray-50/30',
+          // Enhanced mobile styling
+          isMobile && 'shadow-sm',
+        )}
+      >
+        <CardContent
+          className={cn(
+            // Mobile-first padding
+            'p-4 sm:p-5 lg:p-6',
+          )}
+        >
+          {/* Mobile-optimized layout */}
+          <div
+            className={cn(
+              'flex flex-col gap-4',
+              // Desktop: side-by-side layout
+              'lg:flex-row lg:items-center lg:justify-between lg:gap-6',
+            )}
+          >
+            {/* Session Status Section */}
+            <div className="flex items-center gap-4">
               <div
-                className={`p-2 rounded-full ${
-                  sessionState === 'pending'
-                    ? 'bg-yellow-100'
-                    : sessionState === 'active'
-                      ? 'bg-green-100'
-                      : 'bg-gray-100'
-                }`}
+                className={cn(
+                  'p-3 rounded-full transition-colors',
+                  // Mobile: larger icon container
+                  isMobile && 'p-4',
+                  // Status-based styling
+                  sessionState === 'pending' && 'bg-yellow-100',
+                  sessionState === 'active' && 'bg-green-100',
+                  sessionState === 'complete' && 'bg-gray-100',
+                )}
               >
                 <Clock
-                  className={`h-4 w-4 ${
-                    sessionState === 'pending'
-                      ? 'text-yellow-600'
-                      : sessionState === 'active'
-                        ? 'text-green-600'
-                        : 'text-gray-600'
-                  }`}
+                  className={cn(
+                    'transition-colors',
+                    // Responsive icon sizing
+                    'h-5 w-5 sm:h-6 w-6',
+                    isMobile && 'h-6 w-6',
+                    // Status-based colors
+                    sessionState === 'pending' && 'text-yellow-600',
+                    sessionState === 'active' && 'text-green-600',
+                    sessionState === 'complete' && 'text-gray-600',
+                  )}
                 />
               </div>
-              <div>
-                <h3 className="text-sm font-semibold">
-                  {sessionState === 'pending' && 'Starts in:'}
-                  {sessionState === 'active' && 'Time left:'}
-                  {sessionState === 'complete' && 'Completed'}
+
+              <div className="flex-1 min-w-0">
+                <h3
+                  className={cn(
+                    'font-semibold text-foreground',
+                    // Responsive text sizing
+                    'text-base sm:text-lg',
+                    isMobile && 'text-lg',
+                  )}
+                >
+                  {sessionState === 'pending' && 'Session Starts In'}
+                  {sessionState === 'active' && 'Time Remaining'}
+                  {sessionState === 'complete' && 'Session Completed'}
                 </h3>
+
                 {sessionState !== 'complete' && (
-                  <p className="text-lg font-bold text-primary">
+                  <p
+                    className={cn(
+                      'font-bold text-primary mt-1',
+                      // Large, prominent timer
+                      'text-2xl sm:text-3xl',
+                      isMobile && 'text-3xl',
+                      // Monospace for better readability
+                      'font-mono',
+                    )}
+                  >
                     {formatTime(timeRemaining)}
                   </p>
                 )}
+
                 {sessionState === 'complete' && (
-                  <p className="text-xs text-muted-foreground">
+                  <p
+                    className={cn(
+                      'text-muted-foreground mt-1',
+                      'text-sm sm:text-base',
+                    )}
+                  >
                     {new Date(attendanceSession._creationTime).toLocaleString(
                       'en-US',
                       {
@@ -186,61 +418,353 @@ const LiveAttendancePage = ({
               </div>
             </div>
 
-            <div className="flex flex-col space-y-1 text-right">
-              <div className="flex items-center space-x-1 justify-end">
-                <MapPin className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs text-muted-foreground">
-                  {sessionData.locationRadius}m
-                </span>
+            {/* Session Details Section */}
+            <div
+              className={cn(
+                'flex flex-col gap-3',
+                // Mobile: full width, Desktop: auto width
+                'w-full lg:w-auto',
+                // Mobile: border top for separation
+                isMobile && 'pt-4 border-t border-border',
+              )}
+            >
+              {/* Location Info */}
+              <div className="flex items-center justify-between lg:justify-end gap-2">
+                <div className="flex items-center gap-2">
+                  <MapPin
+                    className={cn(
+                      'text-muted-foreground',
+                      'h-4 w-4 sm:h-5 w-5',
+                    )}
+                  />
+                  <span
+                    className={cn(
+                      'text-muted-foreground font-medium',
+                      'text-sm sm:text-base',
+                    )}
+                  >
+                    Radius: {sessionData.locationRadius}m
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center space-x-1 justify-end">
-                <span className="text-xs font-medium">CODE:</span>
-                <Badge
-                  variant="outline"
-                  className="font-mono text-xs px-1 py-0"
+
+              {/* Attendance Code */}
+              <div className="flex items-center justify-between lg:justify-end gap-2">
+                <span
+                  className={cn(
+                    'font-medium text-foreground',
+                    'text-sm sm:text-base',
+                  )}
                 >
-                  {sessionData.attendanceCode}
-                </Badge>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={copyAttendanceCode}
-                  className="h-5 w-5 p-0"
-                >
-                  <Copy className="h-2.5 w-2.5" />
-                </Button>
+                  Attendance Code:
+                </span>
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'font-mono font-bold border-2',
+                      // Mobile: larger, more prominent
+                      'px-3 py-1 text-base',
+                      isTouchDevice && 'px-4 py-2 text-lg',
+                      // Status-based styling
+                      sessionState === 'active' &&
+                        'border-green-500 bg-green-50 text-green-700',
+                      sessionState === 'pending' &&
+                        'border-yellow-500 bg-yellow-50 text-yellow-700',
+                    )}
+                  >
+                    {sessionData.attendanceCode}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    size={isMobile ? 'default' : 'sm'}
+                    onClick={copyAttendanceCode}
+                    className={cn(
+                      'transition-all duration-200',
+                      // Touch-friendly sizing
+                      isTouchDevice && 'min-h-[44px] min-w-[44px]',
+                      'active:scale-95 hover:bg-muted',
+                    )}
+                    aria-label="Copy attendance code"
+                  >
+                    <Copy className={cn('h-4 w-4', isMobile && 'h-5 w-5')} />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
 
+          {/* Progress Bar - Only for active sessions */}
           {sessionState !== 'complete' && (
-            <Progress value={(timeRemaining / 60) * 100} className="h-1.5" />
+            <div className="mt-6">
+              <Progress
+                value={(timeRemaining / 60) * 100}
+                className={cn(
+                  'transition-all duration-300',
+                  // Mobile: thicker progress bar
+                  'h-2 sm:h-3',
+                  isMobile && 'h-3',
+                )}
+                aria-label={`Session progress: ${Math.round((timeRemaining / 60) * 100)}% remaining`}
+              />
+              <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                <span>Session Progress</span>
+                <span>{Math.round((timeRemaining / 60) * 100)}% remaining</span>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Real-Time Student Panel */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Student Check-ins
+      {/* Simple Override Status Indicator - Non-obtrusive */}
+      {sessionState === 'complete' && overrideEligibility && (
+        <div className={cn('mb-6', isMobile && 'mb-4')}>
+          <div
+            className={cn(
+              'flex items-center gap-3 p-3 rounded-lg border',
+              // Mobile-first responsive padding
+              'sm:p-4',
+              // Status-based styling
+              overrideEligibility.canOverride
+                ? 'bg-amber-50 border-amber-200 text-amber-800'
+                : 'bg-gray-50 border-gray-200 text-gray-600',
+              // Subtle, non-obtrusive appearance
+              'text-sm',
+            )}
+          >
+            <Timer
+              className={cn(
+                'h-4 w-4 flex-shrink-0',
+                overrideEligibility.canOverride
+                  ? 'text-amber-600'
+                  : 'text-gray-500',
+              )}
+            />
+            <div className="flex-1 min-w-0">
+              {overrideEligibility.canOverride ? (
+                <span>
+                  Manual overrides available for{' '}
+                  <span className="font-medium">
+                    {getSimpleOverrideTimeRemaining()}
+                  </span>{' '}
+                  remaining
+                </span>
+              ) : (
+                <span>Manual override window has expired</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mobile-First Statistics Card with Collapsible Option */}
+      <div className="mb-6">
+        {isMobile && (
+          <Button
+            variant="ghost"
+            onClick={() => setIsStatisticsExpanded(!isStatisticsExpanded)}
+            className={cn(
+              'w-full justify-between mb-3 p-4 h-auto',
+              'border border-border rounded-lg',
+              'hover:bg-muted/50 transition-colors',
+            )}
+            aria-expanded={isStatisticsExpanded}
+            aria-controls="statistics-section"
+          >
+            <div className="flex items-center gap-3">
+              <Users className="h-5 w-5 text-muted-foreground" />
+              <div className="text-left">
+                <div className="font-semibold text-base">
+                  Attendance Statistics
+                </div>
+                {statistics && (
+                  <div className="text-sm text-muted-foreground">
+                    {statistics.totalAttendanceRecords}/
+                    {statistics.totalEnrolledStudents} present (
+                    {Math.round(statistics.overallAttendancePercentage)}%)
+                  </div>
+                )}
+              </div>
+            </div>
+            {isStatisticsExpanded ? (
+              <ChevronUp className="h-5 w-5 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-5 w-5 text-muted-foreground" />
+            )}
+          </Button>
+        )}
+
+        <div
+          id="statistics-section"
+          className={cn(
+            'transition-all duration-300 ease-in-out',
+            isMobile && !isStatisticsExpanded && 'hidden',
+          )}
+        >
+          {statistics ? (
+            <AttendanceStatisticsCard statistics={statistics} />
+          ) : (
+            <AttendanceStatisticsCardSkeleton />
+          )}
+        </div>
+      </div>
+
+      {/* Mobile-First Student Panel */}
+      <Card
+        className={cn(
+          'transition-all duration-300',
+          // Enhanced mobile styling
+          isMobile && 'shadow-sm',
+        )}
+      >
+        {/* Mobile-optimized header */}
+        <CardHeader
+          className={cn(
+            // Mobile-first padding
+            'p-4 sm:p-5 lg:p-6',
+          )}
+        >
+          <div
+            className={cn(
+              'flex flex-col gap-3',
+              // Desktop: side-by-side layout
+              'lg:flex-row lg:items-center lg:justify-between',
+            )}
+          >
+            <div className="flex-1 min-w-0">
+              <CardTitle
+                className={cn(
+                  'flex items-center gap-3',
+                  // Responsive text sizing
+                  'text-lg sm:text-xl',
+                  isMobile && 'text-xl',
+                )}
+              >
+                <Users
+                  className={cn(
+                    'text-muted-foreground',
+                    'h-5 w-5 sm:h-6 w-6',
+                    isMobile && 'h-6 w-6',
+                  )}
+                />
+                Student Attendance
+                {/* Mobile: Show collapsible indicator */}
+                {isMobile && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setIsStudentListExpanded(!isStudentListExpanded)
+                    }
+                    className="ml-auto p-1"
+                    aria-expanded={isStudentListExpanded}
+                    aria-controls="student-list-section"
+                  >
+                    {isStudentListExpanded ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
               </CardTitle>
-              <CardDescription>
-                {/* {checkedInStudents.length} of {sessionData.totalStudents}{' '} */}
-                students have checked in
+
+              <CardDescription
+                className={cn(
+                  'mt-2',
+                  // Responsive text sizing
+                  'text-sm sm:text-base',
+                  // Better line height for mobile
+                  isMobile && 'leading-relaxed',
+                )}
+              >
+                {statistics ? (
+                  <div
+                    className={cn(
+                      'flex flex-col gap-1',
+                      // Desktop: single line
+                      'sm:flex-row sm:items-center sm:gap-2',
+                    )}
+                  >
+                    <span>
+                      {statistics.totalAttendanceRecords} of{' '}
+                      {statistics.totalEnrolledStudents} students have checked
+                      in
+                    </span>
+                    {statistics.manualOverrides > 0 && (
+                      <span
+                        className={cn(
+                          'text-amber-600 font-medium',
+                          // Mobile: new line, Desktop: inline
+                          'block sm:inline',
+                        )}
+                      >
+                        ({statistics.manualOverrides} manual override
+                        {statistics.manualOverrides !== 1 ? 's' : ''})
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  'Loading attendance data...'
+                )}
               </CardDescription>
             </div>
-            <Badge variant="secondary">
-              {/* {checkedInStudents.filter((s) => s.status === 'present').length}{' '} */}
-              Present
-            </Badge>
+
+            {/* Status badges - Mobile optimized */}
+            <div
+              className={cn(
+                'flex items-center gap-2',
+                // Mobile: full width with better spacing
+                isMobile && 'w-full justify-between mt-2',
+              )}
+            >
+              <Badge
+                variant="secondary"
+                className={cn(
+                  'transition-colors',
+                  // Mobile: larger badges
+                  isMobile && 'px-3 py-1 text-sm',
+                  isTouchDevice && 'px-4 py-2 text-base',
+                )}
+              >
+                <CheckCircle2
+                  className={cn('mr-1', 'h-3 w-3', isMobile && 'h-4 w-4')}
+                />
+                {statistics ? statistics.totalAttendanceRecords : 0} Present
+              </Badge>
+
+              {statistics && statistics.absentStudents > 0 && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    'text-red-600 border-red-200 bg-red-50',
+                    // Mobile: larger badges
+                    isMobile && 'px-3 py-1 text-sm',
+                    isTouchDevice && 'px-4 py-2 text-base',
+                  )}
+                >
+                  <AlertCircle
+                    className={cn('mr-1', 'h-3 w-3', isMobile && 'h-4 w-4')}
+                  />
+                  {statistics.absentStudents} Absent
+                </Badge>
+              )}
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
-          {attendanceSessionRecords.length === 0 ? (
+
+        <CardContent
+          id="student-list-section"
+          className={cn(
+            // Mobile-first padding
+            'p-4 sm:p-5 lg:p-6 pt-0',
+            // Collapsible on mobile
+            isMobile && !isStudentListExpanded && 'hidden',
+          )}
+        >
+          {!statistics ||
+          (attendanceSessionRecords.length === 0 &&
+            statistics.absentStudents === 0) ? (
             <div className="text-center py-8">
               <div
                 className={sessionState === 'complete' ? '' : 'animate-pulse'}
@@ -256,107 +780,126 @@ const LiveAttendancePage = ({
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {attendanceSessionRecords.map((student) => (
-                <div
-                  key={student._id}
-                  className="flex items-center justify-between p-4 border rounded-lg  transition-colors animate-scale-in"
-                >
-                  <div className="flex items-center space-x-4">
-                    {/* {getStatusIcon(student.)} */}
-                    <div>
-                      <div className="font-medium">
-                        {student.student.fullName}
-                      </div>
-                      <div className="text-sm ">
-                        {student.student.registrationNumber}
-                      </div>
-                    </div>
-                  </div>
+            <div className="space-y-4">
+              {/* Filter records into present and absent */}
+              {(() => {
+                const presentStudents = attendanceSessionRecords.filter(
+                  (record) => {
+                    // Check if record has enhanced format
+                    if ('isPresent' in record) {
+                      return record.isPresent === true;
+                    }
+                    // Legacy format fallback
+                    return !!record.checkedInAt;
+                  },
+                );
 
-                  <div className="flex items-center space-x-4">
-                    <div className="text-right text-sm">
-                      {/* <div>{student.distance}m</div> */}
-                      <div className="text-gray-500">
-                        {/* {student.}% accuracy */}
-                      </div>
-                    </div>
-                    <div className="text-right text-sm">
-                      <div>
-                        {new Date(student.checkedInAt).toLocaleString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          hour12: true,
-                        })}
-                      </div>
-                      {/* {student.overridden && (
-                        <div className="text-xs text-blue-600">
-                          Manual Override
+                const absentStudents = attendanceSessionRecords.filter(
+                  (record) => {
+                    // Check if record has enhanced format
+                    if ('isPresent' in record) {
+                      return record.isPresent === false;
+                    }
+                    // Legacy format fallback
+                    return !record.checkedInAt;
+                  },
+                );
+
+                return (
+                  <>
+                    {/* Present Students Section */}
+                    {presentStudents.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          Present Students ({presentStudents.length})
                         </div>
-                      )} */}
-                    </div>
-                    {/* {getStatusBadge(student.)} */}
+                        <div className="space-y-2">
+                          {presentStudents.map((record) => (
+                            <StudentAttendanceRow
+                              key={record.student?._id || record._id}
+                              student={record}
+                              canPerformOverrides={canPerformOverrides}
+                              sessionId={attendanceSession._id}
+                              sessionState={sessionState}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                    {/* {student.status !== 'present' && !student.overridden && (
-                      <Dialog
-                        open={isOverrideDialogOpen}
-                        onOpenChange={setIsOverrideDialogOpen}
-                      >
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedStudent(student)}
-                          >
-                            Override
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Manual Override</DialogTitle>
-                            <DialogDescription>
-                              Mark {selectedStudent?.name} as present for this
-                              session.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="reason">
-                                Reason for override (required)
-                              </Label>
-                              <Textarea
-                                id="reason"
-                                placeholder="e.g., Student was present but GPS was inaccurate..."
-                                value={overrideReason}
-                                onChange={(e) =>
-                                  setOverrideReason(e.target.value)
-                                }
-                              />
-                            </div>
-                            <div className="flex justify-end space-x-2">
-                              <Button
+                    {/* Absent Students Section */}
+                    {absentStudents.length > 0 && (
+                      <div className="space-y-3">
+                        {presentStudents.length > 0 && (
+                          <div className="border-t pt-4" />
+                        )}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                            <AlertCircle className="h-4 w-4 text-red-600" />
+                            Absent Students ({absentStudents.length})
+                          </div>
+                          {canPerformOverrides &&
+                            overrideEligibility?.canOverride && (
+                              <Badge
                                 variant="outline"
-                                onClick={() => setIsOverrideDialogOpen(false)}
+                                className="text-xs text-amber-600 border-amber-200"
                               >
-                                Cancel
-                              </Button>
-                              <Button
-                                onClick={handleOverride}
-                                disabled={!overrideReason.trim()}
+                                Override Available
+                              </Badge>
+                            )}
+                        </div>
+
+                        {/* Render absent students */}
+                        <div className="space-y-2">
+                          {absentStudents.map((record) => (
+                            <StudentAttendanceRow
+                              key={record.student?._id || record._id}
+                              student={record}
+                              canPerformOverrides={canPerformOverrides}
+                              sessionId={attendanceSession._id}
+                              sessionState={sessionState}
+                            />
+                          ))}
+                        </div>
+
+                        {/* Show message if no override capability */}
+                        {(!canPerformOverrides ||
+                          !overrideEligibility?.canOverride) && (
+                          <div
+                            className={cn(
+                              'text-center py-4 text-muted-foreground rounded-lg',
+                              'bg-muted/30 border border-dashed border-muted-foreground/20',
+                              // Mobile: better padding and spacing
+                              isMobile && 'py-6 mx-2',
+                            )}
+                          >
+                            <div className="space-y-2">
+                              <Users
+                                className={cn(
+                                  'mx-auto text-muted-foreground',
+                                  'h-6 w-6',
+                                  isMobile && 'h-8 w-8',
+                                )}
+                              />
+                              <p
+                                className={cn(
+                                  'text-sm sm:text-base',
+                                  isMobile && 'text-base',
+                                )}
                               >
-                                Mark Present
-                              </Button>
+                                {!canPerformOverrides
+                                  ? 'Manual overrides are not available'
+                                  : 'Override window has expired'}
+                              </p>
                             </div>
                           </div>
-                        </DialogContent>
-                      </Dialog>
-                    )} */}
-                  </div>
-                </div>
-              ))}
+                        )}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           )}
         </CardContent>
@@ -368,91 +911,290 @@ const LiveAttendancePage = ({
 export default LiveAttendancePage;
 
 export const LiveAttendancePageSkeleton = () => {
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const isTouchDevice = useMediaQuery('(hover: none) and (pointer: coarse)');
+
   return (
-    <div className="space-y-4 md:space-y-6 animate-pulse p-4 md:p-0">
-      {/* Header Skeleton */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="flex items-center space-x-2 sm:space-x-4">
-          <div className="w-16 h-8 sm:w-24 sm:h-10 bg-gray-200 rounded-md"></div>
-          <div className="flex-1">
-            <div className="h-6 sm:h-8 w-48 sm:w-64 bg-gray-200 rounded-md mb-2"></div>
-            <div className="h-3 sm:h-4 w-32 sm:w-48 bg-gray-200 rounded-md"></div>
+    <div
+      className={cn(
+        'min-h-screen bg-background animate-pulse',
+        // Mobile-first spacing and padding
+        'px-4 py-4 sm:px-6 sm:py-6 lg:px-8',
+        // Responsive container
+        'max-w-7xl mx-auto',
+      )}
+    >
+      {/* Mobile-First Header Skeleton */}
+      <div
+        className={cn(
+          'flex flex-col gap-4 mb-6',
+          'lg:flex-row lg:items-center lg:justify-between',
+        )}
+      >
+        <div className="flex items-start gap-3">
+          <div
+            className={cn(
+              'bg-muted rounded-md flex-shrink-0',
+              isMobile ? 'w-10 h-10' : 'w-12 h-10',
+            )}
+          />
+          <div className="flex-1 min-w-0 space-y-2">
+            <div
+              className={cn(
+                'bg-muted rounded-md',
+                'h-6 sm:h-8 lg:h-10',
+                'w-48 sm:w-64 lg:w-80',
+              )}
+            />
+            <div
+              className={cn(
+                'bg-muted rounded-md',
+                'h-4 sm:h-5',
+                'w-32 sm:w-48 lg:w-56',
+              )}
+            />
           </div>
         </div>
+
+        {/* Override badge skeleton */}
+        <div
+          className={cn(
+            'bg-muted rounded-full',
+            'h-8 sm:h-10',
+            'w-32 sm:w-40',
+            isMobile && 'w-full',
+          )}
+        />
       </div>
 
-      {/* Session State Card Skeleton */}
-      <Card className="border-gray-200 bg-gray-50">
-        <CardContent className="p-3 sm:p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="p-2 sm:p-3 rounded-full bg-gray-200">
-                <div className="h-4 w-4 sm:h-6 sm:w-6"></div>
+      {/* Mobile-First Session State Card Skeleton */}
+      <Card className={cn('mb-6 border-muted', isMobile && 'shadow-sm')}>
+        <CardContent className="p-4 sm:p-5 lg:p-6">
+          <div
+            className={cn(
+              'flex flex-col gap-4',
+              'lg:flex-row lg:items-center lg:justify-between lg:gap-6',
+            )}
+          >
+            {/* Status section skeleton */}
+            <div className="flex items-center gap-4">
+              <div
+                className={cn(
+                  'bg-muted rounded-full',
+                  'p-3',
+                  isMobile && 'p-4',
+                )}
+              >
+                <div
+                  className={cn(
+                    'bg-muted-foreground/20 rounded',
+                    'h-5 w-5 sm:h-6 w-6',
+                    isMobile && 'h-6 w-6',
+                  )}
+                />
               </div>
-              <div>
-                <div className="h-5 sm:h-6 w-32 sm:w-48 bg-gray-200 rounded-md mb-2"></div>
-                <div className="h-6 sm:h-8 w-16 sm:w-24 bg-gray-200 rounded-md"></div>
+              <div className="flex-1 min-w-0 space-y-2">
+                <div
+                  className={cn(
+                    'bg-muted rounded-md',
+                    'h-5 sm:h-6',
+                    'w-32 sm:w-40',
+                  )}
+                />
+                <div
+                  className={cn(
+                    'bg-muted rounded-md',
+                    'h-8 sm:h-10',
+                    'w-20 sm:w-24',
+                  )}
+                />
               </div>
             </div>
 
-            <div className="flex flex-col sm:text-right space-y-2">
-              <div className="flex items-center space-x-2 sm:justify-end">
-                <div className="h-3 w-3 sm:h-4 sm:w-4 bg-gray-200 rounded-full"></div>
-                <div className="h-3 sm:h-4 w-16 sm:w-24 bg-gray-200 rounded-md"></div>
+            {/* Details section skeleton */}
+            <div
+              className={cn(
+                'flex flex-col gap-3 w-full lg:w-auto',
+                isMobile && 'pt-4 border-t border-muted',
+              )}
+            >
+              <div className="flex items-center justify-between lg:justify-end gap-2">
+                <div className="flex items-center gap-2">
+                  <div className="bg-muted rounded h-4 w-4 sm:h-5 w-5" />
+                  <div className="bg-muted rounded-md h-4 w-20 sm:w-24" />
+                </div>
               </div>
-              <div className="flex items-center space-x-2 sm:justify-end">
-                <div className="h-3 sm:h-4 w-8 sm:w-12 bg-gray-200 rounded-md"></div>
-                <div className="h-5 sm:h-6 w-16 sm:w-20 bg-gray-200 rounded-md"></div>
-                <div className="h-5 sm:h-6 w-5 sm:w-6 bg-gray-200 rounded-md"></div>
+              <div className="flex items-center justify-between lg:justify-end gap-2">
+                <div className="bg-muted rounded-md h-4 w-24 sm:w-32" />
+                <div className="flex items-center gap-2">
+                  <div
+                    className={cn(
+                      'bg-muted rounded-md',
+                      'h-6 w-16 sm:h-8 w-20',
+                      isTouchDevice && 'h-10 w-24',
+                    )}
+                  />
+                  <div
+                    className={cn(
+                      'bg-muted rounded-md',
+                      isMobile ? 'h-8 w-8' : 'h-6 w-6',
+                      isTouchDevice && 'h-10 w-10',
+                    )}
+                  />
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="h-1.5 sm:h-2 bg-gray-200 rounded-full"></div>
+          {/* Progress bar skeleton */}
+          <div className="mt-6 space-y-2">
+            <div
+              className={cn(
+                'bg-muted rounded-full',
+                'h-2 sm:h-3',
+                isMobile && 'h-3',
+              )}
+            />
+            <div className="flex justify-between">
+              <div className="bg-muted rounded h-3 w-20" />
+              <div className="bg-muted rounded h-3 w-16" />
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Real-Time Student Panel Skeleton */}
-      <Card>
-        <CardHeader className="p-3 sm:p-4 md:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <div className="flex items-center gap-2">
-                <div className="h-4 w-4 sm:h-5 sm:w-5 bg-gray-200 rounded-full"></div>
-                <div className="h-5 sm:h-6 w-32 sm:w-40 bg-gray-200 rounded-md"></div>
+      {/* Mobile Statistics Toggle Skeleton */}
+      {isMobile && (
+        <div className="mb-6">
+          <div className="w-full p-4 border border-muted rounded-lg mb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="bg-muted rounded h-5 w-5" />
+                <div className="space-y-1">
+                  <div className="bg-muted rounded-md h-4 w-32" />
+                  <div className="bg-muted rounded-md h-3 w-24" />
+                </div>
               </div>
-              <div className="h-3 sm:h-4 w-40 sm:w-56 bg-gray-200 rounded-md mt-2"></div>
+              <div className="bg-muted rounded h-5 w-5" />
             </div>
-            <div className="h-5 sm:h-6 w-16 sm:w-24 bg-gray-200 rounded-full"></div>
+          </div>
+        </div>
+      )}
+
+      {/* Statistics Card Skeleton */}
+      <div className="mb-6">
+        <AttendanceStatisticsCardSkeleton />
+      </div>
+
+      {/* Mobile-First Student Panel Skeleton */}
+      <Card className={cn(isMobile && 'shadow-sm')}>
+        <CardHeader className="p-4 sm:p-5 lg:p-6">
+          <div
+            className={cn(
+              'flex flex-col gap-3',
+              'lg:flex-row lg:items-center lg:justify-between',
+            )}
+          >
+            <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    'bg-muted rounded',
+                    'h-5 w-5 sm:h-6 w-6',
+                    isMobile && 'h-6 w-6',
+                  )}
+                />
+                <div
+                  className={cn(
+                    'bg-muted rounded-md',
+                    'h-5 sm:h-6 w-32 sm:w-40',
+                    isMobile && 'h-6 w-40',
+                  )}
+                />
+                {isMobile && (
+                  <div className="bg-muted rounded ml-auto h-4 w-4" />
+                )}
+              </div>
+              <div
+                className={cn(
+                  'bg-muted rounded-md',
+                  'h-4 w-40 sm:w-56',
+                  isMobile && 'w-56',
+                )}
+              />
+            </div>
+
+            <div
+              className={cn(
+                'flex items-center gap-2',
+                isMobile && 'w-full justify-between mt-2',
+              )}
+            >
+              <div
+                className={cn(
+                  'bg-muted rounded-full',
+                  'h-6 w-20',
+                  isMobile && 'h-7 w-24',
+                  isTouchDevice && 'h-8 w-28',
+                )}
+              />
+              <div
+                className={cn(
+                  'bg-muted rounded-full',
+                  'h-6 w-16',
+                  isMobile && 'h-7 w-20',
+                  isTouchDevice && 'h-8 w-24',
+                )}
+              />
+            </div>
           </div>
         </CardHeader>
-        <CardContent className="p-3 sm:p-4 md:p-6">
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
+
+        <CardContent className="p-4 sm:p-5 lg:p-6 pt-0">
+          <div className="space-y-4">
+            {/* Student rows skeleton */}
+            {[1, 2, 3, 4].map((i) => (
               <div
                 key={i}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 sm:p-4 border rounded-lg"
+                className={cn(
+                  'flex flex-col gap-3 p-3 sm:p-4 border border-muted rounded-lg',
+                  'sm:flex-row sm:items-center sm:justify-between',
+                )}
               >
-                <div className="flex items-center space-x-3 sm:space-x-4">
-                  <div className="h-3 w-3 sm:h-4 sm:w-4 bg-gray-200 rounded-full"></div>
-                  <div>
-                    <div className="h-4 sm:h-5 w-24 sm:w-32 bg-gray-200 rounded-md mb-2"></div>
-                    <div className="h-3 sm:h-4 w-20 sm:w-24 bg-gray-200 rounded-md"></div>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="bg-muted rounded-full h-8 w-8" />
+                  <div className="space-y-2 flex-1">
+                    <div className="bg-muted rounded-md h-4 w-24 sm:w-32" />
+                    <div className="bg-muted rounded-md h-3 w-20 sm:w-24" />
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:space-x-4">
-                  <div className="flex justify-between sm:block sm:text-right">
-                    <div className="h-3 sm:h-4 w-12 sm:w-16 bg-gray-200 rounded-md mb-1"></div>
-                    <div className="h-3 sm:h-4 w-16 sm:w-20 bg-gray-200 rounded-md"></div>
+                <div
+                  className={cn(
+                    'flex items-center gap-3',
+                    'sm:flex-row sm:space-x-4',
+                  )}
+                >
+                  <div className="flex justify-between sm:block sm:text-right space-y-1">
+                    <div className="bg-muted rounded-md h-3 w-12 sm:w-16" />
+                    <div className="bg-muted rounded-md h-3 w-16 sm:w-20" />
                   </div>
-                  <div className="flex justify-between sm:block sm:text-right">
-                    <div className="h-3 sm:h-4 w-12 sm:w-16 bg-gray-200 rounded-md mb-1"></div>
-                    <div className="h-2 sm:h-3 w-16 sm:w-24 bg-gray-200 rounded-md"></div>
-                  </div>
-                  <div className="flex justify-between sm:justify-end items-center gap-2">
-                    <div className="h-5 sm:h-6 w-16 sm:w-20 bg-gray-200 rounded-full"></div>
-                    <div className="h-6 sm:h-8 w-16 sm:w-20 bg-gray-200 rounded-md"></div>
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={cn(
+                        'bg-muted rounded-full',
+                        'h-6 w-16 sm:w-20',
+                        isMobile && 'h-7 w-20',
+                        isTouchDevice && 'h-8 w-24',
+                      )}
+                    />
+                    <div
+                      className={cn(
+                        'bg-muted rounded-md',
+                        'h-8 w-16 sm:w-20',
+                        isTouchDevice && 'h-10 w-24',
+                      )}
+                    />
                   </div>
                 </div>
               </div>
