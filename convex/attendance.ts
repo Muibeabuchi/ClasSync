@@ -43,6 +43,18 @@ export const startAttendanceSession = courseMutation({
     const lecturerId = ctx.user._id;
     const course = ctx.course;
 
+    // Check if there are any approved students in the course
+    const approvedStudents = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+      .collect();
+
+    if (approvedStudents.length === 0) {
+      throw new ConvexError(
+        'Cannot create attendance session: No students are enrolled in this course. Please add students to the course before taking attendance.',
+      );
+    }
+
     // Check if there's already an active attendance session for this course
     const existingActiveSession = await ctx.db
       .query('attendanceSessions')

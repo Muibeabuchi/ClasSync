@@ -108,6 +108,9 @@ const CourseDetailPage = ({
     (session) => session.status === 'active' || session.status === 'pending',
   );
 
+  // Check if there are any students enrolled in the course
+  const hasStudents = students.length > 0;
+
   // Analytics calculations - use data from courseDetails.analytics or calculate from students
   const analytics = courseDetails?.analytics || {
     avgAttendance: 0,
@@ -422,27 +425,38 @@ const CourseDetailPage = ({
         {/* Action Buttons - Mobile Responsive */}
         <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
           {/* Left side - Take Attendance */}
-          <AttendanceSessionModal
-            courseId={courseId}
-            courseName={courseData.name}
-            disabled={hasActiveSession || isArchived}
-            // onStartSession={handleStartAttendance}
-          >
-            <Button
-              className="w-full sm:w-auto text-sm"
-              disabled={hasActiveSession || isArchived}
-              title={
-                isArchived
-                  ? 'Cannot take attendance for archived courses'
-                  : hasActiveSession
-                    ? 'An attendance session is already active for this course'
-                    : 'Start a new attendance session'
-              }
+          <div className="flex flex-col gap-2">
+            <AttendanceSessionModal
+              courseId={courseId}
+              courseName={courseData.name}
+              disabled={hasActiveSession || isArchived || !hasStudents}
+              // onStartSession={handleStartAttendance}
             >
-              <ClipboardCheck className="h-4 w-4 mr-2" />
-              {hasActiveSession ? 'Session Active' : 'Take Attendance'}
-            </Button>
-          </AttendanceSessionModal>
+              <Button
+                className="w-full sm:w-auto text-sm"
+                disabled={hasActiveSession || isArchived || !hasStudents}
+                title={
+                  isArchived
+                    ? 'Cannot take attendance for archived courses'
+                    : hasActiveSession
+                      ? 'An attendance session is already active for this course'
+                      : !hasStudents
+                        ? 'Cannot take attendance: No students are enrolled in this course'
+                        : 'Start a new attendance session'
+                }
+              >
+                <ClipboardCheck className="h-4 w-4 mr-2" />
+                {hasActiveSession ? 'Session Active' : 'Take Attendance'}
+              </Button>
+            </AttendanceSessionModal>
+
+            {/* Hint text for when no students are enrolled */}
+            {!hasStudents && !isArchived && (
+              <p className="text-xs text-primary text-center sm:text-left opacity-75 px-2 sm:px-0">
+                Add students to start taking attendance
+              </p>
+            )}
+          </div>
 
           {/* Right side - Course Actions */}
           <div className="flex flex-col sm:flex-row gap-2">
