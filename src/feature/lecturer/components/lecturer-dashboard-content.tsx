@@ -53,7 +53,7 @@ const LecturerDashboardContent = ({
 
   const handleCourseNavigation = (courseId: Id<'courses'>) => {
     navigate({
-      to: '/dashboard/lecturer/_courses/$courseId',
+      to: '/dashboard/lecturer/$courseId',
       params: {
         courseId,
       },
