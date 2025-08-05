@@ -970,6 +970,7 @@ export const getStudentDashboardStats = StudentQueryMiddleware({
     const enrolledCourses = await ctx.db
       .query('courseAttendanceList')
       .withIndex('by_studentId', (q) => q.eq('studentId', studentId))
+      // .filter(q=>q.eq(q.field()))
       .collect();
 
     if (enrolledCourses.length === 0) {
@@ -992,8 +993,12 @@ export const getStudentDashboardStats = StudentQueryMiddleware({
     const courseStats = await Promise.all(
       enrolledCourses.map(async (enrollment) => {
         const course = await ctx.db.get(enrollment.courseId);
-        if (!course || course.status !== 'active')
-          throw new ConvexError('Course does not exist');
+        if (!course) throw new ConvexError('Course does not exist');
+        if (course.status !== 'active') {
+          return null;
+        }
+
+        // throw new ConvexError('Course has been Completed');
 
         // Get lecturer info
         const lecturer = await ctx.db.get(course.lecturerId);
@@ -1052,11 +1057,14 @@ export const getStudentDashboardStats = StudentQueryMiddleware({
     );
 
     const validCourses = courseStats.filter(Boolean);
+
     const avgAttendance =
       validCourses.length > 0
         ? Math.round(
-            validCourses.reduce((sum, course) => sum + course?.attendance, 0) /
-              validCourses.length,
+            validCourses.reduce((sum, course) => {
+              if (!course) return sum;
+              return sum + course.attendance;
+            }, 0) / validCourses.length,
           )
         : 0;
 

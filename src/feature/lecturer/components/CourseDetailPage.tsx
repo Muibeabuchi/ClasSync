@@ -50,8 +50,10 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { AttendanceExportDropdown } from '@/components/attendance/AttendanceExportDropdown';
 
 import type {
   GetAttendanceSessionsReturnType,
@@ -462,6 +464,16 @@ const CourseDetailPage = ({
           <div className="flex flex-col sm:flex-row gap-2">
             {/* Desktop: Individual buttons */}
             <div className="hidden sm:flex gap-2">
+              {/* Export button for archived courses */}
+              {isArchived && attendanceSessions.length > 0 && (
+                <AttendanceExportDropdown
+                  courseId={courseId}
+                  courseName={courseData.name}
+                  courseCode={courseData.code}
+                  className="text-sm"
+                />
+              )}
+
               {isArchived ? (
                 <Button
                   variant="outline"
@@ -522,6 +534,24 @@ const CourseDetailPage = ({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  {/* Export option for archived courses with attendance sessions */}
+                  {isArchived && attendanceSessions.length > 0 && (
+                    <>
+                      <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
+                        Export Data
+                      </div>
+                      <div className="px-2 pb-2">
+                        <AttendanceExportDropdown
+                          courseId={courseId}
+                          courseName={courseData.name}
+                          courseCode={courseData.code}
+                          className="w-full text-sm"
+                        />
+                      </div>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+
                   {isArchived ? (
                     <DropdownMenuItem
                       onClick={(e) => {

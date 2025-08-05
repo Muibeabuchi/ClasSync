@@ -22,6 +22,7 @@ import {
   ChevronUp,
 } from 'lucide-react';
 import { CancelAttendanceSessionDialog } from '@/components/attendance/CancelAttendanceSessionDialog';
+import { SessionExportDropdown } from '@/components/attendance/SessionExportDropdown';
 import { useCanCancelAttendanceSession } from '@/feature/attendance/api';
 import type {
   GetAttendanceSessionRecordsReturnType,
@@ -273,42 +274,74 @@ const LiveAttendancePage = ({
           </div>
         </div>
 
-        {/* Override Status Badge - Mobile optimized */}
-        {sessionState === 'complete' && overrideEligibility && (
-          <Badge
-            variant={overrideEligibility.canOverride ? 'default' : 'secondary'}
-            className={cn(
-              'flex items-center gap-2 transition-colors',
-              // Mobile-first sizing
-              'px-3 py-2 text-sm',
-              // Touch-friendly sizing
-              isTouchDevice && 'px-4 py-3 text-base',
-              // Status-based styling
-              overrideEligibility.canOverride
-                ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200'
-                : 'bg-gray-100 text-gray-600 border-gray-200',
-              // Full width on mobile
-              isMobile && 'w-full justify-center',
-            )}
-          >
-            {overrideEligibility.canOverride ? (
-              <>
-                <Timer className={cn('h-4 w-4', isMobile && 'h-5 w-5')} />
-                <span className="font-medium">
-                  Override:{' '}
-                  {formatOverrideTimeRemaining(
-                    overrideEligibility.timeRemaining,
-                  )}
-                </span>
-              </>
-            ) : (
-              <>
-                <AlertCircle className={cn('h-4 w-4', isMobile && 'h-5 w-5')} />
-                <span className="font-medium">Override Expired</span>
-              </>
-            )}
-          </Badge>
-        )}
+        {/* Action Buttons and Status - Mobile optimized */}
+        <div
+          className={cn(
+            'flex flex-col gap-3',
+            // Desktop layout
+            'lg:flex-row lg:items-center lg:gap-4',
+          )}
+        >
+          {/* Export Button - Show for completed sessions */}
+          {sessionState === 'complete' && (
+            <SessionExportDropdown
+              attendanceSessionId={attendanceSession._id}
+              courseId={attendanceSession.courseId}
+              courseName={attendanceSession.courseName}
+              courseCode={attendanceSession.courseCode}
+              sessionDate={new Date(
+                attendanceSession._creationTime,
+              ).toLocaleDateString()}
+              variant="outline"
+              size={isMobile ? 'default' : 'sm'}
+              className={cn(
+                'transition-all duration-200',
+                isMobile && 'w-full',
+              )}
+            />
+          )}
+
+          {/* Override Status Badge */}
+          {sessionState === 'complete' && overrideEligibility && (
+            <Badge
+              variant={
+                overrideEligibility.canOverride ? 'default' : 'secondary'
+              }
+              className={cn(
+                'flex items-center gap-2 transition-colors',
+                // Mobile-first sizing
+                'px-3 py-2 text-sm',
+                // Touch-friendly sizing
+                isTouchDevice && 'px-4 py-3 text-base',
+                // Status-based styling
+                overrideEligibility.canOverride
+                  ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200'
+                  : 'bg-gray-100 text-gray-600 border-gray-200',
+                // Full width on mobile
+                isMobile && 'w-full justify-center',
+              )}
+            >
+              {overrideEligibility.canOverride ? (
+                <>
+                  <Timer className={cn('h-4 w-4', isMobile && 'h-5 w-5')} />
+                  <span className="font-medium">
+                    Override:{' '}
+                    {formatOverrideTimeRemaining(
+                      overrideEligibility.timeRemaining,
+                    )}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <AlertCircle
+                    className={cn('h-4 w-4', isMobile && 'h-5 w-5')}
+                  />
+                  <span className="font-medium">Override Expired</span>
+                </>
+              )}
+            </Badge>
+          )}
+        </div>
       </div>
 
       {/* Location Stability Message - Mobile optimized */}
@@ -696,302 +729,305 @@ const LiveAttendancePage = ({
       </div>
 
       {/* Mobile-First Student Panel */}
-      <Card
-        className={cn(
-          'transition-all duration-300',
-          // Enhanced mobile styling
-          isMobile && 'shadow-sm',
-        )}
-      >
-        {/* Mobile-optimized header */}
-        <CardHeader
+
+      {sessionState !== 'cancelled' && (
+        <Card
           className={cn(
-            // Mobile-first padding
-            'p-4 sm:p-5 lg:p-6',
+            'transition-all duration-300',
+            // Enhanced mobile styling
+            isMobile && 'shadow-sm',
           )}
         >
-          <div
+          {/* Mobile-optimized header */}
+          <CardHeader
             className={cn(
-              'flex flex-col gap-3',
-              // Desktop: side-by-side layout
-              'lg:flex-row lg:items-center lg:justify-between',
+              // Mobile-first padding
+              'p-4 sm:p-5 lg:p-6',
             )}
           >
-            <div className="flex-1 min-w-0">
-              <CardTitle
-                className={cn(
-                  'flex items-center gap-3',
-                  // Responsive text sizing
-                  'text-lg sm:text-xl',
-                  isMobile && 'text-xl',
-                )}
-              >
-                <Users
-                  className={cn(
-                    'text-muted-foreground',
-                    'h-5 w-5 sm:h-6 w-6',
-                    isMobile && 'h-6 w-6',
-                  )}
-                />
-                Student Attendance
-                {/* Mobile: Show collapsible indicator */}
-                {isMobile && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      setIsStudentListExpanded(!isStudentListExpanded)
-                    }
-                    className="ml-auto p-1"
-                    aria-expanded={isStudentListExpanded}
-                    aria-controls="student-list-section"
-                  >
-                    {isStudentListExpanded ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
-                )}
-              </CardTitle>
-
-              <CardDescription
-                className={cn(
-                  'mt-2',
-                  // Responsive text sizing
-                  'text-sm sm:text-base',
-                  // Better line height for mobile
-                  isMobile && 'leading-relaxed',
-                )}
-              >
-                {statistics ? (
-                  <div
-                    className={cn(
-                      'flex flex-col gap-1',
-                      // Desktop: single line
-                      'sm:flex-row sm:items-center sm:gap-2',
-                    )}
-                  >
-                    <span>
-                      {statistics.totalAttendanceRecords} of{' '}
-                      {statistics.totalEnrolledStudents} students have checked
-                      in
-                    </span>
-                    {statistics.manualOverrides > 0 && (
-                      <span
-                        className={cn(
-                          'text-amber-600 font-medium',
-                          // Mobile: new line, Desktop: inline
-                          'block sm:inline',
-                        )}
-                      >
-                        ({statistics.manualOverrides} manual override
-                        {statistics.manualOverrides !== 1 ? 's' : ''})
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  'Loading attendance data...'
-                )}
-              </CardDescription>
-            </div>
-
-            {/* Status badges - Mobile optimized */}
             <div
               className={cn(
-                'flex items-center gap-2',
-                // Mobile: full width with better spacing
-                isMobile && 'w-full justify-between mt-2',
+                'flex flex-col gap-3',
+                // Desktop: side-by-side layout
+                'lg:flex-row lg:items-center lg:justify-between',
               )}
             >
-              <Badge
-                variant="secondary"
+              <div className="flex-1 min-w-0">
+                <CardTitle
+                  className={cn(
+                    'flex items-center gap-3',
+                    // Responsive text sizing
+                    'text-lg sm:text-xl',
+                    isMobile && 'text-xl',
+                  )}
+                >
+                  <Users
+                    className={cn(
+                      'text-muted-foreground',
+                      'h-5 w-5 sm:h-6 w-6',
+                      isMobile && 'h-6 w-6',
+                    )}
+                  />
+                  Student Attendance
+                  {/* Mobile: Show collapsible indicator */}
+                  {isMobile && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        setIsStudentListExpanded(!isStudentListExpanded)
+                      }
+                      className="ml-auto p-1"
+                      aria-expanded={isStudentListExpanded}
+                      aria-controls="student-list-section"
+                    >
+                      {isStudentListExpanded ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  )}
+                </CardTitle>
+
+                <CardDescription
+                  className={cn(
+                    'mt-2',
+                    // Responsive text sizing
+                    'text-sm sm:text-base',
+                    // Better line height for mobile
+                    isMobile && 'leading-relaxed',
+                  )}
+                >
+                  {statistics ? (
+                    <div
+                      className={cn(
+                        'flex flex-col gap-1',
+                        // Desktop: single line
+                        'sm:flex-row sm:items-center sm:gap-2',
+                      )}
+                    >
+                      <span>
+                        {statistics.totalAttendanceRecords} of{' '}
+                        {statistics.totalEnrolledStudents} students have checked
+                        in
+                      </span>
+                      {statistics.manualOverrides > 0 && (
+                        <span
+                          className={cn(
+                            'text-amber-600 font-medium',
+                            // Mobile: new line, Desktop: inline
+                            'block sm:inline',
+                          )}
+                        >
+                          ({statistics.manualOverrides} manual override
+                          {statistics.manualOverrides !== 1 ? 's' : ''})
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    'Loading attendance data...'
+                  )}
+                </CardDescription>
+              </div>
+
+              {/* Status badges - Mobile optimized */}
+              <div
                 className={cn(
-                  'transition-colors',
-                  // Mobile: larger badges
-                  isMobile && 'px-3 py-1 text-sm',
-                  isTouchDevice && 'px-4 py-2 text-base',
+                  'flex items-center gap-2',
+                  // Mobile: full width with better spacing
+                  isMobile && 'w-full justify-between mt-2',
                 )}
               >
-                <CheckCircle2
-                  className={cn('mr-1', 'h-3 w-3', isMobile && 'h-4 w-4')}
-                />
-                {statistics ? statistics.totalAttendanceRecords : 0} Present
-              </Badge>
-
-              {statistics && statistics.absentStudents > 0 && (
                 <Badge
-                  variant="outline"
+                  variant="secondary"
                   className={cn(
-                    'text-red-600 border-red-200 bg-red-50',
+                    'transition-colors',
                     // Mobile: larger badges
                     isMobile && 'px-3 py-1 text-sm',
                     isTouchDevice && 'px-4 py-2 text-base',
                   )}
                 >
-                  <AlertCircle
+                  <CheckCircle2
                     className={cn('mr-1', 'h-3 w-3', isMobile && 'h-4 w-4')}
                   />
-                  {statistics.absentStudents} Absent
+                  {statistics ? statistics.totalAttendanceRecords : 0} Present
                 </Badge>
-              )}
-            </div>
-          </div>
-        </CardHeader>
 
-        <CardContent
-          id="student-list-section"
-          className={cn(
-            // Mobile-first padding
-            'p-4 sm:p-5 lg:p-6 pt-0',
-            // Collapsible on mobile
-            isMobile && !isStudentListExpanded && 'hidden',
-          )}
-        >
-          {!statistics ||
-          (attendanceSessionRecords.length === 0 &&
-            statistics.absentStudents === 0) ? (
-            <div className="text-center py-8">
-              <div
-                className={sessionState === 'complete' ? '' : 'animate-pulse'}
-              >
-                <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                <p className="text-gray-500">
-                  {sessionState === 'pending'
-                    ? 'Waiting for session to begin...'
-                    : sessionState === 'complete'
-                      ? 'Session has ended - No students marked attendance'
-                      : sessionState === 'cancelled'
-                        ? 'Session was cancelled - No attendance was taken'
-                        : 'Waiting for students to check in...'}
-                </p>
+                {statistics && statistics.absentStudents > 0 && (
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      'text-red-600 border-red-200 bg-red-50',
+                      // Mobile: larger badges
+                      isMobile && 'px-3 py-1 text-sm',
+                      isTouchDevice && 'px-4 py-2 text-base',
+                    )}
+                  >
+                    <AlertCircle
+                      className={cn('mr-1', 'h-3 w-3', isMobile && 'h-4 w-4')}
+                    />
+                    {statistics.absentStudents} Absent
+                  </Badge>
+                )}
               </div>
             </div>
-          ) : (
-            <div className="space-y-4">
-              {/* Filter records into present and absent */}
-              {(() => {
-                const presentStudents = attendanceSessionRecords.filter(
-                  (record) => {
-                    // Check if record has enhanced format
-                    if ('isPresent' in record) {
-                      return record.isPresent === true;
-                    }
-                    // Legacy format fallback
-                    return !!record.checkedInAt;
-                  },
-                );
+          </CardHeader>
 
-                const absentStudents = attendanceSessionRecords.filter(
-                  (record) => {
-                    // Check if record has enhanced format
-                    if ('isPresent' in record) {
-                      return record.isPresent === false;
-                    }
-                    // Legacy format fallback
-                    return !record.checkedInAt;
-                  },
-                );
+          <CardContent
+            id="student-list-section"
+            className={cn(
+              // Mobile-first padding
+              'p-4 sm:p-5 lg:p-6 pt-0',
+              // Collapsible on mobile
+              isMobile && !isStudentListExpanded && 'hidden',
+            )}
+          >
+            {!statistics ||
+            (attendanceSessionRecords.length === 0 &&
+              statistics.absentStudents === 0) ? (
+              <div className="text-center py-8">
+                <div
+                  className={sessionState === 'complete' ? '' : 'animate-pulse'}
+                >
+                  <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p className="text-gray-500">
+                    {sessionState === 'pending'
+                      ? 'Waiting for session to begin...'
+                      : sessionState === 'complete'
+                        ? 'Session has ended - No students marked attendance'
+                        : sessionState === 'cancelled'
+                          ? 'Session was cancelled - No attendance was taken'
+                          : 'Waiting for students to check in...'}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Filter records into present and absent */}
+                {(() => {
+                  const presentStudents = attendanceSessionRecords.filter(
+                    (record) => {
+                      // Check if record has enhanced format
+                      if ('isPresent' in record) {
+                        return record.isPresent === true;
+                      }
+                      // Legacy format fallback
+                      return !!record.checkedInAt;
+                    },
+                  );
 
-                return (
-                  <>
-                    {/* Present Students Section */}
-                    {presentStudents.length > 0 && (
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                          <CheckCircle2 className="h-4 w-4 text-green-600" />
-                          Present Students ({presentStudents.length})
-                        </div>
-                        <div className="space-y-2">
-                          {presentStudents.map((record) => (
-                            <StudentAttendanceRow
-                              key={record.student?._id || record._id}
-                              student={record}
-                              canPerformOverrides={canPerformOverrides}
-                              sessionId={attendanceSession._id}
-                              sessionState={sessionState}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                  const absentStudents = attendanceSessionRecords.filter(
+                    (record) => {
+                      // Check if record has enhanced format
+                      if ('isPresent' in record) {
+                        return record.isPresent === false;
+                      }
+                      // Legacy format fallback
+                      return !record.checkedInAt;
+                    },
+                  );
 
-                    {/* Absent Students Section */}
-                    {absentStudents.length > 0 && (
-                      <div className="space-y-3">
-                        {presentStudents.length > 0 && (
-                          <div className="border-t pt-4" />
-                        )}
-                        <div className="flex items-center justify-between">
+                  return (
+                    <>
+                      {/* Present Students Section */}
+                      {presentStudents.length > 0 && (
+                        <div className="space-y-3">
                           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                            <AlertCircle className="h-4 w-4 text-red-600" />
-                            Absent Students ({absentStudents.length})
+                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            Present Students ({presentStudents.length})
                           </div>
-                          {canPerformOverrides &&
-                            overrideEligibility?.canOverride && (
-                              <Badge
-                                variant="outline"
-                                className="text-xs text-amber-600 border-amber-200"
-                              >
-                                Override Available
-                              </Badge>
-                            )}
-                        </div>
-
-                        {/* Render absent students */}
-                        <div className="space-y-2">
-                          {absentStudents.map((record) => (
-                            <StudentAttendanceRow
-                              key={record.student?._id || record._id}
-                              student={record}
-                              canPerformOverrides={canPerformOverrides}
-                              sessionId={attendanceSession._id}
-                              sessionState={sessionState}
-                            />
-                          ))}
-                        </div>
-
-                        {/* Show message if no override capability */}
-                        {(!canPerformOverrides ||
-                          !overrideEligibility?.canOverride) && (
-                          <div
-                            className={cn(
-                              'text-center py-4 text-muted-foreground rounded-lg',
-                              'bg-muted/30 border border-dashed border-muted-foreground/20',
-                              // Mobile: better padding and spacing
-                              isMobile && 'py-6 mx-2',
-                            )}
-                          >
-                            <div className="space-y-2">
-                              <Users
-                                className={cn(
-                                  'mx-auto text-muted-foreground',
-                                  'h-6 w-6',
-                                  isMobile && 'h-8 w-8',
-                                )}
+                          <div className="space-y-2">
+                            {presentStudents.map((record) => (
+                              <StudentAttendanceRow
+                                key={record.student?._id || record._id}
+                                student={record}
+                                canPerformOverrides={canPerformOverrides}
+                                sessionId={attendanceSession._id}
+                                sessionState={sessionState}
                               />
-                              <p
-                                className={cn(
-                                  'text-sm sm:text-base',
-                                  isMobile && 'text-base',
-                                )}
-                              >
-                                {!canPerformOverrides
-                                  ? 'Manual overrides are not available'
-                                  : 'Override window has expired'}
-                              </p>
-                            </div>
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                        </div>
+                      )}
+
+                      {/* Absent Students Section */}
+                      {absentStudents.length > 0 && (
+                        <div className="space-y-3">
+                          {presentStudents.length > 0 && (
+                            <div className="border-t pt-4" />
+                          )}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                              <AlertCircle className="h-4 w-4 text-red-600" />
+                              Absent Students ({absentStudents.length})
+                            </div>
+                            {canPerformOverrides &&
+                              overrideEligibility?.canOverride && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs text-amber-600 border-amber-200"
+                                >
+                                  Override Available
+                                </Badge>
+                              )}
+                          </div>
+
+                          {/* Render absent students */}
+                          <div className="space-y-2">
+                            {absentStudents.map((record) => (
+                              <StudentAttendanceRow
+                                key={record.student?._id || record._id}
+                                student={record}
+                                canPerformOverrides={canPerformOverrides}
+                                sessionId={attendanceSession._id}
+                                sessionState={sessionState}
+                              />
+                            ))}
+                          </div>
+
+                          {/* Show message if no override capability */}
+                          {(!canPerformOverrides ||
+                            !overrideEligibility?.canOverride) && (
+                            <div
+                              className={cn(
+                                'text-center py-4 text-muted-foreground rounded-lg',
+                                'bg-muted/30 border border-dashed border-muted-foreground/20',
+                                // Mobile: better padding and spacing
+                                isMobile && 'py-6 mx-2',
+                              )}
+                            >
+                              <div className="space-y-2">
+                                <Users
+                                  className={cn(
+                                    'mx-auto text-muted-foreground',
+                                    'h-6 w-6',
+                                    isMobile && 'h-8 w-8',
+                                  )}
+                                />
+                                <p
+                                  className={cn(
+                                    'text-sm sm:text-base',
+                                    isMobile && 'text-base',
+                                  )}
+                                >
+                                  {!canPerformOverrides
+                                    ? 'Manual overrides are not available'
+                                    : 'Override window has expired'}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

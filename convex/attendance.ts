@@ -747,6 +747,248 @@ export const getAttendanceRecordsWithOverrides = query({
 });
 
 /**
+ * Get attendance export data for a single session
+ * This query provides session-specific attendance data for export functionality
+ */
+export const getSessionExportData = query({
+  args: {
+    attendanceSessionId: v.id('attendanceSessions'),
+    courseId: v.id('courses'),
+  },
+  handler: async (ctx, args) => {
+    // Verify user authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError('Authentication required');
+    }
+
+    // Get attendance session
+    const session = await ctx.db.get(args.attendanceSessionId);
+    if (!session) {
+      throw new ConvexError('Attendance session not found');
+    }
+
+    // Verify user is the lecturer for this session
+    if (session.lecturerId !== identity.subject) {
+      throw new ConvexError(
+        'Access denied: You are not the lecturer for this session',
+      );
+    }
+
+    // Verify session belongs to the specified course
+    if (session.courseId !== args.courseId) {
+      throw new ConvexError('Session does not belong to the specified course');
+    }
+
+    // Get course information
+    const course = await ctx.db.get(session.courseId);
+    if (!course) {
+      throw new ConvexError('Course not found');
+    }
+
+    // Get lecturer information
+    const lecturer = await ctx.db.get(session.lecturerId);
+    if (!lecturer) {
+      throw new ConvexError('Lecturer not found');
+    }
+
+    // Get attendance records for this session
+    const attendanceRecords = await ctx.db
+      .query('attendanceRecords')
+      .withIndex('by_attendanceSessionId', (q) =>
+        q.eq('attendanceSessionId', args.attendanceSessionId),
+      )
+      .collect();
+
+    // Get student details for each attendance record
+    const studentsPresent = await Promise.all(
+      attendanceRecords.map(async (record) => {
+        const student = await ctx.db.get(record.studentId);
+        return {
+          name: student?.fullName || 'Unknown Student',
+          registrationNumber: student?.registrationNumber || 'N/A',
+          checkInTime: record.checkedInAt,
+          isManualOverride: record.isManualOverride || false,
+        };
+      }),
+    );
+
+    // Get all enrolled students for statistics
+    const enrolledStudents = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_courseId', (q) => q.eq('courseId', session.courseId))
+      .collect();
+
+    // Count manual overrides
+    const manualOverrides = attendanceRecords.filter(
+      (record) => record.isManualOverride === true,
+    ).length;
+
+    // Build session data
+    const sessionData = {
+      sessionId: session._id,
+      date: new Date(session._creationTime).toLocaleDateString(),
+      time: new Date(session._creationTime).toLocaleTimeString(),
+      status: session.status,
+      attendanceCodeUsed: !!session.attendanceCode,
+      totalPresent: attendanceRecords.length,
+      totalEnrolled: enrolledStudents.length,
+      manualOverrides,
+      studentsPresent: studentsPresent.sort((a, b) =>
+        a.name.localeCompare(b.name),
+      ),
+    };
+
+    return {
+      courseInfo: {
+        courseName: course.courseName,
+        courseCode: course.courseCode,
+        lecturerName: lecturer.fullName,
+        lecturerTitle: lecturer.title || '',
+        status: course.status,
+      },
+      session: sessionData,
+      summary: {
+        totalEnrolled: enrolledStudents.length,
+        totalPresent: attendanceRecords.length,
+        totalAbsent: enrolledStudents.length - attendanceRecords.length,
+        manualOverrides,
+        attendancePercentage:
+          enrolledStudents.length > 0
+            ? Math.round(
+                (attendanceRecords.length / enrolledStudents.length) * 100,
+              )
+            : 0,
+      },
+      exportTimestamp: new Date().toISOString(),
+    };
+  },
+});
+
+/**
+ * Get attendance export data for archived courses
+ * This query provides comprehensive attendance data for export functionality
+ */
+export const getAttendanceExportData = query({
+  args: { courseId: v.id('courses') },
+  handler: async (ctx, args) => {
+    // Verify user authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError('Authentication required');
+    }
+
+    // Get course information
+    const course = await ctx.db.get(args.courseId);
+    if (!course) {
+      throw new ConvexError('Course not found');
+    }
+
+    // Verify user is the lecturer for this course
+    if (course.lecturerId !== identity.subject) {
+      throw new ConvexError(
+        'Access denied: You are not the lecturer for this course',
+      );
+    }
+
+    // Only allow export for archived courses
+    if (course.status !== 'archived') {
+      throw new ConvexError('Export is only available for archived courses');
+    }
+
+    // Get lecturer information
+    const lecturer = await ctx.db.get(course.lecturerId);
+    if (!lecturer) {
+      throw new ConvexError('Lecturer not found');
+    }
+
+    // Get all attendance sessions for this course
+    const attendanceSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+      .order('desc')
+      .collect();
+
+    // Get detailed session data with attendance records
+    const sessionsWithAttendance = await Promise.all(
+      attendanceSessions.map(async (session) => {
+        // Get attendance records for this session
+        const attendanceRecords = await ctx.db
+          .query('attendanceRecords')
+          .withIndex('by_attendanceSessionId', (q) =>
+            q.eq('attendanceSessionId', session._id),
+          )
+          .collect();
+
+        // Get student details for each attendance record
+        const studentsPresent = await Promise.all(
+          attendanceRecords.map(async (record) => {
+            const student = await ctx.db.get(record.studentId);
+            return {
+              name: student?.fullName || 'Unknown Student',
+              registrationNumber: student?.registrationNumber || 'N/A',
+              checkInTime: record.checkedInAt,
+              isManualOverride: record.isManualOverride || false,
+            };
+          }),
+        );
+
+        // Count manual overrides
+        const manualOverrides = attendanceRecords.filter(
+          (record) => record.isManualOverride === true,
+        ).length;
+
+        return {
+          sessionId: session._id,
+          date: new Date(session._creationTime).toLocaleDateString(),
+          time: new Date(session._creationTime).toLocaleTimeString(),
+          status: session.status,
+          attendanceCodeUsed: !!session.attendanceCode,
+          totalPresent: attendanceRecords.length,
+          manualOverrides,
+          studentsPresent: studentsPresent.sort((a, b) =>
+            a.name.localeCompare(b.name),
+          ),
+        };
+      }),
+    );
+
+    // Calculate summary statistics
+    const totalSessions = attendanceSessions.length;
+    const totalAttendanceRecords = sessionsWithAttendance.reduce(
+      (sum, session) => sum + session.totalPresent,
+      0,
+    );
+    const totalManualOverrides = sessionsWithAttendance.reduce(
+      (sum, session) => sum + session.manualOverrides,
+      0,
+    );
+
+    return {
+      courseInfo: {
+        courseName: course.courseName,
+        courseCode: course.courseCode,
+        lecturerName: lecturer.fullName,
+        lecturerTitle: lecturer.title || '',
+        archiveTimestamp: new Date().toISOString(), // Current timestamp as archive time
+        status: course.status,
+      },
+      summary: {
+        totalSessions,
+        totalAttendanceRecords,
+        totalManualOverrides,
+        averageAttendancePerSession:
+          totalSessions > 0
+            ? Math.round(totalAttendanceRecords / totalSessions)
+            : 0,
+      },
+      sessions: sessionsWithAttendance,
+      exportTimestamp: new Date().toISOString(),
+    };
+  },
+});
+
+/**
  * Comprehensive attendance statistics query for session overview
  * Requirements: 2.1, 2.2, 2.4 - Statistics breakdown and progress indicators
  */

@@ -78,3 +78,27 @@ export const useCanCancelAttendanceSession = ({
       courseId,
     }),
   );
+
+// Attendance export hooks
+export const useGetAttendanceExportData = ({
+  courseId,
+}: {
+  courseId: Id<'courses'>;
+}) =>
+  useSuspenseQuery(
+    convexQuery(api.attendance.getAttendanceExportData, { courseId }),
+  );
+
+export const useGetSessionExportData = ({
+  attendanceSessionId,
+  courseId,
+}: {
+  attendanceSessionId: Id<'attendanceSessions'>;
+  courseId: Id<'courses'>;
+}) =>
+  useSuspenseQuery(
+    convexQuery(api.attendance.getSessionExportData, {
+      attendanceSessionId,
+      courseId,
+    }),
+  );

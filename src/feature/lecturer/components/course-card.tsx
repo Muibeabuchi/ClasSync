@@ -34,6 +34,7 @@ import {
   useUnarchiveCourse,
   useDeleteCourse,
 } from '../hooks/useCourseActions';
+import { AttendanceExportDropdown } from '@/components/attendance/AttendanceExportDropdown';
 
 export const CourseCard = ({
   course,
@@ -158,7 +159,10 @@ export const CourseCard = ({
       className={`group relative overflow-hidden border hover:shadow-md transition-all duration-200 cursor-pointer ${
         isArchived ? 'opacity-75 hover:opacity-90' : 'hover:border-primary/20'
       }`}
-      onClick={!isArchived ? handleViewCourse : undefined}
+      onClick={() => {
+        // e.preventDefault();
+        handleViewCourse();
+      }}
     >
       {/* Header */}
       <CardHeader className="p-4 pb-3">
@@ -212,47 +216,52 @@ export const CourseCard = ({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 {isArchived ? (
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowUnarchiveModal(true);
-                    }}
-                    disabled={unarchiveMutation.isPending}
-                  >
-                    {unarchiveMutation.isPending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-                        Unarchiving...
-                      </>
-                    ) : (
-                      <>
-                        <RotateCcw className="h-4 w-4 mr-2" />
-                        Unarchive Course
-                      </>
-                    )}
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowUnarchiveModal(true);
+                      }}
+                      disabled={unarchiveMutation.isPending}
+                    >
+                      {unarchiveMutation.isPending ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                          Unarchiving...
+                        </>
+                      ) : (
+                        <>
+                          <RotateCcw className="h-4 w-4 mr-2" />
+                          Unarchive Course
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
                 ) : (
-                  <DropdownMenuItem
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowArchiveModal(true);
-                    }}
-                    disabled={archiveMutation.isPending}
-                  >
-                    {archiveMutation.isPending ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
-                        Archiving...
-                      </>
-                    ) : (
-                      <>
-                        <Archive className="h-4 w-4 mr-2" />
-                        Archive Course
-                      </>
-                    )}
-                  </DropdownMenuItem>
+                  <>
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowArchiveModal(true);
+                      }}
+                      disabled={archiveMutation.isPending}
+                    >
+                      {archiveMutation.isPending ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
+                          Archiving...
+                        </>
+                      ) : (
+                        <>
+                          <Archive className="h-4 w-4 mr-2" />
+                          Archive Course
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
                 )}
-                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={(e) => {
@@ -337,6 +346,23 @@ export const CourseCard = ({
             </div>
           </div>
         </div>
+
+        {/* Export Section for Archived Courses */}
+        {isArchived && (course.stats?.sessionsHeld || 0) > 0 && (
+          <div className="mt-4 pt-3 border-t border-muted/50">
+            <div className="flex items-center justify-between">
+              <div className="text-xs text-muted-foreground font-medium">
+                Export attendance data
+              </div>
+              <AttendanceExportDropdown
+                courseId={course._id}
+                courseName={course.courseName}
+                courseCode={course.courseCode}
+                className="h-7 text-xs"
+              />
+            </div>
+          </div>
+        )}
       </CardHeader>
       {/* Content */}
 

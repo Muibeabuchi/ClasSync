@@ -83,7 +83,7 @@ export const CancelAttendanceSessionDialog = ({
 
       // Navigate back to course page
       navigate({
-        to: '/dashboard/lecturer/$courseId',
+        to: '/dashboard/lecturer/_courses/$courseId',
         params: { courseId },
       });
     } catch (error) {
