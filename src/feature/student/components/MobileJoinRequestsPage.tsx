@@ -4,6 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
   Drawer,
   DrawerContent,
   DrawerDescription,
@@ -50,18 +56,18 @@ const MobileJoinRequestCard: React.FC<MobileJoinRequestCardProps> = ({
       case 'pending':
         return {
           icon: Clock,
-          color: 'text-yellow-600',
-          bgColor: 'bg-yellow-100',
-          borderColor: 'border-yellow-200',
+          color: 'text-amber-600',
+          bgColor: 'bg-amber-50',
+          borderColor: 'border-amber-200',
           variant: 'secondary' as const,
           label: 'Pending',
         };
       case 'approved':
         return {
           icon: CheckCircle,
-          color: 'text-green-600',
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
+          color: 'text-emerald-600',
+          bgColor: 'bg-emerald-50',
+          borderColor: 'border-emerald-200',
           variant: 'default' as const,
           label: 'Approved',
         };
@@ -69,7 +75,7 @@ const MobileJoinRequestCard: React.FC<MobileJoinRequestCardProps> = ({
         return {
           icon: XCircle,
           color: 'text-red-600',
-          bgColor: 'bg-red-100',
+          bgColor: 'bg-red-50',
           borderColor: 'border-red-200',
           variant: 'destructive' as const,
           label: 'Rejected',
@@ -78,7 +84,7 @@ const MobileJoinRequestCard: React.FC<MobileJoinRequestCardProps> = ({
         return {
           icon: Clock,
           color: 'text-gray-600',
-          bgColor: 'bg-gray-100',
+          bgColor: 'bg-gray-50',
           borderColor: 'border-gray-200',
           variant: 'secondary' as const,
           label: 'Unknown',
@@ -90,31 +96,38 @@ const MobileJoinRequestCard: React.FC<MobileJoinRequestCardProps> = ({
   const StatusIcon = status.icon;
 
   return (
-    <Card className={cn('mobile-tap-feedback', status.borderColor)}>
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
+    <Card className="mobile-tap-feedback border-0 shadow-sm bg-white/80 backdrop-blur-sm">
+      <CardContent className="p-3">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-2">
           <div className="flex-1 min-w-0">
-            <CardTitle className="mobile-text-lg mb-1 truncate">
+            <h3 className="font-semibold text-sm text-gray-900 truncate mb-0.5">
               {request.course.courseName}
-            </CardTitle>
-            <div className="flex items-center gap-2 mobile-text-sm text-muted-foreground">
-              <BookOpen className="h-4 w-4 shrink-0" />
+            </h3>
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <BookOpen className="h-3 w-3 shrink-0" />
               <span className="truncate">{request.course.courseCode}</span>
             </div>
           </div>
-          <Badge variant={status.variant} className="shrink-0 mobile-text-xs">
-            <StatusIcon className="h-3 w-3 mr-1" />
+          <Badge
+            variant={status.variant}
+            className={cn(
+              'shrink-0 text-xs px-1.5 py-0.5 font-medium',
+              status.color,
+              status.bgColor,
+              'border-0',
+            )}
+          >
+            <StatusIcon className="h-2.5 w-2.5 mr-1" />
             {status.label}
           </Badge>
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Lecturer Info */}
-        <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
-          <Avatar className="h-8 w-8 shrink-0">
+        {/* Lecturer Info - Compact */}
+        <div className="flex items-center gap-2 mb-2 p-1.5 bg-gray-50/50 rounded">
+          <Avatar className="h-5 w-5">
             <AvatarImage src={request.lecturer.profileImage} />
-            <AvatarFallback className="mobile-text-xs">
+            <AvatarFallback className="text-xs bg-gray-200">
               {request.lecturer.fullName
                 ?.split(' ')
                 .map((n: string) => n[0])
@@ -122,46 +135,41 @@ const MobileJoinRequestCard: React.FC<MobileJoinRequestCardProps> = ({
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="mobile-text-sm font-medium truncate">
+            <p className="text-xs font-medium text-gray-700 truncate">
               {request.lecturer.fullName}
             </p>
-            <p className="mobile-text-xs text-muted-foreground flex items-center gap-1">
-              <User className="h-3 w-3" />
-              Lecturer
-            </p>
           </div>
         </div>
 
-        {/* Request Details */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 mobile-text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 shrink-0" />
-            <span className="truncate">
-              {formatDistanceToNow(new Date(request._creationTime), {
-                addSuffix: true,
-              })}
-            </span>
-          </div>
+        {/* Request Time */}
+        <div className="flex items-center gap-1 text-xs text-gray-500 mb-2">
+          <Calendar className="h-3 w-3" />
+          <span className="truncate">
+            {formatDistanceToNow(new Date(request._creationTime), {
+              addSuffix: true,
+            })}
+          </span>
+        </div>
 
-          {request.status === 'rejected' && request.rejectionReason && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertTriangle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
-                <div className="min-w-0">
-                  <p className="mobile-text-sm font-medium text-red-800">
-                    Rejection Reason
-                  </p>
-                  <p className="mobile-text-sm text-red-700 mt-1 break-words">
-                    {request.rejectionReason}
-                  </p>
-                </div>
+        {/* Rejection Reason - Compact */}
+        {request.status === 'rejected' && request.rejectionReason && (
+          <div className="p-2 bg-red-50 border border-red-100 rounded mb-2">
+            <div className="flex items-start gap-1">
+              <AlertTriangle className="h-3 w-3 text-red-500 mt-0.5 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-red-800 mb-0.5">
+                  Rejected
+                </p>
+                <p className="text-xs text-red-700 leading-relaxed break-words">
+                  {request.rejectionReason}
+                </p>
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Actions */}
-        <div className="flex gap-2 pt-2">
+        {/* Actions - Compact */}
+        <div className="flex gap-2">
           {request.status === 'pending' && (
             <Drawer>
               <DrawerTrigger asChild>
@@ -169,18 +177,18 @@ const MobileJoinRequestCard: React.FC<MobileJoinRequestCardProps> = ({
                   variant="outline"
                   size="sm"
                   disabled={isLoading}
-                  className="flex-1 mobile-tap-feedback"
+                  className="flex-1 h-7 text-xs mobile-tap-feedback hover:bg-red-50 hover:border-red-200 hover:text-red-700"
                 >
-                  <XCircle className="h-4 w-4 mr-2" />
-                  <span className="mobile-text-sm">Cancel</span>
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Cancel
                 </Button>
               </DrawerTrigger>
               <DrawerContent>
                 <DrawerHeader className="text-left">
-                  <DrawerTitle className="mobile-text-lg">
+                  <DrawerTitle className="text-lg">
                     Cancel Join Request
                   </DrawerTitle>
-                  <DrawerDescription className="mobile-text-sm">
+                  <DrawerDescription className="text-sm">
                     Are you sure you want to cancel your request to join{' '}
                     <strong>{request.course.courseName}</strong>? This action
                     cannot be undone.
@@ -212,18 +220,18 @@ const MobileJoinRequestCard: React.FC<MobileJoinRequestCardProps> = ({
                   variant="outline"
                   size="sm"
                   disabled={isLoading}
-                  className="flex-1 mobile-tap-feedback"
+                  className="flex-1 h-7 text-xs mobile-tap-feedback hover:bg-red-50 hover:border-red-200 hover:text-red-700"
                 >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  <span className="mobile-text-sm">Delete</span>
+                  <Trash2 className="h-3 w-3 mr-1" />
+                  Delete
                 </Button>
               </DrawerTrigger>
               <DrawerContent>
                 <DrawerHeader className="text-left">
-                  <DrawerTitle className="mobile-text-lg">
+                  <DrawerTitle className="text-lg">
                     Delete Join Request
                   </DrawerTitle>
-                  <DrawerDescription className="mobile-text-sm">
+                  <DrawerDescription className="text-sm">
                     Are you sure you want to delete this request for{' '}
                     <strong>{request.course.courseName}</strong>? This will
                     remove it from your request history.
@@ -381,64 +389,140 @@ const MobileJoinRequestsPage: React.FC = () => {
 
         {/* Requests List */}
         {joinRequests.length === 0 ? (
-          <Card>
+          <Card className="border-0 shadow-sm bg-gradient-to-br from-gray-50 to-white">
             <CardContent className="text-center py-12">
-              <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="mobile-text-lg font-medium mb-2">
+              <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <BookOpen className="h-6 w-6 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 No Join Requests
               </h3>
-              <p className="mobile-text-sm text-muted-foreground mb-6">
-                You haven&apos;t made any course join requests yet.
+              <p className="text-sm text-gray-500 mb-6 px-4">
+                You haven't made any course join requests yet. Start by browsing
+                available courses.
               </p>
-              <Button asChild className="mobile-tap-feedback">
+              <Button asChild className="mobile-tap-feedback px-6">
                 <a href="/dashboard/student/courses">Browse Courses</a>
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-6">
+          <Accordion
+            type="multiple"
+            defaultValue={['pending', 'approved', 'rejected']}
+            className="space-y-3"
+          >
             {/* Pending Requests */}
             {pendingRequests.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="mobile-text-lg font-semibold flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-muted-foreground" />
-                  Pending ({pendingRequests.length})
-                </h2>
-                <div className="space-y-3">
-                  {pendingRequests.map((request) => (
-                    <MobileJoinRequestCard
-                      key={request._id}
-                      request={request}
-                      onCancel={handleCancel}
-                      onDelete={handleDelete}
-                      isLoading={isCancelling || isDeleting}
-                    />
-                  ))}
-                </div>
-              </div>
+              <AccordionItem
+                value="pending"
+                className="border-0 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg"
+              >
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-amber-100 rounded-lg">
+                      <Clock className="h-4 w-4 text-amber-600" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-semibold text-gray-900 text-sm">
+                        Pending
+                      </h3>
+                      <p className="text-xs text-gray-600">
+                        {pendingRequests.length} awaiting approval
+                      </p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    {pendingRequests.map((request) => (
+                      <MobileJoinRequestCard
+                        key={request._id}
+                        request={request}
+                        onCancel={handleCancel}
+                        onDelete={handleDelete}
+                        isLoading={isCancelling || isDeleting}
+                      />
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            )}
+
+            {/* Approved Requests */}
+            {approvedRequests.length > 0 && (
+              <AccordionItem
+                value="approved"
+                className="border-0 bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg"
+              >
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-emerald-100 rounded-lg">
+                      <CheckCircle className="h-4 w-4 text-emerald-600" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-semibold text-gray-900 text-sm">
+                        Approved
+                      </h3>
+                      <p className="text-xs text-gray-600">
+                        {approvedRequests.length} requests approved
+                      </p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    {approvedRequests.map((request) => (
+                      <MobileJoinRequestCard
+                        key={request._id}
+                        request={request}
+                        onCancel={handleCancel}
+                        onDelete={handleDelete}
+                        isLoading={isCancelling || isDeleting}
+                      />
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             )}
 
             {/* Rejected Requests */}
             {rejectedRequests.length > 0 && (
-              <div className="space-y-3">
-                <h2 className="mobile-text-lg font-semibold flex items-center gap-2">
-                  <XCircle className="h-5 w-5 text-muted-foreground" />
-                  Rejected ({rejectedRequests.length})
-                </h2>
-                <div className="space-y-3">
-                  {rejectedRequests.map((request) => (
-                    <MobileJoinRequestCard
-                      key={request._id}
-                      request={request}
-                      onCancel={handleCancel}
-                      onDelete={handleDelete}
-                      isLoading={isCancelling || isDeleting}
-                    />
-                  ))}
-                </div>
-              </div>
+              <AccordionItem
+                value="rejected"
+                className="border-0 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg"
+              >
+                <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <div className="p-1.5 bg-red-100 rounded-lg">
+                      <XCircle className="h-4 w-4 text-red-600" />
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-semibold text-gray-900 text-sm">
+                        Rejected
+                      </h3>
+                      <p className="text-xs text-gray-600">
+                        {rejectedRequests.length} requests rejected
+                      </p>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <div className="grid grid-cols-1 gap-3">
+                    {rejectedRequests.map((request) => (
+                      <MobileJoinRequestCard
+                        key={request._id}
+                        request={request}
+                        onCancel={handleCancel}
+                        onDelete={handleDelete}
+                        isLoading={isCancelling || isDeleting}
+                      />
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             )}
-          </div>
+          </Accordion>
         )}
       </div>
     </MobilePageContainer>

@@ -714,13 +714,15 @@ export const unLinkStudentFromCourseAttendanceList = lecturerMutation({
           .eq('studentId', courseAttendanceList.studentId)
           .eq('courseId', course._id),
       )
-      .unique();
+      .collect();
 
-    if (joinRequest && joinRequest.status === 'approved') {
-      await ctx.db.patch(joinRequest._id, {
-        status: 'rejected',
-      });
-    }
+    // If there are any join requests for this student and course, and they are approved, reject them
+    await Promise.all(
+      joinRequest.map(async (request) => {
+        if (request.status === 'approved')
+          await ctx.db.patch(request._id, { status: 'rejected' });
+      }),
+    );
 
     // Finally, delete the courseAttendanceList entry
     await ctx.db.delete(courseAttendanceList._id);
