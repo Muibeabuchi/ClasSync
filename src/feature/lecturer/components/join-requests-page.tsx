@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -21,7 +21,29 @@ import {
 } from '@/components/ui/drawer';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Clock, UserPlus, Check, X, User, Key } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
+  Clock,
+  UserPlus,
+  Check,
+  X,
+  User,
+  Key,
+  BookOpen,
+  ArrowUpDown,
+} from 'lucide-react';
 import { toast } from 'sonner';
 import type { GetLecturerJoinRequestsReturnType } from 'convex/schema';
 import type { Id } from 'convex/_generated/dataModel';
@@ -46,6 +68,7 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
   const [isBindingModalOpen, setIsBindingModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const isMobile = useIsMobile();
 
   const {
@@ -59,6 +82,46 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
     useAcceptJoinRequest();
   const { mutateAsync: rejectJoinRequest, isPending: isRejecting } =
     useRejectJoinRequest();
+
+  // Group requests by course and sort within each group
+  const groupedRequests = useMemo(() => {
+    const groups = lecturerJoinRequests.reduce(
+      (acc, request) => {
+        const courseKey = `${request.courseId}-${request.course.courseName}`;
+        if (!acc[courseKey]) {
+          acc[courseKey] = {
+            course: request.course,
+            requests: [],
+          };
+        }
+        acc[courseKey].requests.push(request);
+        return acc;
+      },
+      {} as Record<
+        string,
+        {
+          course: GetLecturerJoinRequestsReturnType[number]['course'];
+          requests: GetLecturerJoinRequestsReturnType;
+        }
+      >,
+    );
+
+    // Sort requests within each group by creation time
+    Object.values(groups).forEach((group) => {
+      group.requests.sort(
+        (
+          a: GetLecturerJoinRequestsReturnType[number],
+          b: GetLecturerJoinRequestsReturnType[number],
+        ) => {
+          const timeA = new Date(a._creationTime).getTime();
+          const timeB = new Date(b._creationTime).getTime();
+          return sortOrder === 'newest' ? timeB - timeA : timeA - timeB;
+        },
+      );
+    });
+
+    return groups;
+  }, [lecturerJoinRequests, sortOrder]);
 
   const handleBindAndApprove = async ({
     selectedStudentId,
@@ -190,154 +253,186 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
           {lecturerJoinRequests.length} pending
         </Badge>
       </div>
-      {/* Course Filter */}
-      {/* <Card className="border-0 shadow-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Filter by Course</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Select value={selectedCourse} onValueChange={setSelectedCourse}>
-            <SelectTrigger className="w-full max-w-md">
-              <SelectValue placeholder="Select course to filter requests" />
-            </SelectTrigger>
-            <SelectContent>
-              {mockCourses.map((course) => (
-                <SelectItem key={course.id} value={course.id.toString()}>
-                  <div>
-                    <p className="font-medium text-sm">{course.name}</p>
-                    {course.code && (
-                      <p className="text-xs text-muted-foreground">
-                        {course.code}
-                      </p>
-                    )}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </CardContent>
-      </Card> */}
+      {/* Sort Controls */}
+      {lecturerJoinRequests.length > 0 && (
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm font-medium">Sort by time:</span>
+              </div>
+              <Select
+                value={sortOrder}
+                onValueChange={(value: 'newest' | 'oldest') =>
+                  setSortOrder(value)
+                }
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest first</SelectItem>
+                  <SelectItem value="oldest">Oldest first</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Requests Grid or Empty State */}
       {lecturerJoinRequests.length === 0 ? (
         <EmptyRequestsState />
       ) : (
-        <div className="grid gap-3 md:gap-4">
-          {lecturerJoinRequests.map((request) => (
-            <Card
-              key={request._id}
-              className="border-0 shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-r from-background to-muted/30"
+        <Accordion
+          type="multiple"
+          className="space-y-4"
+          defaultValue={Object.keys(groupedRequests)}
+        >
+          {Object.entries(groupedRequests).map(([courseKey, group]) => (
+            <AccordionItem
+              key={courseKey}
+              value={courseKey}
+              className="border-0 shadow-sm rounded-lg"
             >
-              <CardContent className="p-3 md:p-4">
-                <div className="space-y-4">
-                  {/* Student Info */}
-                  <div className="flex items-start md:items-center justify-between gap-3">
-                    <div className="flex items-start md:items-center space-x-3 min-w-0 flex-1">
-                      <Avatar className="h-10 w-10 md:h-12 md:w-12 ring-2 ring-muted flex-shrink-0">
-                        {request.student.profileImage ? (
-                          <img
-                            src={request.student.profileImage}
-                            alt={request.student.fullName}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
-                          <AvatarFallback className="text-xs md:text-sm font-medium">
-                            {request.student.fullName
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
-                          <h3 className="font-medium text-sm md:text-base truncate">
-                            {request.student.fullName}
-                          </h3>
-                          <div className="flex items-center gap-2">
-                            {request.student.registrationNumber ? (
-                              <Badge
-                                variant="outline"
-                                className="text-xs px-2 py-0 self-start md:self-auto flex items-center gap-1"
-                              >
-                                <User className="h-3 w-3" />
-                                {request.student.registrationNumber}
-                              </Badge>
-                            ) : request.uniqueCode ? (
-                              <Badge
-                                variant="outline"
-                                className="text-xs px-2 py-0 self-start md:self-auto flex items-center gap-1"
-                              >
-                                <Key className="h-3 w-3" />
-                                {request.uniqueCode}
-                              </Badge>
-                            ) : (
-                              <Badge
-                                variant="secondary"
-                                className="text-xs px-2 py-0 self-start md:self-auto"
-                              >
-                                No ID
-                              </Badge>
-                            )}
+              <AccordionTrigger className="hover:no-underline hover:bg-muted/30 px-6 py-4 rounded-t-lg">
+                <div className="flex items-center justify-between w-full mr-4">
+                  <div className="flex items-center gap-3">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    <div className="text-left">
+                      <h3 className="text-lg font-semibold">
+                        {group.course.courseName}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {group.course.courseCode}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="secondary" className="px-3 py-1">
+                    {group.requests.length} request
+                    {group.requests.length !== 1 ? 's' : ''}
+                  </Badge>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6">
+                <div className="grid gap-3 md:gap-4">
+                  {group.requests.map((request) => (
+                    <Card
+                      key={request._id}
+                      className="border shadow-sm hover:shadow-md transition-all duration-200 bg-gradient-to-r from-background to-muted/30"
+                    >
+                      <CardContent className="p-3 md:p-4">
+                        <div className="space-y-4">
+                          {/* Student Info */}
+                          <div className="flex items-start md:items-center justify-between gap-3">
+                            <div className="flex items-start md:items-center space-x-3 min-w-0 flex-1">
+                              <Avatar className="h-10 w-10 md:h-12 md:w-12 ring-2 ring-muted flex-shrink-0">
+                                {request.student.profileImage ? (
+                                  <img
+                                    src={request.student.profileImage}
+                                    alt={request.student.fullName}
+                                    className="h-full w-full object-cover"
+                                  />
+                                ) : (
+                                  <AvatarFallback className="text-xs md:text-sm font-medium">
+                                    {request.student.fullName
+                                      .split(' ')
+                                      .map((n) => n[0])
+                                      .join('')}
+                                  </AvatarFallback>
+                                )}
+                              </Avatar>
+                              <div className="space-y-1 min-w-0 flex-1">
+                                <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
+                                  <h3 className="font-medium text-sm md:text-base truncate">
+                                    {request.student.fullName}
+                                  </h3>
+                                  <div className="flex items-center gap-2">
+                                    {request.student.registrationNumber ? (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs px-2 py-0 self-start md:self-auto flex items-center gap-1"
+                                      >
+                                        <User className="h-3 w-3" />
+                                        {request.student.registrationNumber}
+                                      </Badge>
+                                    ) : request.uniqueCode ? (
+                                      <Badge
+                                        variant="outline"
+                                        className="text-xs px-2 py-0 self-start md:self-auto flex items-center gap-1"
+                                      >
+                                        <Key className="h-3 w-3" />
+                                        {request.uniqueCode}
+                                      </Badge>
+                                    ) : (
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs px-2 py-0 self-start md:self-auto"
+                                      >
+                                        No ID
+                                      </Badge>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <Clock className="h-3 w-3 flex-shrink-0" />
+                                  {getTimeAgo(
+                                    new Date(
+                                      request._creationTime,
+                                    ).toLocaleString(),
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            <Badge
+                              variant={
+                                request.status === 'pending'
+                                  ? 'secondary'
+                                  : 'default'
+                              }
+                              className="text-xs rounded-full px-2 py-1 flex-shrink-0 animate-pulse"
+                            >
+                              {request.status}
+                            </Badge>
+                          </div>
+
+                          {/* Action Buttons */}
+                          <div className="flex gap-2 pt-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleAcceptRequest(request);
+                              }}
+                              disabled={isAccepting || isRejecting}
+                            >
+                              <Check className="h-4 w-4 mr-2" />
+                              Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRejectRequest(request);
+                              }}
+                              disabled={isAccepting || isRejecting}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              Reject
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2 text-xs text-muted-foreground">
-                          <span className="truncate font-medium">
-                            {request.course.courseName}
-                          </span>
-                          <span className="hidden md:inline">•</span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3 flex-shrink-0" />
-                            {getTimeAgo(
-                              new Date(request._creationTime).toLocaleString(),
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                    <Badge
-                      variant={
-                        request.status === 'pending' ? 'secondary' : 'default'
-                      }
-                      className="text-xs rounded-full px-2 py-1 flex-shrink-0 animate-pulse"
-                    >
-                      {request.status}
-                    </Badge>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAcceptRequest(request);
-                      }}
-                      disabled={isAccepting || isRejecting}
-                      className=""
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      Accept
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRejectRequest(request);
-                      }}
-                      disabled={isAccepting || isRejecting}
-                      className=""
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Reject
-                    </Button>
-                  </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
+              </AccordionContent>
+            </AccordionItem>
           ))}
-        </div>
+        </Accordion>
       )}
 
       <StudentBindingModal
