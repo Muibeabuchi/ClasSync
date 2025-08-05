@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query'; // Import useQuery
 import { convexQuery } from '@convex-dev/react-query';
@@ -20,35 +19,34 @@ export function useOnboardRedirect() {
     error,
   } = useQuery(convexQuery(api.userProfile.getUserOnboardedStatus, {}));
 
-  useEffect(() => {
-    // Only proceed with redirection logic if data has been fetched and is not loading
-    if (!isLoading) {
-      if (onboardStatus === null) {
+  // useEffect(() => {
+  // Only proceed with redirection logic if data has been fetched and is not loading
+  if (!isLoading) {
+    if (onboardStatus === null) {
+      navigate({
+        to: '/login',
+        replace: true,
+      });
+    } else if (onboardStatus && onboardStatus.isOnboarded === true) {
+      if (onboardStatus.role === 'lecturer') {
         navigate({
-          to: '/login',
+          to: '/dashboard/lecturer',
+          replace: true,
+        });
+      } else {
+        navigate({
+          to: '/dashboard/student',
           replace: true,
         });
       }
-      if (onboardStatus && onboardStatus.isOnboarded === true) {
-        if (onboardStatus.role === 'lecturer') {
-          navigate({
-            to: '/dashboard/lecturer',
-            replace: true,
-          });
-        } else {
-          navigate({
-            to: '/dashboard/student',
-            replace: true,
-          });
-        }
-      }
     }
+  }
 
-    if (isError) {
-      console.error('Error checking authentication status:', error);
-      // Handle error, e.g., show an error message or navigate to an error page
-    }
-  }, [onboardStatus, isLoading, isError, error, navigate]); // Dependencies for useEffect
+  if (isError) {
+    console.error('Error checking authentication status:', error);
+    // Handle error, e.g., show an error message or navigate to an error page
+  }
+  // }, [onboardStatus, isLoading, isError, error, navigate]); // Dependencies for useEffect
 
   return {
     data: onboardStatus,
