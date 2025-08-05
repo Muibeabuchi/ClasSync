@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -43,11 +44,13 @@ import {
   Key,
   BookOpen,
   ArrowUpDown,
+  Zap,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { GetLecturerJoinRequestsReturnType } from 'convex/schema';
 import type { Id } from 'convex/_generated/dataModel';
 import StudentBindingModal from './StudentBindingModal';
+import AutoMatchModal from './AutoMatchModal';
 import {
   useAcceptJoinRequest,
   useRejectJoinRequest,
@@ -67,6 +70,11 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
   >(null);
   const [isBindingModalOpen, setIsBindingModalOpen] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [isAutoMatchModalOpen, setIsAutoMatchModalOpen] = useState(false);
+  const [selectedCourseForAutoMatch, setSelectedCourseForAutoMatch] = useState<{
+    courseId: Id<'courses'>;
+    courseName: string;
+  } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const isMobile = useIsMobile();
@@ -186,6 +194,11 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
         description: error instanceof Error ? error.message : 'Unknown error',
       });
     }
+  };
+
+  const handleAutoMatch = (courseId: Id<'courses'>, courseName: string) => {
+    setSelectedCourseForAutoMatch({ courseId, courseName });
+    setIsAutoMatchModalOpen(true);
   };
 
   const getTimeAgo = (timestamp: string) => {
@@ -309,10 +322,28 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
                       </p>
                     </div>
                   </div>
-                  <Badge variant="secondary" className="px-3 py-1">
-                    {group.requests.length} request
-                    {group.requests.length !== 1 ? 's' : ''}
-                  </Badge>
+                  <div className="flex items-center gap-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAutoMatch(
+                          group.course._id,
+                          group.course.courseName,
+                        );
+                      }}
+                      className="flex items-center gap-2"
+                      disabled={group.requests.length === 0}
+                    >
+                      <Zap className="h-4 w-4" />
+                      Auto Match
+                    </Button>
+                    <Badge variant="secondary" className="px-3 py-1">
+                      {group.requests.length} request
+                      {group.requests.length !== 1 ? 's' : ''}
+                    </Badge>
+                  </div>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-6 pb-6">
@@ -445,6 +476,17 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
         onOpenChange={setIsBindingModalOpen}
         request={selectedRequest}
       />
+
+      {/* Auto Match Modal */}
+      {selectedCourseForAutoMatch && (
+        <AutoMatchModal
+          open={isAutoMatchModalOpen}
+          onOpenChange={setIsAutoMatchModalOpen}
+          courseId={selectedCourseForAutoMatch.courseId}
+          courseName={selectedCourseForAutoMatch.courseName}
+          joinRequests={lecturerJoinRequests}
+        />
+      )}
 
       {/* Reject Modal/Drawer */}
       {isMobile ? (

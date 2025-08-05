@@ -54,3 +54,9 @@ export const useRejectJoinRequest = () =>
     //   });
     // },
   });
+
+export const useBatchAcceptJoinRequests = () =>
+  useMutation({
+    mutationFn: useConvexMutation(api.joinRequests.batchAcceptJoinRequests),
+    // onSuccess and onError will be handled in the component for custom toast messages
+  });

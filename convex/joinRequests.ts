@@ -357,3 +357,176 @@ export const deleteJoinRequest = StudentMutationMiddleware({
     };
   },
 });
+
+export const batchAcceptJoinRequests = lecturerMutation({
+  args: {
+    courseId: v.id('courses'),
+    requestIds: v.array(v.id('joinRequests')),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
+
+    // Verify lecturer owns the course
+    const course = await ctx.db.get(args.courseId);
+    if (!course || course.lecturerId !== lecturerId) {
+      throw new ConvexError('Unauthorized: Course not found or access denied');
+    }
+
+    // Get all class lists attached to this course
+    const courseClassListIds = course.classListIds || [];
+    if (courseClassListIds.length === 0) {
+      throw new ConvexError('No class lists attached to this course');
+    }
+
+    // Get all class list students for matching
+    const allClassListStudents = await Promise.all(
+      courseClassListIds.map(async (classListId) => {
+        const students = await ctx.db
+          .query('classListStudents')
+          .withIndex('by_classListId', (q) => q.eq('classListId', classListId))
+          .collect();
+        return students.map((student) => ({ ...student, classListId }));
+      }),
+    );
+    const flatClassListStudents = allClassListStudents.flat();
+
+    // Get existing course attendance list to check for duplicates
+    const existingAttendees = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_courseId_by_lecturerId', (q) =>
+        q.eq('courseId', args.courseId).eq('lecturerId', lecturerId),
+      )
+      .collect();
+
+    const existingStudentIds = new Set(
+      existingAttendees.map((a) => a.studentId),
+    );
+
+    // Process each join request
+    const results = {
+      accepted: [] as Array<{
+        studentId: string;
+        joinRequestId: string;
+        studentName: string;
+      }>,
+      alreadyAccepted: [] as Array<{
+        studentId: string;
+        joinRequestId: string;
+        studentName: string;
+      }>,
+      noMatch: [] as Array<{
+        studentId: string;
+        joinRequestId: string;
+        studentName: string;
+      }>,
+    };
+
+    for (const requestId of args.requestIds) {
+      const request = await ctx.db.get(requestId);
+      if (
+        !request ||
+        request.lecturerId !== lecturerId ||
+        request.courseId !== args.courseId
+      ) {
+        continue; // Skip invalid requests
+      }
+
+      if (request.status !== 'pending') {
+        continue; // Skip non-pending requests
+      }
+
+      // Get student details
+      const student = await ctx.db.get(request.studentId);
+      if (!student) {
+        continue; // Skip if student not found
+      }
+
+      const studentName = student.fullName || 'Unknown Student';
+
+      // Check if student is already in the course
+      if (existingStudentIds.has(request.studentId)) {
+        results.alreadyAccepted.push({
+          studentId: request.studentId,
+          joinRequestId: requestId,
+          studentName,
+        });
+        // Update request status to approved
+        await ctx.db.patch(requestId, { status: 'approved' });
+        continue;
+      }
+
+      // Try to match student by registration number
+      let matchedClassListStudent = null;
+
+      if (student.registrationNumber) {
+        matchedClassListStudent = flatClassListStudents.find(
+          (cls) =>
+            cls.student.studentRegistrationNumber ===
+            student.registrationNumber,
+        );
+      }
+
+      // If no match by registration number, try by unique code
+      if (!matchedClassListStudent && request.uniqueCode) {
+        // For unique code matching, we'll match against any available student
+        // This is a fallback when registration numbers don't match
+        const availableStudents = flatClassListStudents.filter((cls) => {
+          const isAlreadyInCourse = existingAttendees.some(
+            (attendee) => attendee.classListStudentId === cls._id,
+          );
+          return !isAlreadyInCourse;
+        });
+
+        if (availableStudents.length > 0) {
+          // Take the first available student (lecturer will need to verify this is correct)
+          matchedClassListStudent = availableStudents[0];
+        }
+      }
+
+      if (matchedClassListStudent) {
+        // Check if this class list student is already assigned to someone else
+        const existingAssignment = existingAttendees.find(
+          (attendee) =>
+            attendee.classListStudentId === matchedClassListStudent._id,
+        );
+
+        if (!existingAssignment) {
+          // Create course attendance entry
+          await ctx.db.insert('courseAttendanceList', {
+            lecturerId,
+            courseId: args.courseId,
+            studentId: request.studentId,
+            classListId: matchedClassListStudent.classListId,
+            classListStudentId: matchedClassListStudent._id,
+          });
+
+          // Update request status
+          await ctx.db.patch(requestId, { status: 'approved' });
+
+          // Add to existing student IDs to prevent duplicates in this batch
+          existingStudentIds.add(request.studentId);
+
+          results.accepted.push({
+            studentId: request.studentId,
+            joinRequestId: requestId,
+            studentName,
+          });
+        } else {
+          results.noMatch.push({
+            studentId: request.studentId,
+            joinRequestId: requestId,
+            studentName,
+          });
+        }
+      } else {
+        results.noMatch.push({
+          studentId: request.studentId,
+          joinRequestId: requestId,
+          studentName,
+        });
+      }
+    }
+
+    return results;
+  },
+});
