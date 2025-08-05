@@ -11,10 +11,11 @@ import LiveAttendancePage, {
   LiveAttendancePageSkeleton,
 } from '@/feature/lecturer/components/LiveAttendancePage';
 import { convexQuery } from '@convex-dev/react-query';
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { api } from 'convex/_generated/api';
 import type { Id } from 'convex/_generated/dataModel';
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
+import { toast } from 'sonner';
 
 export const Route = createFileRoute(
   '/dashboard/lecturer/_courses/$lecturerCourseId/$attendanceSessionId',
@@ -150,6 +151,7 @@ const adaptStatisticsFormat = (
 
 function RouteComponent() {
   const { lecturerCourseId, attendanceSessionId } = Route.useParams();
+  const navigate = useNavigate();
 
   // Use the enhanced hook for override functionality
   const {
@@ -164,10 +166,11 @@ function RouteComponent() {
   });
 
   // Fallback to original hooks if the new ones aren't available yet
-  const { data: fallbackSession } = useAttendanceSessionById({
-    attendanceSessionId,
-    courseId: lecturerCourseId,
-  });
+  const { data: fallbackSession, error: sessionError } =
+    useAttendanceSessionById({
+      attendanceSessionId,
+      courseId: lecturerCourseId,
+    });
   const { data: fallbackRecords } = useGetAttendanceSessionRecords({
     attendanceSessionId,
     courseId: lecturerCourseId,
@@ -175,6 +178,24 @@ function RouteComponent() {
 
   // Use enhanced data if available, otherwise fallback to original
   const attendanceSession = session || fallbackSession;
+
+  // Handle session not found (only redirect if truly not found, not if cancelled)
+  useEffect(() => {
+    if (
+      sessionError &&
+      sessionError.message.includes('not found') &&
+      !attendanceSession
+    ) {
+      toast.error('Session not found', {
+        description: 'This attendance session could not be found.',
+      });
+      navigate({
+        to: '/dashboard/lecturer/$courseId',
+        params: { courseId: lecturerCourseId },
+        replace: true,
+      });
+    }
+  }, [sessionError, navigate, lecturerCourseId, attendanceSession]);
 
   // Get all records (both present and absent)
   // Use enhanced records if available (even if empty array), otherwise fallback
@@ -195,8 +216,13 @@ function RouteComponent() {
     return <LiveAttendancePageSkeleton />;
   }
 
-  // Don't render if we still don't have session data
-  if (!attendanceSession) {
+  // Don't render if we still don't have session data (and no error)
+  if (!attendanceSession && !sessionError) {
+    return <LiveAttendancePageSkeleton />;
+  }
+
+  // If there's an error, don't render anything (navigation will handle it)
+  if (sessionError) {
     return <LiveAttendancePageSkeleton />;
   }
 

@@ -83,7 +83,8 @@ export const startAttendanceSession = courseMutation({
       radius: args.radiusMeters,
     });
 
-    await ctx.scheduler.runAfter(
+    // Schedule the activation and end functions, storing their IDs for potential cancellation
+    const activateScheduledFunctionId = await ctx.scheduler.runAfter(
       AttendanceSessionDuration / 2,
       internal.attendance.activateAttendanceSession,
       {
@@ -91,13 +92,19 @@ export const startAttendanceSession = courseMutation({
       },
     );
 
-    await ctx.scheduler.runAt(
+    const endScheduledFunctionId = await ctx.scheduler.runAt(
       endedAt,
       internal.attendance.endAttendanceSession,
       {
         attendanceSessionId: sessionId,
       },
     );
+
+    // Update the session with the scheduled function IDs
+    await ctx.db.patch(sessionId, {
+      activateScheduledFunctionId,
+      endScheduledFunctionId,
+    });
 
     return {
       sessionId,
@@ -111,18 +118,38 @@ export const startAttendanceSession = courseMutation({
 export const endAttendanceSession = internalMutation({
   args: { attendanceSessionId: v.id('attendanceSessions') },
   async handler(ctx, args) {
-    await ctx.db.patch(args.attendanceSessionId, {
-      status: 'complete',
-    });
+    // Get the current session to check if it has been cancelled
+    const session = await ctx.db.get(args.attendanceSessionId);
+    if (!session) {
+      // Session doesn't exist, nothing to do
+      return;
+    }
+
+    // Only update to complete if the session is not already cancelled
+    if (session.status !== 'cancelled') {
+      await ctx.db.patch(args.attendanceSessionId, {
+        status: 'complete',
+      });
+    }
   },
 });
 
 export const activateAttendanceSession = internalMutation({
   args: { attendanceSessionId: v.id('attendanceSessions') },
   async handler(ctx, args) {
-    await ctx.db.patch(args.attendanceSessionId, {
-      status: 'active',
-    });
+    // Get the current session to check if it has been cancelled
+    const session = await ctx.db.get(args.attendanceSessionId);
+    if (!session) {
+      // Session doesn't exist, nothing to do
+      return;
+    }
+
+    // Only update to active if the session is still pending (not cancelled)
+    if (session.status === 'pending') {
+      await ctx.db.patch(args.attendanceSessionId, {
+        status: 'active',
+      });
+    }
   },
 });
 
@@ -257,14 +284,16 @@ export const getCourseAttendanceSessions = LecturerCourseQuery({
   async handler(ctx, args) {
     const lecturerId = ctx.user._id;
 
+    // Get all attendance sessions for the course (including cancelled ones)
     const courseAttendanceSessions = await ctx.db
       .query('attendanceSessions')
       .withIndex('by_courseId_by_lecturerId', (q) =>
         q.eq('courseId', args.courseId).eq('lecturerId', lecturerId),
       )
+      .order('desc') // Order by newest first
       .collect();
 
-    //   get the number of students that took attendance
+    // Get the number of students that took attendance for each session
     return await Promise.all(
       courseAttendanceSessions.map(async (session) => {
         const numberOfStudents = (
@@ -417,7 +446,8 @@ export const getAttendanceSessionWithOverrideInfo = query({
     ).length;
 
     // Calculate session state based on current time
-    let computedState: 'pending' | 'active' | 'complete' = session.status;
+    let computedState: 'pending' | 'active' | 'complete' | 'cancelled' =
+      session.status;
     if (session.status !== 'complete' && session.endedAt) {
       if (currentTime >= session.endedAt) {
         computedState = 'complete';
@@ -1372,6 +1402,194 @@ export const getOverrideLogBySessionAndStudent = query({
 });
 
 /**
+ * Cancel attendance session during prep period
+ * Requirements: Allow lecturers to cancel sessions only during the prep period (first half of session duration)
+ */
+export const cancelAttendanceSession = courseMutation({
+  args: {
+    courseId: v.id('courses'),
+    attendanceSessionId: v.id('attendanceSessions'),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
+    const course = ctx.course;
+
+    // Get the attendance session
+    const session = await ctx.db.get(args.attendanceSessionId);
+    if (!session) {
+      throw new ConvexError('Attendance session not found');
+    }
+
+    // Verify the session belongs to this lecturer and course
+    if (session.lecturerId !== lecturerId) {
+      throw new ConvexError('You are not authorized to cancel this session');
+    }
+
+    if (session.courseId !== args.courseId) {
+      throw new ConvexError('Session does not belong to this course');
+    }
+
+    // Check if session is already completed or cancelled
+    if (session.status === 'complete') {
+      throw new ConvexError('Cannot cancel a completed attendance session');
+    }
+
+    if (session.status === 'cancelled') {
+      throw new ConvexError('Attendance session is already cancelled');
+    }
+
+    // Calculate prep period end time
+    const prepPeriodEndTime =
+      session._creationTime + AttendanceSessionDuration / 2;
+    const currentTime = Date.now();
+
+    // Check if we're still in the prep period
+    if (currentTime >= prepPeriodEndTime) {
+      throw new ConvexError(
+        'Cannot cancel attendance session. The preparation period has ended and the session is now active.',
+      );
+    }
+
+    // Check if any students have already checked in (shouldn't happen during prep period, but safety check)
+    const existingRecords = await ctx.db
+      .query('attendanceRecords')
+      .withIndex('by_attendanceSessionId', (q) =>
+        q.eq('attendanceSessionId', args.attendanceSessionId),
+      )
+      .collect();
+
+    if (existingRecords.length > 0) {
+      throw new ConvexError(
+        'Cannot cancel attendance session. Students have already checked in.',
+      );
+    }
+
+    // Cancel the scheduled functions to prevent them from running
+    if (session.activateScheduledFunctionId) {
+      try {
+        await ctx.scheduler.cancel(session.activateScheduledFunctionId);
+      } catch (error) {
+        // Function might have already run or been cancelled, continue with cancellation
+        console.log('Could not cancel activate function:', error);
+      }
+    }
+
+    if (session.endScheduledFunctionId) {
+      try {
+        await ctx.scheduler.cancel(session.endScheduledFunctionId);
+      } catch (error) {
+        // Function might have already run or been cancelled, continue with cancellation
+        console.log('Could not cancel end function:', error);
+      }
+    }
+
+    // Mark the session as cancelled instead of deleting it
+    await ctx.db.patch(args.attendanceSessionId, {
+      status: 'cancelled',
+      endedAt: currentTime, // Set the end time to when it was cancelled
+    });
+
+    return {
+      success: true,
+      message: 'Attendance session cancelled successfully',
+      sessionId: args.attendanceSessionId,
+      courseId: args.courseId,
+      courseName: course.courseName,
+      courseCode: course.courseCode,
+      cancelledAt: currentTime,
+    };
+  },
+});
+
+/**
+ * Check if attendance session can be cancelled
+ * Requirements: Provide UI feedback on whether cancellation is possible
+ */
+export const canCancelAttendanceSession = LecturerCourseQuery({
+  args: {
+    attendanceSessionId: v.id('attendanceSessions'),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
+
+    // Get the attendance session
+    const session = await ctx.db.get(args.attendanceSessionId);
+    if (!session) {
+      return {
+        canCancel: false,
+        reason: 'Session not found',
+        timeRemaining: 0,
+      };
+    }
+
+    // Verify ownership
+    if (session.lecturerId !== lecturerId) {
+      return {
+        canCancel: false,
+        reason: 'Not authorized',
+        timeRemaining: 0,
+      };
+    }
+
+    // Check if session is already completed or cancelled
+    if (session.status === 'complete') {
+      return {
+        canCancel: false,
+        reason: 'Session already completed',
+        timeRemaining: 0,
+      };
+    }
+
+    if (session.status === 'cancelled') {
+      return {
+        canCancel: false,
+        reason: 'Session already cancelled',
+        timeRemaining: 0,
+      };
+    }
+
+    // Calculate prep period end time
+    const prepPeriodEndTime =
+      session._creationTime + AttendanceSessionDuration / 2;
+    const currentTime = Date.now();
+    const timeRemaining = Math.max(0, prepPeriodEndTime - currentTime);
+
+    // Check if we're still in the prep period
+    if (currentTime >= prepPeriodEndTime) {
+      return {
+        canCancel: false,
+        reason: 'Preparation period has ended',
+        timeRemaining: 0,
+      };
+    }
+
+    // Check if any students have checked in
+    const existingRecords = await ctx.db
+      .query('attendanceRecords')
+      .withIndex('by_attendanceSessionId', (q) =>
+        q.eq('attendanceSessionId', args.attendanceSessionId),
+      )
+      .collect();
+
+    if (existingRecords.length > 0) {
+      return {
+        canCancel: false,
+        reason: 'Students have already checked in',
+        timeRemaining: 0,
+      };
+    }
+
+    return {
+      canCancel: true,
+      reason: 'Can cancel during preparation period',
+      timeRemaining,
+      prepPeriodEndTime,
+      sessionStatus: session.status,
+    };
+  },
+});
+
+/**
  * Get student enrollment for validation
  * Requirements: 4.4 - Validate student enrollment in course
  */
@@ -1396,6 +1614,80 @@ export const getStudentEnrollment = query({
       .first();
 
     return enrollment;
+  },
+});
+
+/**
+ * Utility function to check scheduled functions for a session
+ * This helps with debugging and monitoring
+ */
+export const getSessionScheduledFunctions = query({
+  args: {
+    attendanceSessionId: v.id('attendanceSessions'),
+  },
+  handler: async (ctx, args) => {
+    // Validate authentication
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError('Authentication required');
+    }
+
+    // Get the session
+    const session = await ctx.db.get(args.attendanceSessionId);
+    if (!session) {
+      throw new ConvexError('Session not found');
+    }
+
+    // Check if user has access to this session
+    const isLecturer = session.lecturerId === identity.subject;
+    if (!isLecturer) {
+      // Check if user is a student enrolled in the course
+      const enrollment = await ctx.db
+        .query('courseAttendanceList')
+        .withIndex('by_courseId_by_studentId', (q) =>
+          q
+            .eq('courseId', session.courseId)
+            .eq('studentId', identity.subject as any),
+        )
+        .first();
+
+      if (!enrollment) {
+        throw new ConvexError('Access denied');
+      }
+    }
+
+    const result: any = {
+      sessionId: session._id,
+      sessionStatus: session.status,
+      activateScheduledFunctionId: session.activateScheduledFunctionId,
+      endScheduledFunctionId: session.endScheduledFunctionId,
+      scheduledFunctions: [],
+    };
+
+    // Get the scheduled function details if they exist
+    if (session.activateScheduledFunctionId) {
+      const activateFunction = await ctx.db.system.get(
+        session.activateScheduledFunctionId,
+      );
+      result.scheduledFunctions.push({
+        type: 'activate',
+        id: session.activateScheduledFunctionId,
+        details: activateFunction,
+      });
+    }
+
+    if (session.endScheduledFunctionId) {
+      const endFunction = await ctx.db.system.get(
+        session.endScheduledFunctionId,
+      );
+      result.scheduledFunctions.push({
+        type: 'end',
+        id: session.endScheduledFunctionId,
+        details: endFunction,
+      });
+    }
+
+    return result;
   },
 });
 

@@ -14,7 +14,7 @@ export interface AttendanceSessionForOverride {
   _id: string;
   courseId: string;
   lecturerId: string;
-  status: 'pending' | 'active' | 'complete';
+  status: 'pending' | 'active' | 'complete' | 'cancelled';
   endedAt?: number;
   _creationTime: number;
 }
@@ -35,7 +35,7 @@ export interface OverrideEligibilityResult {
   reason: string;
   timeRemaining: number;
   windowExpiresAt: number;
-  sessionStatus: 'pending' | 'active' | 'complete';
+  sessionStatus: 'pending' | 'active' | 'complete' | 'cancelled';
   errorType?: OverrideErrorType;
 }
 

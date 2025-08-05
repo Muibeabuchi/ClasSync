@@ -235,11 +235,16 @@ const applicationTables = {
       v.literal('active'),
       v.literal('pending'),
       v.literal('complete'),
+      v.literal('cancelled'),
     ),
     radius: v.optional(v.number()),
 
     //  This will be the time the attendance session ends. It will be automatically set by a cron_job
     endedAt: v.optional(v.number()),
+
+    // Scheduled function IDs for cancellation
+    activateScheduledFunctionId: v.optional(v.id('_scheduled_functions')),
+    endScheduledFunctionId: v.optional(v.id('_scheduled_functions')),
   })
     .index('by_courseId_by_lecturerId', ['courseId', 'lecturerId'])
     .index('by_courseId', ['courseId'])

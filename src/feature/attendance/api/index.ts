@@ -58,3 +58,23 @@ export const useUnlinkStudentFromCourse = () =>
       api.courses.unLinkStudentFromCourseAttendanceList,
     ),
   });
+
+// Cancel attendance session hooks
+export const useCancelAttendanceSession = () =>
+  useMutation({
+    mutationFn: useConvexMutation(api.attendance.cancelAttendanceSession),
+  });
+
+export const useCanCancelAttendanceSession = ({
+  attendanceSessionId,
+  courseId,
+}: {
+  attendanceSessionId: Id<'attendanceSessions'>;
+  courseId: Id<'courses'>;
+}) =>
+  useSuspenseQuery(
+    convexQuery(api.attendance.canCancelAttendanceSession, {
+      attendanceSessionId,
+      courseId,
+    }),
+  );

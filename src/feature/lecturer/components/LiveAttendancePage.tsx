@@ -21,6 +21,8 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { CancelAttendanceSessionDialog } from '@/components/attendance/CancelAttendanceSessionDialog';
+import { useCanCancelAttendanceSession } from '@/feature/attendance/api';
 import type {
   GetAttendanceSessionRecordsReturnType,
   GetAttendanceSessionReturnType,
@@ -94,8 +96,14 @@ const LiveAttendancePage = ({
 
   // Mobile-first responsive breakpoints
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const isTablet = useMediaQuery('(max-width: 1024px)');
+  // const isTablet = useMediaQuery('(max-width: 1024px)');
   const isTouchDevice = useMediaQuery('(hover: none) and (pointer: coarse)');
+
+  // Get cancel session eligibility
+  const { data: cancelEligibility } = useCanCancelAttendanceSession({
+    attendanceSessionId: attendanceSession._id,
+    courseId: attendanceSession.courseId,
+  });
 
   // Collapsible sections for mobile
   const [isStatisticsExpanded, setIsStatisticsExpanded] = useState(!isMobile);
@@ -125,7 +133,10 @@ const LiveAttendancePage = ({
   });
 
   useEffect(() => {
-    if (attendanceSession.status !== 'complete') {
+    if (
+      attendanceSession.status !== 'complete' &&
+      attendanceSession.status !== 'cancelled'
+    ) {
       const timer = setInterval(() => {
         const endTime =
           attendanceSession?.endedAt ?? attendanceSession._creationTime + 60000; // 60 seconds in milliseconds
@@ -322,6 +333,7 @@ const LiveAttendancePage = ({
           sessionState === 'pending' && 'border-yellow-500 bg-yellow-50/30',
           sessionState === 'active' && 'border-green-500 bg-green-50/30',
           sessionState === 'complete' && 'border-gray-300 bg-gray-50/30',
+          sessionState === 'cancelled' && 'border-red-500 bg-red-50/30',
           // Enhanced mobile styling
           isMobile && 'shadow-sm',
         )}
@@ -351,6 +363,7 @@ const LiveAttendancePage = ({
                   sessionState === 'pending' && 'bg-yellow-100',
                   sessionState === 'active' && 'bg-green-100',
                   sessionState === 'complete' && 'bg-gray-100',
+                  sessionState === 'cancelled' && 'bg-red-100',
                 )}
               >
                 <Clock
@@ -363,6 +376,7 @@ const LiveAttendancePage = ({
                     sessionState === 'pending' && 'text-yellow-600',
                     sessionState === 'active' && 'text-green-600',
                     sessionState === 'complete' && 'text-gray-600',
+                    sessionState === 'cancelled' && 'text-red-600',
                   )}
                 />
               </div>
@@ -379,40 +393,55 @@ const LiveAttendancePage = ({
                   {sessionState === 'pending' && 'Session Starts In'}
                   {sessionState === 'active' && 'Time Remaining'}
                   {sessionState === 'complete' && 'Session Completed'}
+                  {sessionState === 'cancelled' && 'Session Cancelled'}
                 </h3>
 
-                {sessionState !== 'complete' && (
-                  <p
-                    className={cn(
-                      'font-bold text-primary mt-1',
-                      // Large, prominent timer
-                      'text-2xl sm:text-3xl',
-                      isMobile && 'text-3xl',
-                      // Monospace for better readability
-                      'font-mono',
-                    )}
-                  >
-                    {formatTime(timeRemaining)}
-                  </p>
-                )}
+                {sessionState !== 'complete' &&
+                  sessionState !== 'cancelled' && (
+                    <p
+                      className={cn(
+                        'font-bold text-primary mt-1',
+                        // Large, prominent timer
+                        'text-2xl sm:text-3xl',
+                        isMobile && 'text-3xl',
+                        // Monospace for better readability
+                        'font-mono',
+                      )}
+                    >
+                      {formatTime(timeRemaining)}
+                    </p>
+                  )}
 
-                {sessionState === 'complete' && (
+                {(sessionState === 'complete' ||
+                  sessionState === 'cancelled') && (
                   <p
                     className={cn(
                       'text-muted-foreground mt-1',
                       'text-sm sm:text-base',
+                      sessionState === 'cancelled' &&
+                        'text-red-600 font-medium',
                     )}
                   >
-                    {new Date(attendanceSession._creationTime).toLocaleString(
-                      'en-US',
-                      {
-                        month: 'short',
-                        day: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                        hour12: true,
-                      },
-                    )}
+                    {sessionState === 'cancelled'
+                      ? `Cancelled on ${new Date(
+                          attendanceSession.endedAt ||
+                            attendanceSession._creationTime,
+                        ).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true,
+                        })}`
+                      : new Date(
+                          attendanceSession._creationTime,
+                        ).toLocaleString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          hour12: true,
+                        })}
                   </p>
                 )}
               </div>
@@ -494,8 +523,65 @@ const LiveAttendancePage = ({
             </div>
           </div>
 
+          {/* Cancel Session Button - Only during prep period */}
+          {sessionState === 'pending' && cancelEligibility?.canCancel && (
+            <div className="mt-4 pt-4 border-t border-border">
+              <div
+                className={cn(
+                  'flex flex-col gap-3',
+                  // Desktop: side-by-side layout
+                  'sm:flex-row sm:items-center sm:justify-between',
+                )}
+              >
+                <div className="flex-1">
+                  <p
+                    className={cn(
+                      'text-sm text-muted-foreground',
+                      isMobile && 'text-center sm:text-left',
+                    )}
+                  >
+                    You can cancel this session during the preparation period
+                  </p>
+                  {cancelEligibility.timeRemaining > 0 && (
+                    <p
+                      className={cn(
+                        'text-xs text-yellow-600 font-medium mt-1',
+                        isMobile && 'text-center sm:text-left',
+                      )}
+                    >
+                      Time remaining to cancel:{' '}
+                      {formatTime(cancelEligibility.timeRemaining / 1000)}
+                    </p>
+                  )}
+                </div>
+                <div
+                  className={cn(
+                    'flex justify-center sm:justify-end',
+                    isMobile && 'w-full',
+                  )}
+                >
+                  <CancelAttendanceSessionDialog
+                    sessionId={attendanceSession._id}
+                    courseId={attendanceSession.courseId}
+                    courseName={attendanceSession.courseName}
+                    courseCode={attendanceSession.courseCode}
+                    timeRemaining={cancelEligibility.timeRemaining / 1000}
+                    canCancel={cancelEligibility.canCancel}
+                    reason={cancelEligibility.reason}
+                    variant="destructive"
+                    size={isMobile ? 'default' : 'sm'}
+                    className={cn(
+                      'transition-all duration-200',
+                      isMobile && 'w-full max-w-xs',
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Progress Bar - Only for active sessions */}
-          {sessionState !== 'complete' && (
+          {sessionState !== 'complete' && sessionState !== 'cancelled' && (
             <div className="mt-6">
               <Progress
                 value={(timeRemaining / 60) * 100}
@@ -775,7 +861,9 @@ const LiveAttendancePage = ({
                     ? 'Waiting for session to begin...'
                     : sessionState === 'complete'
                       ? 'Session has ended - No students marked attendance'
-                      : 'Waiting for students to check in...'}
+                      : sessionState === 'cancelled'
+                        ? 'Session was cancelled - No attendance was taken'
+                        : 'Waiting for students to check in...'}
                 </p>
               </div>
             </div>
