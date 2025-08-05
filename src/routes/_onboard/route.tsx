@@ -1,3 +1,4 @@
+import { LoaderComponent } from '@/components/Loader';
 import { useOnboardRedirect } from '@/feature/onboarding/hooks/use-onboard-redirect';
 import {
   Outlet,
@@ -6,7 +7,6 @@ import {
 } from '@tanstack/react-router';
 import { createFileRoute } from '@tanstack/react-router';
 // import { convexQuery } from '@convex-dev/react-query';
-import { LoaderComponent } from '../dashboard/route';
 // import { Loader } from '@/components/Loader';
 
 export const Route = createFileRoute('/_onboard')({

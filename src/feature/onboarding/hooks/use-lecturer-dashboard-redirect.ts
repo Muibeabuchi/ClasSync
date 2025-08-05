@@ -21,22 +21,18 @@ export function useLecturerDashboardRedirect() {
   } = useQuery(convexQuery(api.userProfile.getUserOnboardedStatus, {}));
 
   if (!isLoading || onboardStatus !== undefined) {
-    if (onboardStatus && onboardStatus.isOnboarded === false) {
+    if (onboardStatus === null) {
+      navigate({
+        to: '/login',
+        replace: true,
+      });
+    } else if (onboardStatus && onboardStatus.isOnboarded === false) {
       navigate({
         to: '/onboard',
         replace: true,
       });
     }
   }
-
-  //   useEffect(() => {
-  //     // Only proceed with redirection logic if data has been fetched and is not loading
-
-  //     if (isError) {
-  //       console.error('Error checking authentication status:', error);
-  //       // Handle error, e.g., show an error message or navigate to an error page
-  //     }
-  //   }, [onboardStatus, isLoading, isError, error, navigate]); // Dependencies for useEffect
 
   return {
     data: onboardStatus,

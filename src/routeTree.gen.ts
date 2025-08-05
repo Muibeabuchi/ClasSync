@@ -10,11 +10,11 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as MobileDemoRouteImport } from './routes/mobile-demo'
-import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as OnboardRouteRouteImport } from './routes/_onboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OnboardRoleRouteImport } from './routes/_onboard/role'
 import { Route as OnboardOnboardRouteImport } from './routes/_onboard/onboard'
+import { Route as authLoginSuccessRouteImport } from './routes/(auth)/login-success'
 import { Route as authLoginRouteImport } from './routes/(auth)/login'
 import { Route as DashboardStudentRouteRouteImport } from './routes/dashboard/student/route'
 import { Route as DashboardLecturerRouteRouteImport } from './routes/dashboard/lecturer/route'
@@ -37,11 +37,6 @@ const MobileDemoRoute = MobileDemoRouteImport.update({
   path: '/mobile-demo',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRouteRoute = DashboardRouteRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OnboardRouteRoute = OnboardRouteRouteImport.update({
   id: '/_onboard',
   getParentRoute: () => rootRouteImport,
@@ -61,20 +56,25 @@ const OnboardOnboardRoute = OnboardOnboardRouteImport.update({
   path: '/onboard',
   getParentRoute: () => OnboardRouteRoute,
 } as any)
+const authLoginSuccessRoute = authLoginSuccessRouteImport.update({
+  id: '/(auth)/login-success',
+  path: '/login-success',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const authLoginRoute = authLoginRouteImport.update({
   id: '/(auth)/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardStudentRouteRoute = DashboardStudentRouteRouteImport.update({
-  id: '/student',
-  path: '/student',
-  getParentRoute: () => DashboardRouteRoute,
+  id: '/dashboard/student',
+  path: '/dashboard/student',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardLecturerRouteRoute = DashboardLecturerRouteRouteImport.update({
-  id: '/lecturer',
-  path: '/lecturer',
-  getParentRoute: () => DashboardRouteRoute,
+  id: '/dashboard/lecturer',
+  path: '/dashboard/lecturer',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardStudentIndexRoute = DashboardStudentIndexRouteImport.update({
   id: '/',
@@ -155,11 +155,11 @@ const DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/mobile-demo': typeof MobileDemoRoute
   '/dashboard/lecturer': typeof DashboardLecturerRouteRouteWithChildren
   '/dashboard/student': typeof DashboardStudentRouteRouteWithChildren
   '/login': typeof authLoginRoute
+  '/login-success': typeof authLoginSuccessRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
   '/dashboard/lecturer/classLists': typeof DashboardLecturerClassListsRoute
@@ -178,9 +178,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/mobile-demo': typeof MobileDemoRoute
   '/login': typeof authLoginRoute
+  '/login-success': typeof authLoginSuccessRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
   '/dashboard/lecturer/classLists': typeof DashboardLecturerClassListsRoute
@@ -201,11 +201,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_onboard': typeof OnboardRouteRouteWithChildren
-  '/dashboard': typeof DashboardRouteRouteWithChildren
   '/mobile-demo': typeof MobileDemoRoute
   '/dashboard/lecturer': typeof DashboardLecturerRouteRouteWithChildren
   '/dashboard/student': typeof DashboardStudentRouteRouteWithChildren
   '/(auth)/login': typeof authLoginRoute
+  '/(auth)/login-success': typeof authLoginSuccessRoute
   '/_onboard/onboard': typeof OnboardOnboardRoute
   '/_onboard/role': typeof OnboardRoleRoute
   '/dashboard/lecturer/classLists': typeof DashboardLecturerClassListsRoute
@@ -226,11 +226,11 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/dashboard'
     | '/mobile-demo'
     | '/dashboard/lecturer'
     | '/dashboard/student'
     | '/login'
+    | '/login-success'
     | '/onboard'
     | '/role'
     | '/dashboard/lecturer/classLists'
@@ -249,9 +249,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/dashboard'
     | '/mobile-demo'
     | '/login'
+    | '/login-success'
     | '/onboard'
     | '/role'
     | '/dashboard/lecturer/classLists'
@@ -271,11 +271,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_onboard'
-    | '/dashboard'
     | '/mobile-demo'
     | '/dashboard/lecturer'
     | '/dashboard/student'
     | '/(auth)/login'
+    | '/(auth)/login-success'
     | '/_onboard/onboard'
     | '/_onboard/role'
     | '/dashboard/lecturer/classLists'
@@ -296,9 +296,11 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OnboardRouteRoute: typeof OnboardRouteRouteWithChildren
-  DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   MobileDemoRoute: typeof MobileDemoRoute
+  DashboardLecturerRouteRoute: typeof DashboardLecturerRouteRouteWithChildren
+  DashboardStudentRouteRoute: typeof DashboardStudentRouteRouteWithChildren
   authLoginRoute: typeof authLoginRoute
+  authLoginSuccessRoute: typeof authLoginSuccessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -308,13 +310,6 @@ declare module '@tanstack/react-router' {
       path: '/mobile-demo'
       fullPath: '/mobile-demo'
       preLoaderRoute: typeof MobileDemoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_onboard': {
@@ -345,6 +340,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardOnboardRouteImport
       parentRoute: typeof OnboardRouteRoute
     }
+    '/(auth)/login-success': {
+      id: '/(auth)/login-success'
+      path: '/login-success'
+      fullPath: '/login-success'
+      preLoaderRoute: typeof authLoginSuccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/(auth)/login': {
       id: '/(auth)/login'
       path: '/login'
@@ -354,17 +356,17 @@ declare module '@tanstack/react-router' {
     }
     '/dashboard/student': {
       id: '/dashboard/student'
-      path: '/student'
+      path: '/dashboard/student'
       fullPath: '/dashboard/student'
       preLoaderRoute: typeof DashboardStudentRouteRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/lecturer': {
       id: '/dashboard/lecturer'
-      path: '/lecturer'
+      path: '/dashboard/lecturer'
       fullPath: '/dashboard/lecturer'
       preLoaderRoute: typeof DashboardLecturerRouteRouteImport
-      parentRoute: typeof DashboardRouteRoute
+      parentRoute: typeof rootRouteImport
     }
     '/dashboard/student/': {
       id: '/dashboard/student/'
@@ -525,26 +527,14 @@ const DashboardStudentRouteRouteWithChildren =
     DashboardStudentRouteRouteChildren,
   )
 
-interface DashboardRouteRouteChildren {
-  DashboardLecturerRouteRoute: typeof DashboardLecturerRouteRouteWithChildren
-  DashboardStudentRouteRoute: typeof DashboardStudentRouteRouteWithChildren
-}
-
-const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
-  DashboardLecturerRouteRoute: DashboardLecturerRouteRouteWithChildren,
-  DashboardStudentRouteRoute: DashboardStudentRouteRouteWithChildren,
-}
-
-const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
-  DashboardRouteRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardRouteRoute: OnboardRouteRouteWithChildren,
-  DashboardRouteRoute: DashboardRouteRouteWithChildren,
   MobileDemoRoute: MobileDemoRoute,
+  DashboardLecturerRouteRoute: DashboardLecturerRouteRouteWithChildren,
+  DashboardStudentRouteRoute: DashboardStudentRouteRouteWithChildren,
   authLoginRoute: authLoginRoute,
+  authLoginSuccessRoute: authLoginSuccessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

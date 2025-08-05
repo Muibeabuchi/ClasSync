@@ -36,6 +36,7 @@ export const getUserOnboardedStatus = query({
       role: v.optional(userRoleSchema),
       fullName: v.string(),
       userImage: v.string(),
+      registrationNumber: v.optional(v.string()),
     }),
     v.null(),
   ),
@@ -55,6 +56,7 @@ export const getUserOnboardedStatus = query({
       isOnboarded: user.isOnboarded,
       role: user.role,
       fullName: user.fullName,
+      registrationNumber: user.registrationNumber,
       userImage,
     };
   },

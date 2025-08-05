@@ -33,15 +33,6 @@ export function useLoginRedirect() {
     }
   }
 
-  // useEffect(() => {
-  //   // Only proceed with redirection logic if data has been fetched and is not loading
-
-  //   // if (isError) {
-  //   //   console.error('Error checking authentication status:', error);
-  //   //   // Handle error, e.g., show an error message or navigate to an error page
-  //   // }
-  // }, [onboardStatus, isLoading, navigate]); // Dependencies for useEffect
-
   return {
     onboardStatus,
     isError,

@@ -6,7 +6,7 @@ export const useGoogleSignIn = () => {
     await authClient.signIn.social({
       provider: 'google',
       newUserCallbackURL: '/onboard',
-      callbackURL: '/dashboard',
+      callbackURL: '/login-success',
     });
   }
   return signIn;

@@ -11,7 +11,10 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useState } from 'react';
 import { Authenticated } from 'convex/react';
 import MobileStudentDashboard from '@/feature/student/components/mobile-student-dashboard';
-import { useQuery } from '@tanstack/react-query';
+// import { useQuery } from '@tanstack/react-query';
+
+import { useStudentDashboardRedirect } from '../../../feature/onboarding/hooks/use-student-dashboard-redirect';
+import { LecturerDashboardSkeleton } from '@/feature/lecturer/components/lecturer-dashboard-content';
 
 export const Route = createFileRoute('/dashboard/student')({
   component: RouteComponent,
@@ -23,7 +26,13 @@ export const Route = createFileRoute('/dashboard/student')({
 function RouteComponent() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { data: userData } = useQuery(AuthQueryOptions.getCurrentUser);
+  const { isLoading, data: userData } = useStudentDashboardRedirect();
+  // const {  } = useQuery(AuthQueryOptions.getCurrentUser);
+
+  if (isLoading) {
+    // TODO: Create a Custom StudentDashboardSkeleton
+    return <LecturerDashboardSkeleton />;
+  }
 
   const userInfo = {
     fullName: userData?.fullName,

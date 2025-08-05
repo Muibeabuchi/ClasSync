@@ -234,6 +234,7 @@ function RouteComponent() {
               {dashboardStats?.recentCourses &&
               dashboardStats.recentCourses.length > 0 ? (
                 dashboardStats.recentCourses.slice(0, 2).map((course) => {
+                  if (!course) return null;
                   const courseNameDisplay = truncateText(course.name, 15, 25);
 
                   return (
@@ -515,6 +516,7 @@ function RouteComponent() {
                 {dashboardStats?.recentCourses &&
                 dashboardStats.recentCourses.length > 0 ? (
                   dashboardStats.recentCourses.map((course) => {
+                    if (!course) return null;
                     const courseNameDisplay = truncateText(course.name, 15, 25);
 
                     return (
