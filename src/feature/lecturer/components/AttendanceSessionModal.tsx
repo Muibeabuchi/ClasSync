@@ -7,6 +7,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -19,6 +27,7 @@ import { toast } from 'sonner';
 import { useGeolocated } from 'react-geolocated';
 import { useNavigate } from '@tanstack/react-router';
 import { LecturerLocationStabilityMessage } from '@/components/attendance/LecturerLocationStabilityMessage';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 interface AttendanceSessionModalProps {
   courseId: Id<'courses'>;
@@ -42,6 +51,7 @@ const AttendanceSessionModal = ({
   const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   const navigate = useNavigate();
+  const isDesktop = useMediaQuery('(min-width: 768px)');
 
   const { mutateAsync: createAttendanceSession } = useCreateAttendanceSession();
   const { isGeolocationAvailable, isGeolocationEnabled, getPosition } =
@@ -127,145 +137,188 @@ const AttendanceSessionModal = ({
     setIsOpen(open);
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild disabled={disabled}>
-        {children}
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-primary" />
-            Start Attendance Session
-          </DialogTitle>
-          <DialogDescription className="truncate">
-            Configure your attendance session for{' '}
-            <strong>
-              {courseName.length > 30
-                ? courseName.substring(0, 30) + '...'
-                : courseName}
-            </strong>
-          </DialogDescription>
-        </DialogHeader>
+  // Shared content component for both dialog and drawer
+  const SessionContent = () => (
+    <div className="space-y-4 sm:space-y-6">
+      {/* Session Info */}
+      <div className="bg-primary/10 p-3 sm:p-4 rounded-lg space-y-2">
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Clock className="h-4 w-4 text-primary" />
+          Session Duration: 1 minute total
+        </div>
+        <div className="text-xs text-muted-foreground space-y-1">
+          <div>{`• 30 seconds prep time (students see "Get Ready")`}</div>
+          <div>• 30 seconds active time (students can check-in)</div>
+        </div>
+      </div>
 
-        <div className="space-y-6">
-          {/* Session Info */}
-          <div className="bg-primary/10 p-4 rounded-lg space-y-2">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <Clock className="h-4 w-4 text-primary" />
-              Session Duration: 1 minute total
-            </div>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <div>{`• 30 seconds prep time (students see "Get Ready")`}</div>
-              <div>• 30 seconds active time (students can check-in)</div>
-            </div>
+      {/* Location Stability Message */}
+      <LecturerLocationStabilityMessage isVisible={true} variant="compact" />
+
+      {/* Location Settings */}
+      <div className="space-y-3">
+        <Label className="flex items-center gap-2 text-sm font-medium">
+          <MapPin className="h-4 w-4" />
+          Location Radius
+        </Label>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <Input
+              type="range"
+              min="5"
+              max="300"
+              value={locationRadius}
+              onChange={(e) => setLocationRadius(Number(e.target.value))}
+              className="flex-1 h-8 sm:h-10"
+            />
+            <Badge variant="outline" className="min-w-[60px] justify-center">
+              {locationRadius}m
+            </Badge>
           </div>
+          <p className="text-xs text-muted-foreground">
+            Students must be within this radius to check-in
+          </p>
+        </div>
+      </div>
 
-          {/* Location Stability Message */}
-          <LecturerLocationStabilityMessage
-            isVisible={true}
-            variant="compact"
+      {/* Attendance Code */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <Label className="flex items-center gap-2 text-sm font-medium">
+            <Code className="h-4 w-4" />
+            Require Attendance Code
+          </Label>
+          <Switch
+            checked={requireCode}
+            onCheckedChange={setRequireCode}
+            className="data-[state=checked]:bg-primary"
           />
+        </div>
 
-          {/* Location Settings */}
-          <div className="space-y-3">
-            <Label className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Location Radius
-            </Label>
-            <div className="flex items-center gap-3">
+        {requireCode && (
+          <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
+            <div className="flex gap-2">
               <Input
-                type="range"
-                min="5"
-                max="300"
-                value={locationRadius}
-                onChange={(e) => setLocationRadius(Number(e.target.value))}
-                className="flex-1"
+                value={attendanceCode}
+                onChange={(e) =>
+                  setAttendanceCode(e.target.value.toUpperCase())
+                }
+                placeholder="Enter code or generate"
+                maxLength={6}
+                className="font-mono text-center text-lg sm:text-base tracking-wider h-12 sm:h-10"
               />
-              <Badge variant="outline">{locationRadius}m</Badge>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={generateCode}
+                className="h-12 w-12 sm:h-10 sm:w-10 shrink-0"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+              {attendanceCode && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={copyCode}
+                  className="h-12 w-12 sm:h-10 sm:w-10 shrink-0"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Students must be within this radius to check-in
+              Students will need to enter this code during check-in
             </p>
           </div>
+        )}
+      </div>
 
-          {/* Attendance Code */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-2">
-                <Code className="h-4 w-4" />
-                Require Attendance Code
-              </Label>
-              <Switch checked={requireCode} onCheckedChange={setRequireCode} />
-            </div>
+      {/* Actions */}
+      <div className="flex flex-col sm:flex-row gap-3 pt-2">
+        <Button
+          variant="outline"
+          onClick={() => setIsOpen(false)}
+          className="flex-1 h-12 sm:h-10 order-2 sm:order-1"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleStartSession}
+          className="flex-1 h-12 sm:h-10 order-1 sm:order-2"
+          disabled={
+            (requireCode && !attendanceCode.trim()) || isCreatingSession
+          }
+        >
+          {isCreatingSession ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              <span className="hidden sm:inline">Creating Session...</span>
+              <span className="sm:hidden">Creating...</span>
+            </>
+          ) : (
+            'Start Session'
+          )}
+        </Button>
+      </div>
+    </div>
+  );
 
-            {requireCode && (
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Input
-                    value={attendanceCode}
-                    onChange={(e) =>
-                      setAttendanceCode(e.target.value.toUpperCase())
-                    }
-                    placeholder="Enter code or generate"
-                    maxLength={6}
-                    className="font-mono"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={generateCode}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                  </Button>
-                  {attendanceCode && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      onClick={copyCode}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Students will need to enter this code during check-in
-                </p>
-              </div>
-            )}
-          </div>
+  if (isDesktop) {
+    return (
+      <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+        <DialogTrigger asChild disabled={disabled}>
+          {children}
+        </DialogTrigger>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              Start Attendance Session
+            </DialogTitle>
+            <DialogDescription className="truncate">
+              Configure your attendance session for{' '}
+              <strong>
+                {courseName.length > 30
+                  ? courseName.substring(0, 30) + '...'
+                  : courseName}
+              </strong>
+            </DialogDescription>
+          </DialogHeader>
+          <SessionContent />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <Button
-              variant="outline"
-              onClick={() => setIsOpen(false)}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleStartSession}
-              className="flex-1"
-              disabled={
-                (requireCode && !attendanceCode.trim()) || isCreatingSession
-              }
-            >
-              {isCreatingSession ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Creating Session...
-                </>
-              ) : (
-                'Start Session'
-              )}
-            </Button>
+  return (
+    <Drawer open={isOpen} onOpenChange={handleOpenChange}>
+      <DrawerTrigger asChild disabled={disabled}>
+        {children}
+      </DrawerTrigger>
+      <DrawerContent className="max-h-[90vh]">
+        <div className="mx-auto w-full max-w-sm">
+          <DrawerHeader className="text-left pb-4">
+            <DrawerTitle className="flex items-center gap-2 text-lg">
+              <Clock className="h-5 w-5 text-primary" />
+              Start Attendance Session
+            </DrawerTitle>
+            <DrawerDescription className="text-sm">
+              Configure your attendance session for{' '}
+              <strong className="block truncate mt-1">
+                {courseName.length > 40
+                  ? courseName.substring(0, 40) + '...'
+                  : courseName}
+              </strong>
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="px-4 pb-8">
+            <SessionContent />
           </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </DrawerContent>
+    </Drawer>
   );
 };
 
