@@ -21,15 +21,17 @@ interface JoinCourseModalProps {
 }
 
 const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [courseCode, setCourseCode] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [requestMessage] = useState('');
   const [uniqueCode, setUniqueCode] = useState('');
   const [editableRegNumber, setEditableRegNumber] = useState('');
 
   const { data: currentUser } = useGetCurrentUser();
-  const { data: searchResult, isLoading: isSearching } = useQuery(
-    convexQuery(api.courses.searchCourse, { courseCode: searchTerm }),
-  );
+  const { data: searchResult, isLoading: isSearching } = useQuery({
+    ...convexQuery(api.courses.searchCourse, { courseCode: searchQuery }),
+    enabled: !!searchQuery, // Only run query when searchQuery is set
+  });
 
   const { mutateAsync: requestToJoin, isPending: isJoining } =
     useRequestToJoinCourseClassList();
@@ -45,6 +47,19 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
   const canSubmitRequest =
     (hasRegistrationNumber && editableRegNumber.trim().length > 0) ||
     (!hasRegistrationNumber && uniqueCode.trim().length > 0);
+
+  const handleSearch = () => {
+    if (!courseCode.trim()) {
+      toast.error('Please enter a course code');
+      return;
+    }
+    setSearchQuery(courseCode.trim());
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSearch();
+  };
 
   const handleSendRequest = async () => {
     if (!searchResult) return;
@@ -69,7 +84,8 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
       );
 
       // Reset form
-      setSearchTerm('');
+      setCourseCode('');
+      setSearchQuery('');
       setUniqueCode('');
       // Reset editable registration number to original value
       if (currentUser?.registrationNumber) {
@@ -83,31 +99,37 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchResult && !searchResult.isMember) {
-      handleSendRequest();
-    }
-  };
-
   return (
     <div className="space-y-4">
       {/* Search Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Enter course code provided by your lecturer"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-            disabled={isSearching || isJoining}
-          />
+      <form onSubmit={handleSearchSubmit} className="space-y-4">
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Enter course code provided by your lecturer"
+              value={courseCode}
+              onChange={(e) => setCourseCode(e.target.value)}
+              className="pl-10"
+              disabled={isSearching || isJoining}
+            />
+          </div>
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={!courseCode.trim() || isSearching || isJoining}
+          >
+            {isSearching ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4" />
+            )}
+          </Button>
         </div>
       </form>
 
       {/* Search Results */}
-      {isSearching && searchTerm && (
+      {isSearching && searchQuery && (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">
@@ -219,10 +241,10 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
         </div>
       )}
 
-      {searchTerm && !searchResult && !isSearching && (
+      {searchQuery && !searchResult && !isSearching && (
         <div className="text-center py-8">
           <p className="text-sm text-muted-foreground">
-            {`No course found with code "{searchTerm}" `}
+            {`No course found with code "${searchQuery}" `}
           </p>
           <p className="text-xs text-muted-foreground mt-1">
             Make sure you have the correct course code from your lecturer
