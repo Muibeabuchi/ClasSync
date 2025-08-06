@@ -15,7 +15,7 @@ import { convex, crossDomain } from '@convex-dev/better-auth/plugins';
 import { betterAuth } from 'better-auth';
 import { GenericCtx } from './_generated/server';
 
-const siteUrl = 'http://localhost:3000';
+// const siteUrl = 'http://localhost:3000';
 
 export const createAuth = (ctx: GenericCtx) =>
   betterAuth({
@@ -37,7 +37,7 @@ export const createAuth = (ctx: GenericCtx) =>
       // The Convex plugin is required
       convex(),
       crossDomain({
-        siteUrl,
+        siteUrl: process.env.SITE_URL!,
       }),
     ],
   });
