@@ -12,6 +12,7 @@ import {
   AlertCircle,
   //  GraduationCap,
   X,
+  Loader2,
 } from 'lucide-react';
 import {
   Dialog,
@@ -82,7 +83,7 @@ interface StudentBindingModalProps {
     // requestId: string;
     selectedStudentId: Id<'classListStudents'>;
     classListId: Id<'classLists'>;
-  }) => void;
+  }) => Promise<void>;
   loadingClassListWithAvailableStudents: boolean;
 }
 
@@ -98,6 +99,7 @@ const StudentBindingModal = ({
     useState<Id<'classListStudents'> | null>(null);
   const [selectedClassListId, setSelectedClassListId] =
     useState<Id<'classLists'> | null>(null);
+  const [isBinding, setIsBinding] = useState(false);
 
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
@@ -105,29 +107,56 @@ const StudentBindingModal = ({
     studentId: Id<'classListStudents'>,
     classListId: Id<'classLists'>,
   ) => {
+    // Prevent selection changes while binding is in progress
+    if (isBinding) return;
+
     setSelectedStudentId(studentId);
     setSelectedClassListId(classListId);
   };
 
-  const handleBindAndApprove = () => {
-    if (!selectedStudentId || !selectedClassListId || !classListsWithStudents) {
+  const handleBindAndApprove = async () => {
+    if (
+      !selectedStudentId ||
+      !selectedClassListId ||
+      !classListsWithStudents ||
+      isBinding
+    ) {
       return;
     }
 
-    onBindAndApprove({
-      selectedStudentId,
-      classListId: selectedClassListId,
-    });
+    try {
+      setIsBinding(true);
+      await onBindAndApprove({
+        selectedStudentId,
+        classListId: selectedClassListId,
+      });
 
-    // Reset selections
-    setSelectedStudentId(null);
-    setSelectedClassListId(null);
+      // Reset selections only on success
+      setSelectedStudentId(null);
+      setSelectedClassListId(null);
+      // Close modal on success
+      onOpenChange(false);
+    } catch (error) {
+      // Keep selections on error so user can retry
+      console.error('Failed to bind student:', error);
+    } finally {
+      setIsBinding(false);
+    }
   };
 
   const handleCancel = () => {
+    // Prevent closing while binding is in progress
+    if (isBinding) return;
+
     setSelectedStudentId(null);
     setSelectedClassListId(null);
     onOpenChange(false);
+  };
+
+  // Prevent modal from closing by clicking outside or pressing escape while binding
+  const handleOpenChange = (newOpen: boolean) => {
+    if (isBinding && !newOpen) return; // Prevent closing while binding
+    onOpenChange(newOpen);
   };
 
   // Show loading skeleton while data is being fetched
@@ -159,6 +188,7 @@ const StudentBindingModal = ({
           selectedStudentId={selectedStudentId}
           selectedClassListId={selectedClassListId}
           onStudentSelect={handleStudentSelect}
+          isBinding={isBinding}
         />
       ) : null}
     </>
@@ -166,11 +196,27 @@ const StudentBindingModal = ({
 
   if (isDesktop) {
     return (
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <Dialog open={open} onOpenChange={handleOpenChange}>
+        <DialogContent
+          className="max-w-4xl max-h-[90vh] overflow-hidden"
+          onPointerDownOutside={(e) => {
+            // Prevent closing by clicking outside while binding
+            if (isBinding) {
+              e.preventDefault();
+            }
+          }}
+          onEscapeKeyDown={(e) => {
+            // Prevent closing with escape key while binding
+            if (isBinding) {
+              e.preventDefault();
+            }
+          }}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {/* <Users className="h-5 w-5 text-primary" /> */}
+              {isBinding && (
+                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+              )}
               Match Student to ClassList
             </DialogTitle>
             <DialogDescription>
@@ -182,21 +228,36 @@ const StudentBindingModal = ({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-6 overflow-y-auto max-h-[60vh]">
+          <div
+            className={`space-y-6 overflow-y-auto max-h-[60vh] ${isBinding ? 'opacity-50 pointer-events-none' : ''}`}
+          >
             {content}
           </div>
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={handleCancel}>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isBinding}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleBindAndApprove}
               disabled={
-                !selectedStudentId || classListsWithStudents?.length === 0
+                !selectedStudentId ||
+                classListsWithStudents?.length === 0 ||
+                isBinding
               }
             >
-              Bind & Approve
+              {isBinding ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Binding...
+                </>
+              ) : (
+                'Bind & Approve'
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -205,12 +266,16 @@ const StudentBindingModal = ({
   }
 
   return (
-    <Drawer open={open} onOpenChange={onOpenChange}>
+    <Drawer open={open} onOpenChange={handleOpenChange}>
       <DrawerContent className="max-h-[95vh]">
         <DrawerHeader className="text-left">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+              {isBinding ? (
+                <Loader2 className="h-5 w-5 text-primary animate-spin" />
+              ) : (
+                <Users className="h-5 w-5 text-primary" />
+              )}
               <DrawerTitle className="text-lg">Match Student</DrawerTitle>
             </div>
             <Button
@@ -218,6 +283,7 @@ const StudentBindingModal = ({
               size="icon"
               onClick={handleCancel}
               className="h-8 w-8"
+              disabled={isBinding}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -227,23 +293,39 @@ const StudentBindingModal = ({
           </DrawerDescription>
         </DrawerHeader>
 
-        <div className="flex-1 overflow-y-auto px-4 pb-4">
+        <div
+          className={`flex-1 overflow-y-auto px-4 pb-4 ${isBinding ? 'opacity-50 pointer-events-none' : ''}`}
+        >
           <div className="space-y-4">{content}</div>
         </div>
 
         <DrawerFooter className="pt-4">
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCancel} className="flex-1">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              className="flex-1"
+              disabled={isBinding}
+            >
               Cancel
             </Button>
             <Button
               onClick={handleBindAndApprove}
               disabled={
-                !selectedStudentId || classListsWithStudents?.length === 0
+                !selectedStudentId ||
+                classListsWithStudents?.length === 0 ||
+                isBinding
               }
               className="flex-1"
             >
-              Bind & Approve
+              {isBinding ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Binding...
+                </>
+              ) : (
+                'Bind & Approve'
+              )}
             </Button>
           </div>
         </DrawerFooter>
@@ -344,6 +426,7 @@ const ClassListSelection = ({
   selectedStudentId,
   selectedClassListId,
   onStudentSelect,
+  isBinding = false,
 }: {
   classListsWithStudents: GetLecturerClassListWithStudentsReturnType;
   selectedStudentId: Id<'classListStudents'> | null;
@@ -352,6 +435,7 @@ const ClassListSelection = ({
     studentId: Id<'classListStudents'>,
     classListId: Id<'classLists'>,
   ) => void;
+  isBinding?: boolean;
 }) => {
   const [filterTerm, setFilterTerm] = useState('');
   const filteredValues =
@@ -379,6 +463,7 @@ const ClassListSelection = ({
           onChange={(e) => setFilterTerm(e.target.value)}
           value={filterTerm}
           placeholder="Search by Registration/Unique number or Name"
+          disabled={isBinding}
         />
         <RadioGroup
           value={`${selectedClassListId}-${selectedStudentId}`}
