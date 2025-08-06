@@ -59,9 +59,15 @@ function RouteComponent() {
     });
     if (response.success) {
       toast.success(response.message);
-      navigate({
-        to: '/dashboard',
-      });
+      if (userRole === 'lecturer') {
+        navigate({
+          to: '/dashboard/lecturer',
+        });
+      } else {
+        navigate({
+          to: '/dashboard/student',
+        });
+      }
     } else {
       toast.error(
         'Onboarding Failed. Ensure you have filled in the right information',
