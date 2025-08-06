@@ -87,6 +87,70 @@ export const optimizeDataForIndexes = migrations.define({
   },
 });
 
+// Migration to ensure course code uniqueness
+export const ensureCourseCodeUniqueness = migrations.define({
+  table: 'courses',
+  migrateOne: async (ctx, doc) => {
+    if (!doc.courseCode) {
+      console.warn(`Course ${doc._id} has no course code`);
+      return;
+    }
+
+    // Check if there are other courses with the same course code
+    const duplicates = await ctx.db
+      .query('courses')
+      .withIndex('by_courseCode', (q) => q.eq('courseCode', doc.courseCode))
+      .collect();
+
+    if (duplicates.length > 1) {
+      // Find if this is the first occurrence (by creation time)
+      const sortedDuplicates = duplicates.sort(
+        (a, b) => a._creationTime - b._creationTime,
+      );
+      const isFirstOccurrence = sortedDuplicates[0]._id === doc._id;
+
+      if (!isFirstOccurrence) {
+        // Generate a new unique course code for this duplicate
+        const baseCode = doc.courseCode.slice(0, 5); // Take first 5 chars
+        let attempts = 0;
+        let newCourseCode = '';
+
+        while (attempts < 10) {
+          const randomSuffix = Math.random()
+            .toString(36)
+            .substring(2, 7)
+            .toUpperCase();
+          newCourseCode = baseCode + randomSuffix;
+
+          // Check if this new code is unique
+          const existing = await ctx.db
+            .query('courses')
+            .withIndex('by_courseCode', (q) =>
+              q.eq('courseCode', newCourseCode),
+            )
+            .first();
+
+          if (!existing) {
+            break;
+          }
+          attempts++;
+        }
+
+        if (attempts < 10) {
+          console.log(
+            `Updating duplicate course code ${doc.courseCode} to ${newCourseCode} for course ${doc._id}`,
+          );
+          await ctx.db.patch(doc._id, { courseCode: newCourseCode });
+        } else {
+          console.error(
+            `Failed to generate unique course code for course ${doc._id} after 10 attempts`,
+          );
+        }
+      }
+    }
+  },
+});
+
 // Migration to clean up any remaining inconsistencies
 export const finalCleanup = migrations.define({
   table: 'classLists',

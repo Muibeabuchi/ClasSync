@@ -188,7 +188,7 @@ const AutoMatchModal = ({
             </Badge>
           </div>
 
-          <ScrollArea className={isMobile ? 'h-[300px]' : 'h-[400px]'}>
+          <ScrollArea className={''}>
             {isMobile ? (
               // Mobile: Card layout
               <div className="space-y-3">
@@ -353,7 +353,7 @@ const AutoMatchModal = ({
             )}
           </ScrollArea>
 
-          {courseRequests.length > 0 && (
+          {/* {courseRequests.length > 0 && (
             <div className="bg-muted/30 rounded-lg p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-primary" />
@@ -373,7 +373,7 @@ const AutoMatchModal = ({
                 <li>• Unmatched students will need manual review</li>
               </ul>
             </div>
-          )}
+          )} */}
         </>
       )}
     </div>
