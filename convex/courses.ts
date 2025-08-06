@@ -38,7 +38,10 @@ export const createCourse = lecturerMutation({
   ) => {
     const lecturerId = ctx.user._id;
 
-    const courseCode = CoursesModel.generateCourseCode(initialCourseCode);
+    const courseCode = await CoursesModel.generateUniqueCourseCode(
+      ctx,
+      initialCourseCode,
+    );
 
     const courseId = await ctx.db.insert('courses', {
       lecturerId,
