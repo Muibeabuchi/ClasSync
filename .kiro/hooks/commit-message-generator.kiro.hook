@@ -1,0 +1,18 @@
+{
+  "enabled": true,
+  "name": "Auto Commit Message Generator",
+  "description": "Automatically creates commit messages that summarize completed features/tasks when using Vibe mode and Spec mode, adding the message after the summary",
+  "version": "1",
+  "when": {
+    "type": "fileEdited",
+    "patterns": [
+      "*_SUMMARY.md",
+      "*_IMPLEMENTATION_SUMMARY.md",
+      "IMPLEMENTATION_SUMMARY.md"
+    ]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A feature/task implementation summary file has been created or updated. Please analyze the content and generate an appropriate commit message that summarizes the completed work. The commit message should be concise, descriptive, and follow conventional commit format. Add this commit message after the summary content in the file."
+  }
+}
