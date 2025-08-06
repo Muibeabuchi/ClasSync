@@ -31,7 +31,7 @@ export const getCurrentUser = async ({
   }
   return {
     ...user,
-    ...userMetadata,
+    // ...userMetadata,
     userImage,
   };
   // },
