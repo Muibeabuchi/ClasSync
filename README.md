@@ -1,12 +1,9 @@
 ---
-
-
 # 🎓 ClassSync — Smart Attendance for Smart Classrooms
 
 ClassSync is a modern, scalable web app designed to digitize attendance for Nigerian universities and beyond. It allows lecturers to easily take attendance using GPS verification and code input, while students check in from their own devices — all powered by intuitive UI and secure backend architecture.
 
 Built with ❤️ for HACK4FUTO, but structured for real-world scale.
-
 ---
 
 ## 🚀 Features
@@ -21,6 +18,7 @@ Built with ❤️ for HACK4FUTO, but structured for real-world scale.
 - View detailed attendance logs & analytics
 - Soft-delete or archive courses
 - Customize attendance time window & GPS radius
+- **📊 Export attendance data** (PDF, CSV, Excel) for archived courses
 
 ### 👨‍🎓 For Students
 

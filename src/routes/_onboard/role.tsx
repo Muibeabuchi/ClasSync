@@ -3,18 +3,25 @@ import {
   useCompleteOnboarding,
   useGetUserRole,
 } from '@/feature/onboarding/api/api-hooks';
-import LecturerOnboardingSection from '@/feature/onboarding/components/lecturer-onboarding-section';
+import LecturerOnboardingSection, {
+  LecturerOnboardingSkeleton,
+} from '@/feature/onboarding/components/lecturer-onboarding-section';
 import StudentOnboardingSection from '@/feature/onboarding/components/onboard.student';
 import { type OnboardingDataType } from '@/feature/onboarding/schema/onboarding-schema';
+import { convexQuery } from '@convex-dev/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { createFileRoute } from '@tanstack/react-router';
+import { api } from 'convex/_generated/api';
 import { toast } from 'sonner';
 
 export const Route = createFileRoute('/_onboard/role')({
-  component: RouteComponent,
-  pendingComponent: () => {
-    return <div className="">Loading the Role Page</div>;
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(
+      convexQuery(api.userProfile.getUserRole, {}),
+    );
   },
+  component: RouteComponent,
+  pendingComponent: LecturerOnboardingSkeleton,
 });
 
 function RouteComponent() {
@@ -28,26 +35,26 @@ function RouteComponent() {
     useCompleteOnboarding();
 
   const handleGoToDashboard = async ({
-    department,
-    faculty,
+    // department,
+    // faculty,
     fullName,
     gender,
-    registrationNumber,
-    title,
-    yearLevel,
+    // registrationNumber,
+    // title,
+    // yearLevel,
     // passportPhoto,
   }: OnboardingDataType) => {
     if (isCompletingOnboarding) return;
     if (!fullName) return;
     // store the users info  in the back end
     const response = await completeOnboarding({
-      department,
-      faculty,
+      // department,
+      // faculty,
       fullName,
       gender,
-      registrationNumber,
-      title,
-      yearLevel,
+      // registrationNumber,
+      // title,
+      // yearLevel,
       // passportPhoto,
     });
     if (response.success) {

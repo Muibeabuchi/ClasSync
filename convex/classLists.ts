@@ -1,4 +1,4 @@
-import { v } from 'convex/values';
+import { ConvexError, v } from 'convex/values';
 import {
   LecturerCourseQuery,
   classListQuery,
@@ -13,9 +13,6 @@ import * as ClassListModel from './models/classListModel';
 export const createClassList = lecturerMutation({
   args: {
     classListName: v.optional(v.string()),
-    department: v.string(),
-    yearGroup: v.string(),
-    faculty: v.string(),
     students: v.array(
       v.object({
         Name: v.string(),
@@ -34,9 +31,6 @@ export const createClassList = lecturerMutation({
 
     const classListId = await ctx.db.insert('classLists', {
       classListName: args.classListName,
-      department: args.department,
-      yearGroup: args.yearGroup,
-      faculty: args.faculty,
       lecturerId: ctx.user._id,
       isArchived: false,
     });
@@ -125,32 +119,13 @@ export const deleteClassList = lecturerMutation({
 });
 
 // Update ClassList info
-export const updateClassList = lecturerMutation({
+export const updateClassListName = lecturerMutation({
   args: {
     classListId: v.id('classLists'),
     classListName: v.optional(v.string()),
-    department: v.optional(v.string()),
-    yearGroup: v.optional(v.string()),
-    faculty: v.optional(v.string()),
-    // students: v.optional(
-    //   v.array(
-    //     v.object({
-    //       fullName: v.string(),
-    //       registrationNumber: v.string(),
-    //       gender: v.union(
-    //         v.literal('Male'),
-    //         v.literal('Female'),
-    //         v.literal('Other'),
-    //       ),
-    //       faculty: v.string(),
-    //       department: v.string(),
-    //       yearLevel: v.string(),
-    //     }),
-    //   ),
-    // ),
   },
   handler: async (ctx, args) => {
-    const { classListId, classListName, department, faculty, yearGroup } = args;
+    const { classListId, classListName } = args;
     const lecturerId = ctx.user._id;
 
     const classList = await ClassListModel.ensureLecturerClassListAccess({
@@ -159,21 +134,184 @@ export const updateClassList = lecturerMutation({
       lecturerId,
     });
 
-    //   // Validate unique registration numbers
-    //   const regNumbers = args.students.map((s) => s.registrationNumber);
-    //   const uniqueRegNumbers = new Set(regNumbers);
-    //   if (regNumbers.length !== uniqueRegNumbers.size) {
-    //     throw new Error('Duplicate registration numbers found');
-    //   }
-    //   updates.students = args.students;
-    // }
-
     await ctx.db.patch(classList._id, {
       classListName: classListName ?? classList.classListName,
-      faculty: faculty ?? classList.faculty,
-      department: department ?? classList.department,
-      yearGroup: yearGroup ?? classList.yearGroup,
     });
+    return { success: true };
+  },
+});
+
+// Add student to ClassList
+export const addStudentToClassList = lecturerMutation({
+  args: {
+    classListId: v.id('classLists'),
+    student: v.object({
+      Name: v.string(),
+      registrationNumber: v.string(),
+      gender: studentGenderSchema,
+    }),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
+
+    await ClassListModel.ensureLecturerClassListAccess({
+      ctx,
+      classListId: args.classListId,
+      lecturerId,
+    });
+
+    // Check for duplicate registration number within this classlist
+    const existingStudents = await ctx.db
+      .query('classListStudents')
+      .withIndex('by_classListId', (q) => q.eq('classListId', args.classListId))
+      .collect();
+
+    const duplicateStudent = existingStudents.find(
+      (s) =>
+        s.student.studentRegistrationNumber === args.student.registrationNumber,
+    );
+
+    if (duplicateStudent) {
+      throw new Error(
+        'A student with this registration number already exists in this class list',
+      );
+    }
+
+    // Get the next position
+    const nextPosition = existingStudents.length + 1;
+
+    const studentId = await ctx.db.insert('classListStudents', {
+      classListId: args.classListId,
+      student: {
+        classlistPosition: nextPosition,
+        studentGender: args.student.gender,
+        studentName: args.student.Name,
+        studentRegistrationNumber: args.student.registrationNumber,
+      },
+    });
+
+    return studentId;
+  },
+});
+
+// Update student in ClassList
+export const updateClassListStudent = lecturerMutation({
+  args: {
+    classListId: v.id('classLists'),
+    studentId: v.id('classListStudents'),
+    student: v.object({
+      Name: v.string(),
+      registrationNumber: v.string(),
+      gender: studentGenderSchema,
+    }),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
+
+    // Verify lecturer has access to this classlist
+    await ClassListModel.ensureLecturerClassListAccess({
+      ctx,
+      classListId: args.classListId,
+      lecturerId,
+    });
+
+    // Get the student to update
+    const studentToUpdate = await ctx.db.get(args.studentId);
+    if (!studentToUpdate || studentToUpdate.classListId !== args.classListId) {
+      throw new Error('Student not found in this class list');
+    }
+
+    // Check for duplicate registration number (excluding current student)
+    const existingStudents = await ctx.db
+      .query('classListStudents')
+      .withIndex('by_classListId', (q) => q.eq('classListId', args.classListId))
+      .collect();
+
+    const duplicateStudent = existingStudents.find(
+      (s) =>
+        s._id !== args.studentId &&
+        s.student.studentRegistrationNumber === args.student.registrationNumber,
+    );
+
+    if (duplicateStudent) {
+      throw new Error(
+        'A student with this registration number already exists in this class list',
+      );
+    }
+
+    await ctx.db.patch(args.studentId, {
+      student: {
+        ...studentToUpdate.student,
+        studentName: args.student.Name,
+        studentRegistrationNumber: args.student.registrationNumber,
+        studentGender: args.student.gender,
+      },
+    });
+
+    return { success: true };
+  },
+});
+
+// Delete student from ClassList
+export const deleteClassListStudent = lecturerMutation({
+  args: {
+    classListId: v.id('classLists'),
+    studentId: v.id('classListStudents'),
+  },
+  handler: async (ctx, args) => {
+    const lecturerId = ctx.user._id;
+
+    // Verify lecturer has access to this classlist
+    await ClassListModel.ensureLecturerClassListAccess({
+      ctx,
+      classListId: args.classListId,
+      lecturerId,
+    });
+
+    // Get the student to delete
+    const studentToDelete = await ctx.db.get(args.studentId);
+    if (!studentToDelete || studentToDelete.classListId !== args.classListId) {
+      throw new Error('Student not found in this class list');
+    }
+
+    // Check if student is enrolled in any courses
+    const courseEnrollments = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_classListStudentId', (q) =>
+        q.eq('classListStudentId', args.studentId),
+      )
+      .collect();
+
+    if (courseEnrollments.length > 0) {
+      throw new Error(
+        'Cannot delete student. They are enrolled in active courses.',
+      );
+    }
+
+    await ctx.db.delete(args.studentId);
+
+    // Reorder positions for remaining students
+    const remainingStudents = await ctx.db
+      .query('classListStudents')
+      .withIndex('by_classListId', (q) => q.eq('classListId', args.classListId))
+      .collect();
+
+    // Sort by current position and reassign positions
+    const sortedStudents = remainingStudents.sort(
+      (a, b) => a.student.classlistPosition - b.student.classlistPosition,
+    );
+
+    await Promise.all(
+      sortedStudents.map(async (student, index) => {
+        await ctx.db.patch(student._id, {
+          student: {
+            ...student.student,
+            classlistPosition: index + 1,
+          },
+        });
+      }),
+    );
+
     return { success: true };
   },
 });
@@ -253,13 +391,25 @@ export const getClassListsWithAvailableStudents = LecturerCourseQuery({
   },
   handler: async (ctx, args) => {
     const lecturerId = ctx.user._id;
+    const course = ctx.course;
 
-    // Get all class lists for the lecturer
-    const classLists = await ctx.db
-      .query('classLists')
-      .withIndex('by_lecturer', (q) => q.eq('lecturerId', lecturerId))
-      .order('desc')
-      .collect();
+    // Get only class lists that are attached to this specific course
+    const courseClassListIds = course.classListIds || [];
+
+    if (courseClassListIds.length === 0) {
+      return []; // No class lists attached to this course
+    }
+
+    // Get class lists that are attached to this course
+    const classLists = await Promise.all(
+      courseClassListIds.map(async (classListId) => {
+        const classList = await ctx.db.get(classListId);
+        return classList;
+      }),
+    );
+
+    // Filter out null results
+    const validClassLists = classLists.filter(Boolean);
 
     // Get all students already in the course attendance list
     const existingCourseAttendees = await ctx.db
@@ -276,7 +426,8 @@ export const getClassListsWithAvailableStudents = LecturerCourseQuery({
 
     // Process each class list and filter out students already in the course
     const classListsWithAvailableStudents = await Promise.all(
-      classLists.map(async (classList) => {
+      validClassLists.map(async (classList) => {
+        if (!classList) throw new ConvexError('ClassList does not exist');
         // Get all students in this class list
         const allClassListStudents = await ctx.db
           .query('classListStudents')

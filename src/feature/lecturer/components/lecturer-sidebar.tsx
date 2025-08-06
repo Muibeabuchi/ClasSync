@@ -1,6 +1,5 @@
 // import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
   SidebarContent,
@@ -13,7 +12,9 @@ import {
   SidebarHeader,
   SidebarFooter,
   useSidebar,
+  // SidebarTrigger,
 } from '@/components/ui/sidebar';
+// import { SidebarToggle } from '@/components/ui/sidebar-toggle';
 import { BookOpen, Bell, LogOut, User } from 'lucide-react';
 import {
   DropdownMenu,
@@ -26,18 +27,15 @@ import { navigationItems } from '@/constants/navigation-constants';
 import { Link } from '@tanstack/react-router';
 import { cn } from '@/lib/utils';
 import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
-// import { ThemeToggle } from '@/components/theme-toggle';
+import { ThemeDropdownToggle } from '@/components/theme-dropdown-toggle';
 
 interface LecturerSidebarProps {
-  userData: any;
-  handleSidebarState: (value: boolean) => void;
+  fullName?: string;
+  profileImage?: string;
 }
 
-const LecturerSidebar = ({
-  userData,
-  // handleSidebarState,
-}: LecturerSidebarProps) => {
-  const { state } = useSidebar();
+const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
+  const { state, isMobile, setOpenMobile } = useSidebar();
 
   const signOut = useSignOut();
 
@@ -45,17 +43,23 @@ const LecturerSidebar = ({
     signOut();
   };
 
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
     <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b">
+      <SidebarHeader>
         <div className="flex items-center gap-3 px-1 py-0.5">
           <div
-            className={cn('bg-primary p-3 rounded-md shadow-lg', {
+            className={cn('bg-primary p-1 rounded-md shadow-lg', {
               'p-1 rounded-sm': state === 'collapsed',
             })}
           >
             <BookOpen
-              className={cn('size-5', {
+              className={cn('size-4 text-background', {
                 'size-4': state === 'collapsed',
               })}
             />
@@ -66,7 +70,7 @@ const LecturerSidebar = ({
               <p className="text-xs font-normal opacity-70">Lecturer Portal</p>
             </div>
           )}
-          {/* <ThemeToggle /> */}
+          {/* <SidebarTrigger /> */}
         </div>
       </SidebarHeader>
 
@@ -82,16 +86,14 @@ const LecturerSidebar = ({
                 return (
                   <SidebarMenuItem key={item.id}>
                     <Link
-                      to={`/dashboard/$role/${item.to}`}
+                      to={`/dashboard/lecturer/${item.to}`}
                       activeOptions={{ exact: true }}
                     >
                       {({ isActive }) => {
                         return (
                           <SidebarMenuButton
                             isActive={isActive}
-                            // onClick={() => {
-                            //   // handleSidebarState(false);
-                            // }}
+                            onClick={handleLinkClick}
                             tooltip={
                               state === 'collapsed' ? item.label : undefined
                             }
@@ -106,14 +108,6 @@ const LecturerSidebar = ({
                           >
                             <Icon className="h-4 w-4 flex-shrink-0" />
                             <span className="font-normal">{item.label}</span>
-                            {item.badge && state === 'expanded' && (
-                              <Badge
-                                variant="secondary"
-                                className="ml-auto text-xs px-2 py-0.5"
-                              >
-                                {item.badge}
-                              </Badge>
-                            )}
                           </SidebarMenuButton>
                         );
                       }}
@@ -135,24 +129,18 @@ const LecturerSidebar = ({
                   size="lg"
                   className="h-12  rounded-lg hover:bg-accent transition-colors duration-200 data-[state=open]:bg-accent"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg border">
-                    <AvatarImage src={userData?.profileImage} />
+                  <Avatar className="size-5 rounded-md border">
+                    <AvatarImage src={profileImage} />
                     <AvatarFallback className="rounded-lg text-sm font-medium">
-                      {userData?.fullName
+                      {fullName
                         ?.split(' ')
-                        // @ts-expect-error : temporary data
                         .map((n) => n[0])
                         .join('')}
                     </AvatarFallback>
                   </Avatar>
                   {state === 'expanded' && (
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-medium">
-                        {userData?.title} {userData?.fullName}
-                      </span>
-                      <span className="truncate text-xs opacity-70">
-                        {userData?.department}
-                      </span>
+                      <span className="truncate font-medium">{fullName}</span>
                     </div>
                   )}
                   <Bell className="ml-auto size-4 opacity-70" />
@@ -164,15 +152,11 @@ const LecturerSidebar = ({
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem
-                  // onClick={() => onPageChange('profile')}
-                  className="cursor-pointer"
-                >
-                  <Link to="/">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
-                  </Link>
+                <DropdownMenuItem className="cursor-pointer">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
                 </DropdownMenuItem>
+                <ThemeDropdownToggle />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}

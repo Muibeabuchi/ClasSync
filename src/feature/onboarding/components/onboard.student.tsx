@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Card,
   CardContent,
@@ -7,8 +9,16 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -16,18 +26,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { CancelModal } from '@/feature/onboarding/components/cancel-modal';
-import { Upload } from 'lucide-react';
 import {
-  getFaculties,
-  getDepartmentsByFaculty,
-} from '@/constants/faculty-department';
-import {
-  type GenderType,
+  genderSchema,
+  // type GenderType,
   type OnboardingDataType,
-  type yearLevelType,
 } from '../schema/onboarding-schema';
-import { yearLevelArrayConstant } from '@/constants/onboarding';
+import { useImageUpload } from '@/hooks/useImageUpload';
+import { z } from 'zod';
+import { toast } from 'sonner';
+// import { studentGenderSchema } from 'convex/schema';
+
+// Student form schema
+const studentFormSchema = z.object({
+  fullName: z.string().min(4, 'Full name must be at least 4 characters'),
+  registrationNumber: z.string().optional(),
+  gender: genderSchema,
+  profileImage: z
+    .instanceof(File, { message: 'Add a profile image' })
+    .refine((file) => file.type.startsWith('image/'), {
+      message: 'File must be an image',
+    })
+    .refine((file) => file.size <= 5 * 1024 * 1024, {
+      message: 'Image must be smaller than 5MB',
+    }),
+});
+
+type StudentFormData = z.infer<typeof studentFormSchema>;
 
 export default function StudentOnboardingSection({
   handleConfirmCancel,
@@ -37,66 +63,34 @@ export default function StudentOnboardingSection({
   handleCompleteOnboarding: (data: OnboardingDataType) => Promise<void>;
 }) {
   const [showCancelModal, setShowCancelModal] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [departments, setDepartments] = useState<string[]>([]);
 
-  // Form data
-  const [fullName, setFullName] = useState('');
-  const [registrationNumber, setRegistrationNumber] = useState('');
-  const [gender, setGender] = useState<GenderType>();
-  const [yearLevel, setYearLevel] = useState<yearLevelType>('100');
-  const [faculty, setFaculty] = useState('');
-  const [department, setDepartment] = useState('');
+  const { uploadImage, isUploading } = useImageUpload();
 
-  const faculties = getFaculties();
+  const form = useForm<StudentFormData>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: {
+      fullName: '',
+      registrationNumber: '',
+      gender: undefined,
+      profileImage: undefined,
+    },
+  });
 
-  useEffect(() => {
-    if (faculty) {
-      const depts = getDepartmentsByFaculty(faculty);
-      setDepartments(depts);
-      if (!depts.includes(department)) {
-        setDepartment('');
-      }
-    }
-  }, [faculty, department]);
-
-  const isValidRegistrationNumber = (regNum: string) => {
-    return /^202\d{8}$/.test(regNum);
-  };
-
-  const isFormValid = () => {
-    return (
-      fullName &&
-      registrationNumber &&
-      isValidRegistrationNumber(registrationNumber) &&
-      gender &&
-      yearLevel &&
-      faculty &&
-      department
-    );
-  };
-
-  const handleSubmit = async () => {
-    if (!isFormValid()) return;
-
-    setIsSubmitting(true);
+  const onSubmit = async (data: StudentFormData) => {
     try {
-      const data = {
-        fullName,
-        registrationNumber,
-        gender,
-        yearLevel,
-        faculty,
-        department,
-      };
-      await handleCompleteOnboarding({
-        ...data,
-      });
+      // Upload image if provided
+      if (!data.profileImage) return;
+      await uploadImage(data.profileImage);
+      // Complete onboarding
+      await handleCompleteOnboarding(data);
     } catch (error) {
-      console.error('Submission error:', error);
-    } finally {
-      setIsSubmitting(false);
+      toast.error('Error completing onboarding');
+      console.error('Error completing onboarding:', error);
     }
+  };
+
+  const handleCancel = () => {
+    setShowCancelModal(true);
   };
 
   return (
@@ -104,11 +98,11 @@ export default function StudentOnboardingSection({
       <div className="max-w-2xl mx-auto pt-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+          <h1 className="text-3xl font-bold text-foreground text-primary mb-2">
             Student Registration
           </h1>
-          <p className="text-muted-foreground">
-            Complete your profile to start using ClassSync
+          <p className="text-muted-foreground text-xs">
+            Complete your profile to start using ClassSynk
           </p>
         </div>
 
@@ -119,179 +113,137 @@ export default function StudentOnboardingSection({
               Please provide your details to set up your student account
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Full Name */}
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
-              <Input
-                id="fullName"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            {/* Registration Number */}
-            <div className="space-y-2">
-              <Label htmlFor="registrationNumber">Registration Number</Label>
-              <Input
-                id="registrationNumber"
-                value={registrationNumber}
-                onChange={(e) => setRegistrationNumber(e.target.value)}
-                placeholder="e.g. 2021123456"
-              />
-              <p className="text-xs text-muted-foreground">
-                Registration number must start with 202 and be 10 digits
-              </p>
-              {registrationNumber &&
-                !isValidRegistrationNumber(registrationNumber) && (
-                  <p className="text-sm text-destructive">
-                    Registration number must start with 202 and be 10 digits
-                  </p>
-                )}
-            </div>
-
-            {/* Gender and Year Level Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="gender">Gender</Label>
-                <Select
-                  value={gender}
-                  onValueChange={(value) => {
-                    setGender(value as GenderType);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="yearLevel">Year Level</Label>
-                <Select
-                  value={yearLevel}
-                  onValueChange={(value) =>
-                    setYearLevel(value as yearLevelType)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select year" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {yearLevelArrayConstant.map((year) => {
-                      return (
-                        <SelectItem key={year} value={year}>
-                          {year}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Faculty */}
-            <div className="space-y-2">
-              <Label htmlFor="faculty">Faculty</Label>
-              <Select
-                value={faculty}
-                onValueChange={(value) => {
-                  setFaculty(value);
-                  setDepartment('');
-                }}
+          <CardContent>
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
               >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select your faculty" />
-                </SelectTrigger>
-                <SelectContent>
-                  {faculties.map((f) => (
-                    <SelectItem key={f} value={f}>
-                      {f}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                {/* Profile Image Upload */}
+                <FormField
+                  control={form.control}
+                  name="profileImage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Profile Photo (Optional)</FormLabel>
+                      <FormControl>
+                        <ImageUpload
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={form.formState.isSubmitting}
+                          maxSize={5 * 1024 * 1024} // 5MB
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Upload a photo that will be displayed in your profile.
+                        Supported formats: JPEG, PNG, GIF, WebP (max 5MB)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Department */}
-            <div className="space-y-2">
-              <Label htmlFor="department">Department</Label>
-              <Select
-                value={department}
-                onValueChange={setDepartment}
-                disabled={!faculty}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      faculty
-                        ? 'Select your department'
-                        : 'Select faculty first'
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                {/* Full Name */}
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter your full name"
+                          {...field}
+                          disabled={form.formState.isSubmitting}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Enter your full name as it should appear in the system.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            {/* Passport Photo Upload */}
-            <div className="space-y-2">
-              <Label htmlFor="passportPhoto">Passport Photo (Optional)</Label>
-              <div className="border-2 border-dashed border-border rounded-lg p-6 text-center hover:border-border/80 transition-colors">
-                <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <div className="text-sm text-muted-foreground">
-                  <label htmlFor="passportPhoto" className="cursor-pointer">
-                    <span className="text-primary hover:text-primary/80">
-                      Click to upload
-                    </span>
-                    <span> or drag and drop</span>
-                  </label>
-                  <input
-                    id="passportPhoto"
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                  />
+                {/* Registration Number */}
+                <FormField
+                  control={form.control}
+                  name="registrationNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Registration Number (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g. 2021123456"
+                          {...field}
+                          disabled={form.formState.isSubmitting}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Enter your school matriculation/registration number or
+                        the unique identifier code given to you by your
+                        lecturer.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Gender */}
+                <FormField
+                  control={form.control}
+                  name="gender"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Gender</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        disabled={form.formState.isSubmitting}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your gender" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Select your gender for profile information.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Action Buttons */}
+                <div className="flex justify-between pt-6">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancel}
+                    disabled={form.formState.isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={form.formState.isSubmitting || isUploading}
+                  >
+                    {form.formState.isSubmitting
+                      ? 'Setting up account...'
+                      : 'Complete Registration'}
+                  </Button>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  PNG, JPG, GIF up to 10MB
-                </p>
-              </div>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex justify-between pt-6">
-              <Button
-                variant="outline"
-                onClick={() => setShowCancelModal(true)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={!isFormValid() || isSubmitting}
-              >
-                {isSubmitting
-                  ? 'Setting up account...'
-                  : 'Complete Registration'}
-              </Button>
-            </div>
+              </form>
+            </Form>
           </CardContent>
         </Card>
       </div>
 
-      {/* <CancelModal open={showCancelModal} onOpenChange={setShowCancelModal} /> */}
       <CancelModal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}

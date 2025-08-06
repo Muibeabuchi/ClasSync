@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -23,20 +22,21 @@ import {
   Plus,
   Eye,
   Edit,
-  // Trash2,
+  Trash2,
   Users,
-  Calendar,
   School,
-  GraduationCap,
-  X,
   // Settings,
 } from 'lucide-react';
 import { CreateClassListSheet } from './CreateClassListSheet';
+import { DeleteClassListModal } from './DeleteClassListModal';
+import { ViewClassListModal } from './ViewClassListModal';
+import { EditClassListSheet } from './EditClassListSheet';
 import { toast } from 'sonner';
 import { useCreateClassList } from '@/feature/classList/api/create-classList';
+import { useDeleteClassList } from '@/feature/classList/api/delete-classList';
 import type { GetLecturerClassListsReturnType } from 'convex/schema';
+import type { Id } from 'convex/_generated/dataModel';
 import { Skeleton } from '@/components/ui/skeleton';
-// import { DeleteClassListModal } from './DeleteClassListModal';
 
 interface LecturerClassListsPageProps {
   LecturerClassLists: GetLecturerClassListsReturnType;
@@ -46,39 +46,24 @@ const LecturerClassListsPage = ({
   LecturerClassLists,
 }: LecturerClassListsPageProps) => {
   const [showCreateModal, setShowCreateModal] = useState(false);
-  // const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedClassList, setSelectedClassList] = useState<{
+    id: Id<'classLists'>;
+    name: string;
+  } | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [facultyFilter, setFacultyFilter] = useState('');
-  const [batchYearFilter, setBatchYearFilter] = useState('');
 
-  const faculties = ['SESET', 'SEET', 'SEMS', 'SLS'];
-  const batchYears = [
-    '2019/2020',
-    '2020/2021',
-    '2021/2022',
-    '2022/2023',
-    '2023/2024',
-  ];
+  const filteredClassList = LecturerClassLists.filter((classList) =>
+    classList?.classListName?.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
-  const getFacultyColor = (faculty: string) => {
-    const colors = {
-      SESET: 'bg-blue-100 text-blue-800 border-blue-200',
-      SEET: 'bg-green-100 text-green-800 border-green-200',
-      SEMS: 'bg-purple-100 text-purple-800 border-purple-200',
-      SLS: 'bg-orange-100 text-orange-800 border-orange-200',
-    };
-    return (
-      colors[faculty as keyof typeof colors] ||
-      'bg-gray-100 text-gray-800 border-gray-200'
-    );
-  };
   const createClassList = useCreateClassList();
+  const deleteClassList = useDeleteClassList();
 
   const handleCreateClassList = async (newClassList: {
-    department: string;
-    faculty: string;
-    batchYear: string;
     classListName: string;
     students: {
       gender: 'male' | 'female';
@@ -86,21 +71,79 @@ const LecturerClassListsPage = ({
       Name: string;
     }[];
   }) => {
-    await createClassList.mutateAsync({
-      department: newClassList.department,
-      faculty: newClassList.faculty,
-      yearGroup: newClassList.batchYear,
-      classListName: newClassList.classListName,
-      students: newClassList.students,
-    });
-
-    setShowCreateModal(false);
-
-    toast.success('ClassList created successfully');
+    try {
+      await createClassList.mutateAsync({
+        classListName: newClassList.classListName,
+        students: newClassList.students,
+      });
+      setShowCreateModal(false);
+      toast.success('ClassList created successfully');
+    } catch (error) {
+      console.error('Error creating class list:', error);
+      toast.error('Failed to create class list');
+    }
   };
 
-  const clearFacultyFilter = () => setFacultyFilter('');
-  const clearBatchYearFilter = () => setBatchYearFilter('');
+  const handleViewClick = (classList: {
+    _id: Id<'classLists'>;
+    classListName?: string;
+  }) => {
+    setSelectedClassList({
+      id: classList._id,
+      name: classList.classListName || 'Unnamed Class List',
+    });
+    setShowViewModal(true);
+  };
+
+  const handleEditClick = (classList: {
+    _id: Id<'classLists'>;
+    classListName?: string;
+  }) => {
+    setSelectedClassList({
+      id: classList._id,
+      name: classList.classListName || 'Unnamed Class List',
+    });
+    setShowEditModal(true);
+  };
+
+  const handleDeleteClick = (classList: {
+    _id: Id<'classLists'>;
+    classListName?: string;
+  }) => {
+    setSelectedClassList({
+      id: classList._id,
+      name: classList.classListName || 'Unnamed Class List',
+    });
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteClassList = async () => {
+    if (!selectedClassList) return;
+
+    try {
+      await deleteClassList.mutateAsync({
+        classListId: selectedClassList.id,
+      });
+
+      toast.success('Class list deleted successfully');
+      setShowDeleteModal(false);
+      setSelectedClassList(null);
+    } catch (error: any) {
+      console.error('Error deleting class list:', error);
+
+      // Handle specific error messages from the server
+      if (error?.message?.includes('used in')) {
+        toast.error('Cannot delete class list', {
+          description: error.message,
+        });
+      } else {
+        toast.error('Failed to delete class list', {
+          description:
+            'Please try again or contact support if the problem persists.',
+        });
+      }
+    }
+  };
 
   return (
     <div className=" sm:p-4 space-y-4 sm:space-y-6">
@@ -108,7 +151,6 @@ const LecturerClassListsPage = ({
       <div className="flex flex-col space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
-            <School className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
                 ClassLists
@@ -134,98 +176,13 @@ const LecturerClassListsPage = ({
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search class lists by fullName or department..."
+              placeholder="Search class lists by fullName "
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
-
-          <div className="relative">
-            <Select value={facultyFilter} onValueChange={setFacultyFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by Faculty" />
-              </SelectTrigger>
-              <SelectContent>
-                {faculties.map((faculty) => (
-                  <SelectItem key={faculty} value={faculty}>
-                    {faculty}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {facultyFilter && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-8 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                onClick={clearFacultyFilter}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
-
-          <div className="relative">
-            <Select value={batchYearFilter} onValueChange={setBatchYearFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Filter by Batch Year" />
-              </SelectTrigger>
-              <SelectContent>
-                {batchYears.map((year) => (
-                  <SelectItem key={year} value={year}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {batchYearFilter && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute right-8 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
-                onClick={clearBatchYearFilter}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            )}
-          </div>
         </div>
-
-        {/* Active Filters */}
-        {(facultyFilter || batchYearFilter) && (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">
-              Active filters:
-            </span>
-            {facultyFilter && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                Faculty: {facultyFilter}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 hover:bg-transparent"
-                  onClick={clearFacultyFilter}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            )}
-            {batchYearFilter && (
-              <Badge variant="secondary" className="flex items-center gap-1">
-                Batch: {batchYearFilter}
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-4 w-4 p-0 hover:bg-transparent"
-                  onClick={clearBatchYearFilter}
-                >
-                  <X className="h-3 w-3" />
-                </Button>
-              </Badge>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Summary Stats */}
@@ -263,36 +220,6 @@ const LecturerClassListsPage = ({
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-3 sm:p-4 flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-green-100 rounded-lg">
-              <GraduationCap className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
-            </div>
-            <div>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Faculties
-              </p>
-              <p className="text-lg sm:text-xl font-semibold">
-                {new Set(LecturerClassLists.map((cl) => cl.faculty)).size}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-3 sm:p-4 flex items-center space-x-2 sm:space-x-3">
-            <div className="p-1.5 sm:p-2 bg-purple-100 rounded-lg">
-              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Batch Years
-              </p>
-              <p className="text-lg sm:text-xl font-semibold">
-                {new Set(LecturerClassLists.map((cl) => cl.yearGroup)).size}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* ClassLists Table */}
@@ -301,18 +228,18 @@ const LecturerClassListsPage = ({
           <CardTitle>Your ClassLists</CardTitle>
         </CardHeader>
         <CardContent>
-          {LecturerClassLists.length === 0 ? (
+          {filteredClassList.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
               <School className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mb-4" />
               <h3 className="text-base sm:text-lg font-medium mb-2">
                 No class lists found
               </h3>
               <p className="text-sm sm:text-base text-muted-foreground mb-4">
-                {searchTerm || facultyFilter || batchYearFilter
+                {searchTerm
                   ? 'Try adjusting your search or filters'
                   : 'Create your first class list to get started'}
               </p>
-              {!searchTerm && !facultyFilter && !batchYearFilter && (
+              {!searchTerm && (
                 <Button onClick={() => setShowCreateModal(true)} size="sm">
                   <Plus className="h-4 w-4 mr-2" />
                   Create ClassList
@@ -323,7 +250,7 @@ const LecturerClassListsPage = ({
             <>
               {/* Mobile Card Layout */}
               <div className="block sm:hidden space-y-4">
-                {LecturerClassLists.map((classList) => (
+                {filteredClassList.map((classList) => (
                   <Card key={classList._id} className="p-4">
                     <div className="space-y-3">
                       <div className="flex items-start justify-between">
@@ -332,31 +259,36 @@ const LecturerClassListsPage = ({
                             {classList.classListName}
                           </h3>
                           <p className="text-xs text-muted-foreground mt-1">
-                            {classList.department}
+                            {/* {classList.department} */}
                           </p>
                         </div>
                         <div className="flex items-center space-x-1 ml-2">
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewClick(classList)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditClick(classList)}
+                          >
                             <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteClick(classList)}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Badge
-                            variant="outline"
-                            className={`${getFacultyColor(classList.faculty)} text-xs`}
-                          >
-                            {classList.faculty}
-                          </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {classList.yearGroup}
-                          </Badge>
-                        </div>
                         <div className="flex items-center space-x-1">
                           <Users className="h-3 w-3 text-muted-foreground" />
                           <span className="text-xs text-muted-foreground">
@@ -380,9 +312,6 @@ const LecturerClassListsPage = ({
                   <TableHeader>
                     <TableRow>
                       <TableHead>ClassList Name</TableHead>
-                      <TableHead>Faculty</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Batch Year</TableHead>
                       <TableHead>Students</TableHead>
                       <TableHead>Created</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -393,20 +322,6 @@ const LecturerClassListsPage = ({
                       <TableRow key={classList._id}>
                         <TableCell className="font-medium">
                           {classList.classListName}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant="outline"
-                            className={getFacultyColor(classList.faculty)}
-                          >
-                            {classList.faculty}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {classList.department}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{classList.yearGroup}</Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-1">
@@ -424,16 +339,24 @@ const LecturerClassListsPage = ({
                             <Button
                               variant="ghost"
                               size="sm"
-                              // onClick={() => onEditClassList(classList.id)}
+                              onClick={() => handleViewClick(classList)}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
-                              // onClick={() => onEditClassList(classList.id)}
+                              onClick={() => handleEditClick(classList)}
                             >
                               <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteClick(classList)}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -454,22 +377,27 @@ const LecturerClassListsPage = ({
         onCreateClassList={handleCreateClassList}
       />
 
-      {/* <DeleteClassListModal
+      <ViewClassListModal
+        open={showViewModal}
+        onOpenChange={setShowViewModal}
+        classListId={selectedClassList?.id || null}
+        classListName={selectedClassList?.name || ''}
+      />
+
+      <EditClassListSheet
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+        classListId={selectedClassList?.id || null}
+        classListName={selectedClassList?.name || ''}
+      />
+
+      <DeleteClassListModal
         open={showDeleteModal}
         onOpenChange={setShowDeleteModal}
-        // classListName={selectedClassList?.name || ''}
-        // onConfirmDelete={handleDeleteClassList}
-      /> */}
-
-      {/* <UpdateClassListSheet
-          isOpen={showUpdateSheet}
-          onClose={() => {
-            setShowUpdateSheet(false);
-            setSelectedClassList(null);
-          }}
-          // classlist={selectedClassList}
-          // onUpdate={handleUpdateClassList}
-        /> */}
+        classListName={selectedClassList?.name || ''}
+        onConfirmDelete={handleDeleteClassList}
+        isDeleting={deleteClassList.isPending}
+      />
     </div>
   );
 };

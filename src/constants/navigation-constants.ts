@@ -13,14 +13,12 @@ export const navigationItems = [
     label: 'Dashboard',
     icon: Home,
     to: '',
-    badge: null,
   },
   {
     id: 'courses',
     label: 'My Courses',
     icon: BookOpen,
     to: '/courses',
-    badge: '3',
   },
 
   {
@@ -28,14 +26,12 @@ export const navigationItems = [
     label: 'ClassLists',
     icon: ClipboardList,
     to: 'classLists',
-    badge: null,
   },
   {
     id: 'join-requests',
     label: 'Join Requests',
     icon: Users,
     to: 'joinRequests',
-    badge: '8',
   },
   // {
   //   id: 'notifications',

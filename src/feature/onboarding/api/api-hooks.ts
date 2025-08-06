@@ -14,12 +14,6 @@ export const useGetUserOnboardedStatus = () => {
   return useQuery(userOnBoardedQueries.getUserOnboardedStatus);
 };
 
-export const useUpdateUserOnboardedStatus = () => {
-  return useMutation({
-    mutationFn: useConvexMutation(api.userProfile.updateUserOnboardedStatus),
-  });
-};
-
 export const useGetUserRole = () => {
   return useSuspenseQuery(userOnBoardedQueries.getUserRole);
 };

@@ -47,6 +47,12 @@ export const lecturerCourseStatusSchema = v.union(
   v.literal('completed'),
 );
 
+export const lectureScheduleSchema = v.object({
+  day: v.string(),
+  startTime: v.string(),
+  endTime: v.string(),
+});
+
 export const classListStudentSchema = v.object({
   classlistPosition: v.number(),
   studentName: v.string(),
@@ -81,6 +87,12 @@ export type GetStudentsCoursesWithActiveAttendanceReturnType =
 
 export type GetStudentsCoursesReturnType = FunctionReturnType<
   typeof api.courses.getStudentCourses
+>;
+export type GetLecturerCoursesWithStatsReturnType = FunctionReturnType<
+  typeof api.courses.getLecturerCoursesWithStats
+>;
+export type GetCoursesWithActiveAttendanceReturnType = FunctionReturnType<
+  typeof api.courses.getCoursesWithActiveAttendance
 >;
 // const lecturerCurrentPlanSchema = v.optional(
 //   v.union(
@@ -146,17 +158,11 @@ const applicationTables = {
   // ClassList - Core abstraction for student groups
   classLists: defineTable({
     classListName: v.optional(v.string()),
-    department: v.string(),
-    yearGroup: v.string(), // e.g., "Software Engineering - 2022"
-    faculty: v.string(),
     //  ClassLists have to be tied to a lecturer
     lecturerId: v.id('userProfiles'),
     // For figuring out classLists that are archived
     isArchived: v.boolean(),
-  })
-    .index('by_lecturer', ['lecturerId'])
-    .index('by_department', ['department'])
-    .index('by_year_group', ['yearGroup']),
+  }).index('by_lecturer', ['lecturerId']),
 
   classListStudents: defineTable({
     classListId: v.id('classLists'),
@@ -169,6 +175,7 @@ const applicationTables = {
     lecturerId: v.id('userProfiles'),
     classListIds: v.array(v.id('classLists')), // Reference to ClassLists
     status: lecturerCourseStatusSchema,
+    schedule: v.optional(v.array(lectureScheduleSchema)), // Lecture schedule
   })
     .index('by_lecturer', ['lecturerId'])
     .index('by_courseCode', ['courseCode']),
@@ -196,6 +203,7 @@ const applicationTables = {
 
   joinRequests: defineTable({
     studentId: v.id('userProfiles'),
+    uniqueCode: v.optional(v.string()),
     lecturerId: v.id('userProfiles'),
     courseId: v.id('courses'),
     status: v.union(
@@ -207,6 +215,7 @@ const applicationTables = {
     message: v.optional(v.string()),
   })
     .index('by_student_by_courseId', ['studentId', 'courseId'])
+    .index('by_studentId', ['studentId'])
     .index('by_lecturerId_by_courseId', ['lecturerId', 'courseId'])
     .index('by_lecturerId', ['lecturerId'])
     .index('by_status', ['status']),
@@ -226,11 +235,16 @@ const applicationTables = {
       v.literal('active'),
       v.literal('pending'),
       v.literal('complete'),
+      v.literal('cancelled'),
     ),
     radius: v.optional(v.number()),
 
     //  This will be the time the attendance session ends. It will be automatically set by a cron_job
     endedAt: v.optional(v.number()),
+
+    // Scheduled function IDs for cancellation
+    activateScheduledFunctionId: v.optional(v.id('_scheduled_functions')),
+    endScheduledFunctionId: v.optional(v.id('_scheduled_functions')),
   })
     .index('by_courseId_by_lecturerId', ['courseId', 'lecturerId'])
     .index('by_courseId', ['courseId'])
@@ -250,100 +264,80 @@ const applicationTables = {
       lat: v.number(),
       long: v.number(),
     }),
+    // New override-related fields
+    isManualOverride: v.optional(v.boolean()),
+    overrideTimestamp: v.optional(v.string()),
+    overrideReason: v.optional(v.string()),
+    overriddenBy: v.optional(v.id('userProfiles')),
+    originalStatus: v.optional(v.literal('absent')),
   })
     .index('by_attendanceSessionId_by_StudentId', [
       'attendanceSessionId',
       'studentId',
     ])
+    .index('by_courseId', ['courseId'])
     .index('by_attendanceSessionId', ['attendanceSessionId'])
     .index('by_studentId', ['studentId'])
-    .index('by_studentId_by_courseId', ['studentId', 'courseId']),
+    .index('by_studentId_by_courseId', ['studentId', 'courseId'])
+    .index('by_isManualOverride', ['isManualOverride'])
+    .index('by_overriddenBy', ['overriddenBy']),
 
-  // ? ==================== WILL LOOK AT THIS LATER ========================  //
+  // Attendance Override Audit Logs
+  // Comprehensive audit logging for all manual attendance overrides
+  attendanceOverrideLogs: defineTable({
+    attendanceSessionId: v.id('attendanceSessions'),
+    studentId: v.id('userProfiles'),
+    lecturerId: v.id('userProfiles'),
+    courseId: v.id('courses'),
+    overrideTimestamp: v.string(),
+    justificationNote: v.string(),
+    originalStatus: v.literal('absent'),
+    newStatus: v.literal('present'),
+    sessionEndTime: v.number(),
+    overrideWindowHours: v.number(),
+  })
+    .index('by_session', ['attendanceSessionId'])
+    .index('by_lecturer', ['lecturerId'])
+    .index('by_student', ['studentId'])
+    .index('by_timestamp', ['overrideTimestamp'])
+    .index('by_courseId', ['courseId'])
+    .index('by_session_student', ['attendanceSessionId', 'studentId']),
 
-  // Notifications
-  // notifications: defineTable({
-  //   userId: v.id('users'),
-  //   type: v.union(
-  //     v.literal('join_approved'),
-  //     v.literal('join_rejected'),
-  //     v.literal('session_created'),
-  //     v.literal('course_completed'),
-  //     v.literal('attendance_reminder'),
-  //   ),
-  //   title: v.string(),
-  //   message: v.string(),
-  //   data: v.optional(
-  //     v.object({
-  //       courseId: v.optional(v.id('courses')),
-  //       sessionId: v.optional(v.id('attendanceSessions')),
-  //       requestId: v.optional(v.id('joinRequests')),
-  //     }),
-  //   ),
-  //   isRead: v.boolean(),
-  //   // createdAt: v.number(),
-  // })
-  //   .index('by_user', ['userId'])
-  //   .index('by_read', ['isRead']),
-
-  // ? ============================== NOTHING HERE TO SEE ========================== //
-
-  // Course completion reports
-  // courseReports: defineTable({
-  //   courseId: v.id('courses'),
-  //   reportType: v.union(
-  //     v.literal('completion'),
-  //     v.literal('analytics'),
-  //     v.literal('attendance'),
-  //   ),
-  //   data: v.object({
-  //     totalStudents: v.number(),
-  //     totalSessions: v.number(),
-  //     averageAttendance: v.number(),
-  //     topPerformers: v.array(
-  //       v.object({
-  //         studentId: v.string(),
-  //         studentName: v.string(),
-  //         attendancePercentage: v.number(),
-  //       }),
-  //     ),
-  //     bottomPerformers: v.array(
-  //       v.object({
-  //         studentId: v.string(),
-  //         studentName: v.string(),
-  //         attendancePercentage: v.number(),
-  //       }),
-  //     ),
-  //     sessionBreakdown: v.array(
-  //       v.object({
-  //         sessionId: v.string(),
-  //         sessionName: v.string(),
-  //         date: v.number(),
-  //         attendanceCount: v.number(),
-  //         attendancePercentage: v.number(),
-  //       }),
-  //     ),
-  //   }),
-  //   generatedAt: v.number(),
-  //   generatedBy: v.id('users'),
-  // })
-  //   .index('by_course', ['courseId'])
-  //   .index('by_type', ['reportType']),
-
-  // Messages (existing)
-  // messages: defineTable({
-  //   senderId: v.id('users'),
-  //   recipientId: v.id('users'),
-  //   subject: v.string(),
-  //   content: v.string(),
-  //   isRead: v.boolean(),
-  //   sentAt: v.number(),
-  //   courseId: v.optional(v.id('courses')),
-  // })
-  //   .index('by_recipient', ['recipientId'])
-  //   .index('by_sender', ['senderId'])
-  //   .index('by_course', ['courseId']),
+  // Lecturer Settings for Override Configuration
+  // Stores lecturer-specific settings for manual attendance overrides
+  lecturerSettings: defineTable({
+    lecturerId: v.id('userProfiles'),
+    overrideWindowHours: v.number(), // 1-24 hours, default 24
+    notifyOnOverride: v.optional(v.boolean()),
+  }).index('by_lecturer', ['lecturerId']),
 };
+
+// ? ==================== WILL LOOK AT THIS LATER ========================  //
+
+// Notifications
+// notifications: defineTable({
+//   userId: v.id('users'),
+//   type: v.union(
+//     v.literal('join_approved'),
+//     v.literal('join_rejected'),
+//     v.literal('session_created'),
+//     v.literal('course_completed'),
+//     v.literal('attendance_reminder'),
+//   ),
+//   title: v.string(),
+//   message: v.string(),
+//   data: v.optional(
+//     v.object({
+//       courseId: v.optional(v.id('courses')),
+//       sessionId: v.optional(v.id('attendanceSessions')),
+//       requestId: v.optional(v.id('joinRequests')),
+//     }),
+//   ),
+//   isRead: v.boolean(),
+//   // createdAt: v.number(),
+// })
+//   .index('by_user', ['userId'])
+//   .index('by_read', ['isRead']),
 
 export default defineSchema({
   // ...authTables,
@@ -353,3 +347,47 @@ export default defineSchema({
 // applicationTables.userProfiles.validator.fields[""]
 
 export type BackendUserRoleType = Infer<typeof userRoleSchema>;
+export type LectureScheduleType = Infer<typeof lectureScheduleSchema>;
+
+// New types for manual attendance override system
+export type AttendanceOverrideLogType = {
+  _id: string;
+  attendanceSessionId: string;
+  studentId: string;
+  lecturerId: string;
+  courseId: string;
+  overrideTimestamp: string;
+  justificationNote: string;
+  originalStatus: 'absent';
+  newStatus: 'present';
+  sessionEndTime: number;
+  overrideWindowHours: number;
+  _creationTime: number;
+};
+
+export type LecturerSettingsType = {
+  _id: string;
+  lecturerId: string;
+  overrideWindowHours: number;
+  notifyOnOverride?: boolean;
+  _creationTime: number;
+};
+
+export type AttendanceRecordWithOverrideType = {
+  _id: string;
+  attendanceSessionId: string;
+  studentId: string;
+  courseId: string;
+  distance?: number;
+  checkedInAt: string;
+  location: {
+    lat: number;
+    long: number;
+  };
+  isManualOverride?: boolean;
+  overrideTimestamp?: string;
+  overrideReason?: string;
+  overriddenBy?: string;
+  originalStatus?: 'absent';
+  _creationTime: number;
+};

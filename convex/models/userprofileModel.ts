@@ -1,3 +1,4 @@
+// import { Doc } from './../_generated/dataModel.d';
 // import { QueryCtx } from './../_generated/server.d';
 import { ConvexError } from 'convex/values';
 import { Id } from '../_generated/dataModel';
@@ -21,12 +22,22 @@ export const getCurrentUser = async ({
   // (skip this if you have no fields in your users table schema)
   const user = await ctx.db.get(userMetadata.userId as Id<'userProfiles'>);
   if (!user) return null;
+  let userImage: string = '';
+  if (user.isOnboarded) {
+    userImage =
+      user.role === 'student'
+        ? ((await ctx.storage.getUrl(user.student_passport_photo_id!)) ?? '')
+        : ((await ctx.storage.getUrl(user.lecturerPassportImage!)) ?? '');
+  }
   return {
     ...user,
     ...userMetadata,
+    userImage,
   };
   // },
 };
+
+export type getUserReturnType = ReturnType<typeof getCurrentUser>;
 
 export const ensureIsLecturer = async (ctx: MutationCtx) => {
   const user = await getCurrentUser({ ctx });

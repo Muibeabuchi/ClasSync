@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
-import { PanelLeftIcon } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -258,7 +258,39 @@ function SidebarTrigger({
   onClick,
   ...props
 }: React.ComponentProps<typeof Button>) {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, state, isMobile } = useSidebar();
+
+  const isExpanded = state === 'expanded';
+
+  // Don't render on mobile as it uses sheet
+  if (isMobile) {
+    return (
+      <Button
+        data-sidebar="trigger"
+        data-slot="sidebar-trigger"
+        variant="ghost"
+        size="icon"
+        className={cn(
+          'size-6 hover:bg-accent hover:text-accent-foreground transition-colors duration-200',
+          className,
+        )}
+        onClick={(event) => {
+          onClick?.(event);
+          toggleSidebar();
+        }}
+        {...props}
+      >
+        {isExpanded ? (
+          <ChevronsLeft className="size-5" />
+        ) : (
+          <ChevronsRight className="size-5" />
+        )}
+        <span className="sr-only">
+          {isExpanded ? 'Collapse Sidebar' : 'Expand Sidebar'}
+        </span>
+      </Button>
+    );
+  }
 
   return (
     <Button
@@ -266,15 +298,28 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon"
-      className={cn('size-7', className)}
+      className={cn(
+        'fixed top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 size-8 rounded-full border bg-background shadow-md hover:bg-accent hover:text-accent-foreground transition-all duration-200',
+        // Position exactly on the sidebar border line
+        isExpanded
+          ? 'left-[var(--sidebar-width)]' // When expanded, position at the right edge of full sidebar
+          : 'left-[var(--sidebar-width-icon)]', // When collapsed, position at the edge of collapsed sidebar
+        className,
+      )}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
       }}
       {...props}
     >
-      <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
+      {isExpanded ? (
+        <ChevronsLeft className="size-4" />
+      ) : (
+        <ChevronsRight className="size-4" />
+      )}
+      <span className="sr-only">
+        {isExpanded ? 'Collapse Sidebar' : 'Expand Sidebar'}
+      </span>
     </Button>
   );
 }

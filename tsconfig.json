@@ -1,5 +1,5 @@
 {
-  "include": ["**/*.ts", "**/*.tsx", "src/routes/_auth/onboard.role.$roletsx"],
+  "include": ["**/*.ts", "**/*.tsx", "src/routes/(auth)/onboard.role.$roletsx"],
   "compilerOptions": {
     "strict": true,
     "verbatimModuleSyntax": true,

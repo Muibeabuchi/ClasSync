@@ -1,6 +1,5 @@
-// import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
+// import { Badge } from '@/components/ui/badge';
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +13,17 @@ import {
   SidebarFooter,
   useSidebar,
 } from '@/components/ui/sidebar';
-import { Home, BookOpen, Plus, Clock, Bell, LogOut, User } from 'lucide-react';
+// import { SidebarToggle } from '@/components/ui/sidebar-toggle';
+import {
+  Home,
+  BookOpen,
+  Clock,
+  Bell,
+  LogOut,
+  User,
+  Settings,
+  UserPlus,
+} from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +32,8 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
-// import { ThemeToggle } from '@/components/theme-toggle';
+import { Link } from '@tanstack/react-router';
+import { ThemeDropdownToggle } from '@/components/theme-dropdown-toggle';
 
 const navigationItems = [
   {
@@ -31,57 +41,55 @@ const navigationItems = [
     label: 'Dashboard',
     icon: Home,
     badge: null,
+    to: '/dashboard/student',
   },
   {
     id: 'courses',
     label: 'My Courses',
     icon: BookOpen,
-    badge: '3',
-  },
-  {
-    id: 'join-course',
-    label: 'Join Course',
-    icon: Plus,
-    badge: null,
+    to: '/dashboard/student/courses',
   },
   {
     id: 'attendance',
     label: 'Check In',
     icon: Clock,
     badge: null,
+    to: '/dashboard/student/attendance',
   },
   {
-    id: 'notifications',
-    label: 'Notifications',
-    icon: Bell,
-    badge: '3',
+    id: 'join-requests',
+    label: 'Join Requests',
+    icon: UserPlus,
+    badge: null,
+    to: '/dashboard/student/join-requests',
   },
 ];
 
 interface StudentSidebarProps {
-  activePage: string;
-  onPageChange: (page: any) => void;
   userData: any;
 }
 
-const StudentSidebar = ({
-  activePage,
-  onPageChange,
-  userData,
-}: StudentSidebarProps) => {
-  const { state } = useSidebar();
+const StudentSidebar = ({ userData }: StudentSidebarProps) => {
+  const { state, isMobile, setOpenMobile } = useSidebar();
+
   const signOut = useSignOut();
 
   const handleSignOut = () => {
     signOut();
   };
 
+  const handleLinkClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-2">
-          <div className="bg-chart-2 p-1 rounded-sm">
-            <BookOpen className="h-4 w-4 text-primary-foreground" />
+        <div className="flex items-center gap-2 px-1 py-2">
+          <div className=" p-1 rounded-sm bg-primary ">
+            <BookOpen className="h-4 w-4 text-background" />
           </div>
           {state === 'expanded' && (
             <div className="flex flex-col flex-1">
@@ -89,7 +97,7 @@ const StudentSidebar = ({
               <p className="text-xs text-muted-foreground">Student Portal</p>
             </div>
           )}
-          {/* <ThemeToggle /> */}
+          {/* <SidebarToggle /> */}
         </div>
       </SidebarHeader>
 
@@ -100,23 +108,38 @@ const StudentSidebar = ({
             <SidebarMenu>
               {navigationItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = activePage === item.id;
 
                 return (
                   <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => onPageChange(item.id)}
-                      tooltip={state === 'collapsed' ? item.label : undefined}
-                    >
-                      <Icon className="h-4 w-4" />
-                      <span>{item.label}</span>
-                      {item.badge && state === 'expanded' && (
-                        <Badge variant="secondary" className="ml-auto">
-                          {item.badge}
-                        </Badge>
-                      )}
-                    </SidebarMenuButton>
+                    <Link to={item.to} activeOptions={{ exact: true }}>
+                      {({ isActive }) => {
+                        return (
+                          <SidebarMenuButton
+                            isActive={isActive}
+                            onClick={handleLinkClick}
+                            tooltip={
+                              state === 'collapsed' ? item.label : undefined
+                            }
+                            className={`
+                              transition-all duration-200 
+                              ${
+                                isActive
+                                  ? 'bg-primary/20 text-primary'
+                                  : 'hover:bg-accent hover:text-accent-foreground'
+                              }
+                            `}
+                          >
+                            <Icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                            {/* {item.badge && state === 'expanded' && (
+                              <Badge variant="secondary" className="ml-auto">
+                                {item.badge}
+                              </Badge>
+                            )} */}
+                          </SidebarMenuButton>
+                        );
+                      }}
+                    </Link>
                   </SidebarMenuItem>
                 );
               })}
@@ -134,7 +157,7 @@ const StudentSidebar = ({
                   size="lg"
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <Avatar className="h-8 w-8 rounded-lg">
+                  <Avatar className="size-5 rounded-md">
                     <AvatarImage src={userData?.profileImage} />
                     <AvatarFallback className="rounded-lg">
                       {userData?.fullName
@@ -152,9 +175,6 @@ const StudentSidebar = ({
                       <span className="truncate text-xs">
                         {userData?.regNumber}
                       </span>
-                      <span className="truncate text-xs">
-                        {userData?.yearLevel} Year • {userData?.department}
-                      </span>
                     </div>
                   )}
                   <Bell className="ml-auto size-4" />
@@ -166,13 +186,34 @@ const StudentSidebar = ({
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem onClick={() => onPageChange('profile')}>
-                  <User className="h-4 w-4 mr-2" />
-                  Profile
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/dashboard/student/notifications"
+                    onClick={handleLinkClick}
+                  >
+                    <Bell className="h-4 w-4 mr-2" />
+                    Notifications
+                  </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onPageChange('settings')}>
-                  Settings
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/dashboard/student/profile"
+                    onClick={handleLinkClick}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Profile
+                  </Link>
                 </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/dashboard/student/settings"
+                    onClick={handleLinkClick}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <ThemeDropdownToggle />
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleSignOut}

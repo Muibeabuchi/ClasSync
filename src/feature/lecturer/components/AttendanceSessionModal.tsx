@@ -12,17 +12,19 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Copy, RefreshCw, MapPin, Clock, Code } from 'lucide-react';
+import { Copy, RefreshCw, MapPin, Clock, Code, Loader2 } from 'lucide-react';
 import { useCreateAttendanceSession } from '@/feature/attendance/api';
 import type { Id } from 'convex/_generated/dataModel';
 import { toast } from 'sonner';
 import { useGeolocated } from 'react-geolocated';
 import { useNavigate } from '@tanstack/react-router';
+import { LecturerLocationStabilityMessage } from '@/components/attendance/LecturerLocationStabilityMessage';
 
 interface AttendanceSessionModalProps {
   courseId: Id<'courses'>;
   courseName: string;
   children: React.ReactNode;
+  disabled?: boolean;
   onStartSession?: (courseId: string) => void;
 }
 
@@ -30,12 +32,14 @@ const AttendanceSessionModal = ({
   courseId,
   courseName,
   children,
+  disabled = false,
   // onStartSession,
 }: AttendanceSessionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [requireCode, setRequireCode] = useState(false);
   const [attendanceCode, setAttendanceCode] = useState('');
-  const [locationRadius, setLocationRadius] = useState(150);
+  const [locationRadius, setLocationRadius] = useState(50);
+  const [isCreatingSession, setIsCreatingSession] = useState(false);
 
   const navigate = useNavigate();
 
@@ -48,32 +52,49 @@ const AttendanceSessionModal = ({
       userDecisionTimeout: 5000,
       suppressLocationOnMount: true,
       onSuccess: async ({ coords }) => {
-        if (!isGeolocationAvailable && !isGeolocationEnabled) return;
+        if (!isGeolocationAvailable && !isGeolocationEnabled) {
+          setIsCreatingSession(false);
+          return;
+        }
 
-        const { sessionId, courseId: CourseId } = await createAttendanceSession(
-          {
-            courseId,
-            requireCode: attendanceCode,
-            radiusMeters: locationRadius,
-            gpsCoordinates: {
-              lat: coords.latitude,
-              long: coords.longitude,
+        try {
+          const { sessionId, courseId: CourseId } =
+            await createAttendanceSession({
+              courseId,
+              requireCode: attendanceCode,
+              radiusMeters: locationRadius,
+              gpsCoordinates: {
+                lat: coords.latitude,
+                long: coords.longitude,
+              },
+            });
+          toast.success('Attendance Session Starting', {
+            description: '30-second preparation phase has begun.',
+          });
+
+          // Close modal and trigger navigation
+          setIsOpen(false);
+          navigate({
+            to: '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId',
+            params: {
+              lecturerCourseId: CourseId,
+              attendanceSessionId: sessionId,
             },
-          },
-        );
-        toast.success('Attendance Session Starting', {
-          description: '30-second preparation phase has begun.',
-        });
-
-        // Close modal and trigger navigation
-        setIsOpen(false);
-        navigate({
-          to: '/dashboard/$role/$lecturerCourseId/$attendanceSessionId',
-          params: {
-            lecturerCourseId: CourseId,
-            role: 'lecturer',
-            attendanceSessionId: sessionId,
-          },
+          });
+        } catch (error) {
+          toast.error('Failed to create session', {
+            description:
+              error instanceof Error ? error.message : 'Please try again.',
+          });
+        } finally {
+          setIsCreatingSession(false);
+        }
+      },
+      onError: () => {
+        setIsCreatingSession(false);
+        toast.error('Location access required', {
+          description:
+            'Please enable location access to start an attendance session.',
         });
       },
     });
@@ -95,35 +116,56 @@ const AttendanceSessionModal = ({
   };
 
   const handleStartSession = () => {
+    setIsCreatingSession(true);
     getPosition();
   };
 
+  const handleOpenChange = (open: boolean) => {
+    if (disabled && open) {
+      return; // Prevent opening when disabled
+    }
+    setIsOpen(open);
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild disabled={disabled}>
+        {children}
+      </DialogTrigger>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Clock className="h-5 w-5 text-primary" />
             Start Attendance Session
           </DialogTitle>
-          <DialogDescription>
-            Configure your attendance session for <strong>{courseName}</strong>
+          <DialogDescription className="truncate">
+            Configure your attendance session for{' '}
+            <strong>
+              {courseName.length > 30
+                ? courseName.substring(0, 30) + '...'
+                : courseName}
+            </strong>
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Session Info */}
-          <div className="bg-blue-50 p-4 rounded-lg space-y-2">
+          <div className="bg-primary/10 p-4 rounded-lg space-y-2">
             <div className="flex items-center gap-2 text-sm font-medium">
-              <Clock className="h-4 w-4 text-blue-600" />
+              <Clock className="h-4 w-4 text-primary" />
               Session Duration: 1 minute total
             </div>
-            <div className="text-xs text-gray-600 space-y-1">
+            <div className="text-xs text-muted-foreground space-y-1">
               <div>{`• 30 seconds prep time (students see "Get Ready")`}</div>
               <div>• 30 seconds active time (students can check-in)</div>
             </div>
           </div>
+
+          {/* Location Stability Message */}
+          <LecturerLocationStabilityMessage
+            isVisible={true}
+            variant="compact"
+          />
 
           {/* Location Settings */}
           <div className="space-y-3">
@@ -134,7 +176,7 @@ const AttendanceSessionModal = ({
             <div className="flex items-center gap-3">
               <Input
                 type="range"
-                min="50"
+                min="5"
                 max="300"
                 value={locationRadius}
                 onChange={(e) => setLocationRadius(Number(e.target.value))}
@@ -142,7 +184,7 @@ const AttendanceSessionModal = ({
               />
               <Badge variant="outline">{locationRadius}m</Badge>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               Students must be within this radius to check-in
             </p>
           </div>
@@ -188,7 +230,7 @@ const AttendanceSessionModal = ({
                     </Button>
                   )}
                 </div>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   Students will need to enter this code during check-in
                 </p>
               </div>
@@ -207,9 +249,18 @@ const AttendanceSessionModal = ({
             <Button
               onClick={handleStartSession}
               className="flex-1"
-              disabled={requireCode && !attendanceCode.trim()}
+              disabled={
+                (requireCode && !attendanceCode.trim()) || isCreatingSession
+              }
             >
-              Start Session
+              {isCreatingSession ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating Session...
+                </>
+              ) : (
+                'Start Session'
+              )}
             </Button>
           </div>
         </div>

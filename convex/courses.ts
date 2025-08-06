@@ -22,8 +22,20 @@ export const createCourse = lecturerMutation({
     courseName: v.string(),
     initialCourseCode: v.string(),
     classListIds: v.array(v.id('classLists')),
+    schedule: v.optional(
+      v.array(
+        v.object({
+          day: v.string(),
+          startTime: v.string(),
+          endTime: v.string(),
+        }),
+      ),
+    ),
   },
-  handler: async (ctx, { courseName, initialCourseCode, classListIds }) => {
+  handler: async (
+    ctx,
+    { courseName, initialCourseCode, classListIds, schedule },
+  ) => {
     const lecturerId = ctx.user._id;
 
     const courseCode = CoursesModel.generateCourseCode(initialCourseCode);
@@ -34,6 +46,7 @@ export const createCourse = lecturerMutation({
       courseCode: courseCode,
       status: 'active',
       classListIds,
+      schedule,
     });
 
     // const [classListStudents] = await Promise.all(
@@ -177,6 +190,15 @@ export const updateCourse = courseMutation({
   args: {
     courseName: v.optional(v.string()),
     status: v.optional(lecturerCourseStatusSchema),
+    schedule: v.optional(
+      v.array(
+        v.object({
+          day: v.string(),
+          startTime: v.string(),
+          endTime: v.string(),
+        }),
+      ),
+    ),
   },
   async handler(ctx, args) {
     const course = ctx.course;
@@ -187,10 +209,66 @@ export const updateCourse = courseMutation({
     await ctx.db.patch(args.courseId, {
       courseName: args.courseName ?? course.courseName,
       status: args.status ?? course.status,
+      schedule: args.schedule ?? course.schedule,
     });
   },
 });
 
+export const updateCourseSchedule = courseMutation({
+  args: {
+    schedule: v.array(
+      v.object({
+        day: v.string(),
+        startTime: v.string(),
+        endTime: v.string(),
+      }),
+    ),
+  },
+  async handler(ctx, args) {
+    const course = ctx.course;
+
+    // Check if course is archived
+    if (course.status === 'archived') {
+      throw new ConvexError('Cannot update schedule for archived courses');
+    }
+
+    await ctx.db.patch(course._id, {
+      schedule: args.schedule,
+    });
+
+    return { success: true, message: 'Course schedule updated successfully' };
+  },
+});
+
+export const deleteScheduleItem = courseMutation({
+  args: {
+    day: v.string(),
+  },
+  async handler(ctx, args) {
+    const course = ctx.course;
+
+    // Check if course is archived
+    if (course.status === 'archived') {
+      throw new ConvexError('Cannot delete schedule from archived courses');
+    }
+
+    // Remove the specific day from the schedule
+    const updatedSchedule = (course.schedule || []).filter(
+      (item) => item.day !== args.day,
+    );
+
+    await ctx.db.patch(course._id, {
+      schedule: updatedSchedule,
+    });
+
+    return {
+      success: true,
+      message: `${args.day} schedule deleted successfully`,
+    };
+  },
+});
+
+// TODO: Add a check to ensure
 export const removeCourseClassList = courseMutation({
   args: {
     classListIds: v.array(v.id('classLists')),
@@ -247,6 +325,147 @@ export const removeCourseClassList = courseMutation({
     await ctx.db.patch(course._id, {
       classListIds: updatedCourseClassListIds,
     });
+  },
+});
+
+export const archiveCourse = courseMutation({
+  args: {},
+  async handler(ctx) {
+    const course = ctx.course;
+
+    // Validate course can be archived
+    if (course.status === 'archived') {
+      throw new ConvexError('Course is already archived');
+    }
+
+    // Check if there are any active attendance sessions
+    const activeAttendanceSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .collect();
+
+    if (activeAttendanceSessions.length > 0) {
+      throw new ConvexError(
+        'Cannot archive course with active attendance sessions. Please end all active sessions first.',
+      );
+    }
+
+    // Archive the course
+    await ctx.db.patch(course._id, {
+      status: 'archived',
+    });
+
+    return { success: true, message: 'Course archived successfully' };
+  },
+});
+
+export const unarchiveCourse = courseMutation({
+  args: {},
+  async handler(ctx) {
+    const course = ctx.course;
+
+    // Validate course can be unarchived
+    if (course.status !== 'archived') {
+      throw new ConvexError('Only archived courses can be unarchived');
+    }
+
+    // Unarchive the course (set back to active)
+    await ctx.db.patch(course._id, {
+      status: 'active',
+    });
+
+    return { success: true, message: 'Course unarchived successfully' };
+  },
+});
+
+export const deleteCourse = courseMutation({
+  args: {},
+  async handler(ctx) {
+    const course = ctx.course;
+    const lecturerId = ctx.user._id;
+
+    // Validate course can be deleted
+    if (course.status === 'archived') {
+      throw new ConvexError('Archived courses cannot be deleted');
+    }
+
+    // Check if there are any active attendance sessions
+    const activeAttendanceSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .collect();
+
+    if (activeAttendanceSessions.length > 0) {
+      throw new ConvexError(
+        'Cannot delete course with active attendance sessions',
+      );
+    }
+
+    // Delete all related data in the correct order
+
+    // 1. Delete attendance records
+    const attendanceRecords = await ctx.db
+      .query('attendanceRecords')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .collect();
+
+    await Promise.all(
+      attendanceRecords.map(async (record) => {
+        await ctx.db.delete(record._id);
+      }),
+    );
+
+    // 2. Delete attendance sessions
+    const attendanceSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .collect();
+
+    await Promise.all(
+      attendanceSessions.map(async (session) => {
+        await ctx.db.delete(session._id);
+      }),
+    );
+
+    // 3. Delete course attendance list entries
+    const courseAttendanceList = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .collect();
+
+    await Promise.all(
+      courseAttendanceList.map(async (attendance) => {
+        await ctx.db.delete(attendance._id);
+      }),
+    );
+
+    // 4. Delete join requests
+    const joinRequests = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_lecturerId_by_courseId', (q) =>
+        q.eq('lecturerId', lecturerId).eq('courseId', course._id),
+      )
+      .collect();
+
+    await Promise.all(
+      joinRequests.map(async (request) => {
+        await ctx.db.delete(request._id);
+      }),
+    );
+
+    // 5. Finally delete the course
+    await ctx.db.delete(course._id);
+
+    // Update lecturer consumption
+    await CoursesModel.updateLecturerConsumption({
+      ctx,
+      lecturerId,
+      method: 'delete',
+    });
+
+    return { success: true, message: 'Course deleted successfully' };
   },
 });
 
@@ -424,14 +643,96 @@ export const acceptAndLinkJoinRequest = lecturerMutation({
   },
 });
 
-export const unLinkStudentFromCourseAttendanceList = courseMutation({
+export const unLinkStudentFromCourseAttendanceList = lecturerMutation({
   args: { courseAttendanceListId: v.id('courseAttendanceList') },
   async handler(ctx, args) {
+    const lecturerId = ctx.user._id;
+    // Verify the courseAttendanceList exists
     const courseAttendanceList = await ctx.db.get(args.courseAttendanceListId);
     if (!courseAttendanceList)
       throw new ConvexError('CourseAttendanceList does not exist');
 
+    // Verify the lecturer owns this course attendance list entry
+    if (courseAttendanceList.lecturerId !== lecturerId) {
+      throw new ConvexError(
+        'Unauthorized: You do not have access to this course attendance list',
+      );
+    }
+
+    // Get the course to verify it exists and belongs to the lecturer
+    const course = await ctx.db.get(courseAttendanceList.courseId);
+    if (!course) {
+      throw new ConvexError('Course does not exist');
+    }
+
+    if (course.lecturerId !== lecturerId) {
+      throw new ConvexError(
+        'Unauthorized: You do not have access to this course',
+      );
+    }
+
+    // Check if the course is archived - prevent unlinking from archived courses
+    if (course.status === 'archived') {
+      throw new ConvexError('Cannot unlink students from archived courses');
+    }
+
+    // Check if there are any active attendance sessions for this course
+    const activeAttendanceSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .filter((q) => q.eq(q.field('status'), 'active'))
+      .collect();
+
+    if (activeAttendanceSessions.length > 0) {
+      throw new ConvexError(
+        'Cannot unlink student while there are active attendance sessions. Please end all active sessions first.',
+      );
+    }
+
+    // Get all attendance records for this student in this course
+    const attendanceRecords = await ctx.db
+      .query('attendanceRecords')
+      .withIndex('by_studentId_by_courseId', (q) =>
+        q
+          .eq('studentId', courseAttendanceList.studentId)
+          .eq('courseId', course._id),
+      )
+      .collect();
+
+    // Delete all attendance records for this student in this course
+    await Promise.all(
+      attendanceRecords.map(async (record) => {
+        await ctx.db.delete(record._id);
+      }),
+    );
+
+    // Update any related join request to rejected status if it exists
+    const joinRequest = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_student_by_courseId', (q) =>
+        q
+          .eq('studentId', courseAttendanceList.studentId)
+          .eq('courseId', course._id),
+      )
+      .collect();
+
+    // If there are any join requests for this student and course, and they are approved, reject them
+    await Promise.all(
+      joinRequest.map(async (request) => {
+        if (request.status === 'approved')
+          await ctx.db.patch(request._id, { status: 'rejected' });
+      }),
+    );
+
+    // Finally, delete the courseAttendanceList entry
     await ctx.db.delete(courseAttendanceList._id);
+
+    return {
+      success: true,
+      message: 'Student successfully unlinked from course',
+      studentId: courseAttendanceList.studentId,
+      courseId: course._id,
+    };
   },
 });
 
@@ -630,6 +931,7 @@ export const getStudentCourses = StudentQueryMiddleware({
           courseName: course.courseName,
           courseCode: course.courseCode,
           status: course.status,
+          schedule: course.schedule || [],
           lecturer: {
             id: lecturer._id,
             name: lecturer.fullName,
@@ -659,16 +961,134 @@ export const getStudentCourses = StudentQueryMiddleware({
   },
 });
 
+export const getStudentDashboardStats = StudentQueryMiddleware({
+  args: {},
+  handler: async (ctx) => {
+    const studentId = ctx.user._id;
+
+    // Get all courses the student is enrolled in
+    const enrolledCourses = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_studentId', (q) => q.eq('studentId', studentId))
+      // .filter(q=>q.eq(q.field()))
+      .collect();
+
+    if (enrolledCourses.length === 0) {
+      return {
+        totalCourses: 0,
+        avgAttendance: 0,
+        totalSessions: 0,
+        attendedSessions: 0,
+        activeSessions: 0,
+        recentCourses: [],
+      };
+    }
+
+    let totalSessions = 0;
+    let totalAttendedSessions = 0;
+    let activeSessions = 0;
+    // const recentCourses = [];
+
+    // Calculate stats for each course
+    const courseStats = await Promise.all(
+      enrolledCourses.map(async (enrollment) => {
+        const course = await ctx.db.get(enrollment.courseId);
+        if (!course) throw new ConvexError('Course does not exist');
+        if (course.status !== 'active') {
+          return null;
+        }
+
+        // throw new ConvexError('Course has been Completed');
+
+        // Get lecturer info
+        const lecturer = await ctx.db.get(course.lecturerId);
+        if (!lecturer) throw new ConvexError('Lecturer does not exist');
+
+        // Calculate student's attendance for this course
+        const courseSessions = await ctx.db
+          .query('attendanceSessions')
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+          .filter((q) => q.neq(q.field('status'), 'pending'))
+          .collect();
+
+        const courseAttendedSessions = await ctx.db
+          .query('attendanceRecords')
+          .withIndex('by_studentId_by_courseId', (q) =>
+            q.eq('studentId', studentId).eq('courseId', course._id),
+          )
+          .collect();
+
+        const attendanceRate =
+          courseSessions.length > 0
+            ? (courseAttendedSessions.length / courseSessions.length) * 100
+            : 0;
+
+        // Check if there's an active session
+        const activeSession = await ctx.db
+          .query('attendanceSessions')
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+          .filter((q) =>
+            q.or(
+              q.eq(q.field('status'), 'active'),
+              q.eq(q.field('status'), 'pending'),
+            ),
+          )
+          .first();
+
+        if (activeSession) {
+          activeSessions++;
+        }
+
+        totalSessions += courseSessions.length;
+        totalAttendedSessions += courseAttendedSessions.length;
+
+        return {
+          id: course._id,
+          name: course.courseName,
+          code: course.courseCode,
+          lecturer: lecturer.fullName,
+          attendance: Math.round(attendanceRate),
+          totalSessions: courseSessions.length,
+          attendedSessions: courseAttendedSessions.length,
+          status: 'active',
+          hasActiveSession: !!activeSession,
+        };
+      }),
+    );
+
+    const validCourses = courseStats.filter(Boolean);
+
+    const avgAttendance =
+      validCourses.length > 0
+        ? Math.round(
+            validCourses.reduce((sum, course) => {
+              if (!course) return sum;
+              return sum + course.attendance;
+            }, 0) / validCourses.length,
+          )
+        : 0;
+
+    return {
+      totalCourses: validCourses.length,
+      avgAttendance,
+      totalSessions,
+      attendedSessions: totalAttendedSessions,
+      activeSessions,
+      recentCourses: validCourses.slice(0, 3), // Return top 3 courses for dashboard
+    };
+  },
+});
+
 export const getCourseDetails = LecturerCourseQuery({
   args: {},
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const lecturerId = ctx.user._id;
     const course = ctx.course;
 
     // Get course attendance list (enrolled students)
     const courseAttendanceList = await ctx.db
       .query('courseAttendanceList')
-      .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
       .collect();
 
     // Get student profiles and calculate attendance rates
@@ -689,16 +1109,14 @@ export const getCourseDetails = LecturerCourseQuery({
         // Calculate attendance rate for this student in this course
         const totalSessions = await ctx.db
           .query('attendanceSessions')
-          .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+          .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
           .filter((q) => q.neq(q.field('status'), 'pending'))
           .collect();
 
         const attendedSessions = await ctx.db
           .query('attendanceRecords')
           .withIndex('by_studentId_by_courseId', (q) =>
-            q
-              .eq('studentId', attendance.studentId)
-              .eq('courseId', args.courseId),
+            q.eq('studentId', attendance.studentId).eq('courseId', course._id),
           )
           .collect();
 
@@ -706,6 +1124,14 @@ export const getCourseDetails = LecturerCourseQuery({
           totalSessions.length > 0
             ? Math.round((attendedSessions.length / totalSessions.length) * 100)
             : 0;
+
+        // Get student image URL if available
+        let imageUrl = null;
+        if (studentProfile.student_passport_photo_id) {
+          imageUrl = await ctx.storage.getUrl(
+            studentProfile.student_passport_photo_id,
+          );
+        }
 
         return {
           id: studentProfile._id,
@@ -715,6 +1141,7 @@ export const getCourseDetails = LecturerCourseQuery({
           regNumber:
             classListStudent?.student?.studentRegistrationNumber || 'N/A',
           department: studentProfile.department || 'Not specified',
+          imageUrl,
           attendanceRate,
           courseAttendanceListId: attendance._id,
         };
@@ -727,7 +1154,7 @@ export const getCourseDetails = LecturerCourseQuery({
     const joinRequests = await ctx.db
       .query('joinRequests')
       .withIndex('by_lecturerId_by_courseId', (q) =>
-        q.eq('lecturerId', lecturerId).eq('courseId', args.courseId),
+        q.eq('lecturerId', lecturerId).eq('courseId', course._id),
       )
       .collect();
 
@@ -737,6 +1164,14 @@ export const getCourseDetails = LecturerCourseQuery({
         if (!studentProfile)
           throw new ConvexError('studentProfile does not exist');
 
+        // Get student image URL if available
+        let imageUrl = null;
+        if (studentProfile.student_passport_photo_id) {
+          imageUrl = await ctx.storage.getUrl(
+            studentProfile.student_passport_photo_id,
+          );
+        }
+
         return {
           id: request._id,
           student: {
@@ -744,6 +1179,7 @@ export const getCourseDetails = LecturerCourseQuery({
             email: studentProfile.email,
             regNumber: studentProfile.registrationNumber || 'N/A',
             department: studentProfile.department || 'Not specified',
+            imageUrl,
           },
           status: request.status,
           requestDate: new Date(request._creationTime)
@@ -799,7 +1235,7 @@ export const getCourseDetails = LecturerCourseQuery({
     // Get attendance sessions count
     const attendanceSessions = await ctx.db
       .query('attendanceSessions')
-      .withIndex('by_courseId', (q) => q.eq('courseId', args.courseId))
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
       .collect();
 
     return {
@@ -808,6 +1244,7 @@ export const getCourseDetails = LecturerCourseQuery({
         name: course.courseName,
         code: course.courseCode,
         status: course.status,
+        schedule: course.schedule || [],
         enrolledCount: students.length,
         description: `Course managed by ${ctx.user.fullName}`, // You can add a description field to the schema if needed
       },

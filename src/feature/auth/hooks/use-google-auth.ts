@@ -3,10 +3,10 @@ import { useNavigate } from '@tanstack/react-router';
 
 export const useGoogleSignIn = () => {
   async function signIn() {
-    return await authClient.signIn.social({
+    await authClient.signIn.social({
       provider: 'google',
       newUserCallbackURL: '/onboard',
-      callbackURL: '/dashboard',
+      callbackURL: '/login-success',
     });
   }
   return signIn;
@@ -15,10 +15,10 @@ export const useGoogleSignIn = () => {
 export const useSignOut = () => {
   const navigate = useNavigate();
   async function signOut() {
-    await authClient.signOut({
+    return await authClient.signOut({
       fetchOptions: {
-        onSuccess: () => {
-          navigate({
+        onSuccess: async () => {
+          await navigate({
             to: '/login',
           }); // redirect to login page
         },

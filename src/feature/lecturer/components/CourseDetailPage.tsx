@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,74 +9,89 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+// import { Label } from '@/components/ui/label';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
-import {
-  ArrowLeft,
   Users,
-  BookOpen,
-  // Calendar, Building2,
+  // BookOpen,
   BarChart,
   TrendingUp,
   AlertTriangle,
+  ClipboardCheck,
+  ArrowLeft,
+  Archive,
+  RotateCcw,
+  Trash2,
+  MoreVertical,
+  Edit2,
   Check,
   X,
-  Trash2,
-  MessageSquare,
-  MoreHorizontal,
-  ClipboardCheck,
+  Calendar,
+  Clock,
 } from 'lucide-react';
 import AttendanceSessionModal from './AttendanceSessionModal';
+import { StudentsTable } from './StudentsTable';
+import { AttendanceSessionsTable } from './AttendanceSessionsTable';
+import { useNavigate } from '@tanstack/react-router';
+import { DeleteConfirmationModal } from './DeleteConfirmationModal';
+import { ArchiveConfirmationModal } from './ArchiveConfirmationModal';
+import { UnarchiveConfirmationModal } from './UnarchiveConfirmationModal';
+import { DeleteScheduleConfirmationModal } from './DeleteScheduleConfirmationModal';
+import CourseScheduleModal from './CourseScheduleModal';
+import { toast } from 'sonner';
+import {
+  useArchiveCourse,
+  useUnarchiveCourse,
+  useDeleteCourse,
+  useUpdateCourse,
+} from '../hooks/useCourseActions';
+import { useDeleteScheduleItem } from '@/feature/course/api/delete-schedule-item';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Label } from '@/components/ui/label';
+import { AttendanceExportDropdown } from '@/components/attendance/AttendanceExportDropdown';
 
 import type {
   GetAttendanceSessionsReturnType,
   GetCourseDetailsReturnType,
 } from 'convex/schema';
 import type { Id } from 'convex/_generated/dataModel';
-import { Link } from '@tanstack/react-router';
+// import { Link } from '@tanstack/react-router';
 interface CourseDetailPageProps {
   courseId: Id<'courses'>;
   courseDetails: GetCourseDetailsReturnType;
   attendanceSessions: GetAttendanceSessionsReturnType;
-  // onAnalyticsClick: (courseId: string) => void;
-  // onAttendanceClick: (courseId: string) => void;
-  // onLiveAttendanceClick?: (courseId: string) => void;
-  // onAttendanceHistoryClick?: (courseId: string) => void;
 }
 
 const CourseDetailPage = ({
   courseId,
   courseDetails,
   attendanceSessions,
-  // onStudentClick,
-  // onLiveAttendanceClick,
-  // onAttendanceHistoryClick,
 }: CourseDetailPageProps) => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-  const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
-  const [requestFilter, setRequestFilter] = useState('pending');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showArchiveModal, setShowArchiveModal] = useState(false);
+  const [showUnarchiveModal, setShowUnarchiveModal] = useState(false);
+  const [showDeleteScheduleModal, setShowDeleteScheduleModal] = useState(false);
+  const [scheduleToDelete, setScheduleToDelete] = useState<{
+    day: string;
+    timeRange: string;
+  } | null>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedCourseName, setEditedCourseName] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
+  // Course action mutations
+  const archiveMutation = useArchiveCourse();
+  const unarchiveMutation = useUnarchiveCourse();
+  const deleteMutation = useDeleteCourse();
+  const updateCourseMutation = useUpdateCourse();
+  const deleteScheduleItem = useDeleteScheduleItem();
 
   // Extract data from courseDetails prop
   const courseData = courseDetails?.course || {
@@ -85,14 +100,18 @@ const CourseDetailPage = ({
     code: 'Loading...',
     enrolledCount: 0,
     description: 'Loading...',
+    schedule: [],
   };
 
   const students = courseDetails?.students || [];
-  const requests = courseDetails?.requests || [];
 
-  const filteredRequests = requests.filter(
-    (req) => requestFilter === 'all' || req.status === requestFilter,
+  // Check if there's an active attendance session
+  const hasActiveSession = attendanceSessions.some(
+    (session) => session.status === 'active' || session.status === 'pending',
   );
+
+  // Check if there are any students enrolled in the course
+  const hasStudents = students.length > 0;
 
   // Analytics calculations - use data from courseDetails.analytics or calculate from students
   const analytics = courseDetails?.analytics || {
@@ -107,58 +126,185 @@ const CourseDetailPage = ({
   const worstStudent = analytics.worstStudent;
   const lowAttendanceCount = analytics.lowAttendanceCount;
 
-  const handleSelectAllStudents = (checked: boolean) => {
-    setSelectedStudents(checked ? students.map((s) => s.id) : []);
+  // Check if course is archived
+  const isArchived = courseData.status === 'archived';
+
+  // Text truncation utility
+  const truncateText = (
+    text: string,
+    mobileLimit: number = 15,
+    desktopLimit: number = 25,
+  ) => {
+    if (text.length <= mobileLimit) return text;
+
+    // For display purposes, we'll show different lengths based on screen size
+    // This is handled via CSS classes, but we'll provide both versions
+    return {
+      mobile:
+        text.length > mobileLimit
+          ? text.substring(0, mobileLimit) + '...'
+          : text,
+      desktop:
+        text.length > desktopLimit
+          ? text.substring(0, desktopLimit) + '...'
+          : text,
+      full: text,
+    };
   };
 
-  const handleSelectStudent = (studentId: string, checked: boolean) => {
-    setSelectedStudents((prev) =>
-      checked ? [...prev, studentId] : prev.filter((id) => id !== studentId),
-    );
+  // Get truncated versions of course name
+  const courseNameDisplay =
+    typeof courseData.name === 'string'
+      ? truncateText(courseData.name)
+      : courseData.name;
+
+  // Initialize edited course name when courseData changes
+  useEffect(() => {
+    if (courseData.name && courseData.name !== 'Loading...') {
+      setEditedCourseName(courseData.name);
+    }
+  }, [courseData.name]);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (isEditingName && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [isEditingName]);
+
+  // Inline editing handlers
+  const handleStartEditing = () => {
+    if (!isArchived) {
+      setIsEditingName(true);
+      setEditedCourseName(courseData.name);
+    }
   };
 
-  const handleSelectAllRequests = (checked: boolean) => {
-    setSelectedRequests(checked ? filteredRequests.map((r) => r.id) : []);
+  const handleCancelEditing = () => {
+    setIsEditingName(false);
+    setEditedCourseName(courseData.name);
   };
 
-  const handleSelectRequest = (requestId: string, checked: boolean) => {
-    setSelectedRequests((prev) =>
-      checked ? [...prev, requestId] : prev.filter((id) => id !== requestId),
-    );
+  const handleSaveCourseName = async () => {
+    const trimmedName = editedCourseName.trim();
+
+    if (!trimmedName) {
+      return; // Don't save empty names
+    }
+
+    // Validate length (max 50 characters for database storage)
+    if (trimmedName.length > 50) {
+      // Don't save names that are too long
+      return;
+    }
+
+    if (trimmedName === courseData.name) {
+      setIsEditingName(false);
+      return; // No changes made
+    }
+
+    try {
+      await updateCourseMutation.mutateAsync({
+        courseId,
+        courseName: trimmedName,
+      });
+      setIsEditingName(false);
+    } catch (error) {
+      console.error('Failed to update course name:', error);
+      // Reset to original name on error
+      setEditedCourseName(courseData.name);
+    }
   };
 
-  const handleBulkApprove = () => {
-    // toast({
-    //   title: "Requests Approved",
-    //   description: `${selectedRequests.length} join requests have been approved.`,
-    // });
-    setSelectedRequests([]);
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveCourseName();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      handleCancelEditing();
+    }
   };
 
-  const handleBulkReject = () => {
-    // toast({
-    //   title: "Requests Rejected",
-    //   description: `${selectedRequests.length} join requests have been rejected.`,
-    //   variant: "destructive"
-    // });
-    setSelectedRequests([]);
+  // Action handlers
+  const handleArchive = async () => {
+    try {
+      await archiveMutation.mutateAsync({ courseId });
+      setShowArchiveModal(false);
+    } catch (error) {
+      console.error('Failed to archive course:', error);
+    }
   };
 
-  const handleBulkRemoveStudents = () => {
-    // toast({
-    //   title: "Students Removed",
-    //   description: `${selectedStudents.length} students have been removed from the course.`,
-    //   variant: "destructive"
-    // });
-    setSelectedStudents([]);
+  const handleUnarchive = async () => {
+    try {
+      await unarchiveMutation.mutateAsync({ courseId });
+      setShowUnarchiveModal(false);
+    } catch (error) {
+      console.error('Failed to unarchive course:', error);
+    }
   };
 
-  const handleBulkMessage = () => {
-    // toast({
-    //   title: "Message Sent",
-    //   description: `Message sent to ${selectedStudents.length} students.`,
-    // });
-    setSelectedStudents([]);
+  const handleDelete = async () => {
+    try {
+      await deleteMutation.mutateAsync({ courseId });
+      setShowDeleteModal(false);
+      // Navigate back to courses page after successful deletion
+      navigate({
+        to: '/dashboard/lecturer/courses',
+      });
+    } catch (error) {
+      console.error('Failed to delete course:', error);
+    }
+  };
+
+  const handleNavigate = () => {
+    navigate({
+      to: '/dashboard/lecturer/courses',
+    });
+  };
+
+  // Helper function to format time range
+  const formatTimeRange = (startTime: string, endTime: string): string => {
+    const formatTime = (time: string) => {
+      const [hours, minutes] = time.split(':');
+      const hour24 = parseInt(hours);
+      const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
+      const ampm = hour24 >= 12 ? 'PM' : 'AM';
+      return `${hour12}:${minutes} ${ampm}`;
+    };
+
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  };
+
+  // Handle showing delete confirmation for schedule items
+  const handleShowDeleteScheduleConfirmation = (
+    day: string,
+    startTime: string,
+    endTime: string,
+  ) => {
+    const timeRange = formatTimeRange(startTime, endTime);
+    setScheduleToDelete({ day, timeRange });
+    setShowDeleteScheduleModal(true);
+  };
+
+  // Handle deleting individual schedule items
+  const handleDeleteScheduleItem = async () => {
+    if (!scheduleToDelete) return;
+
+    try {
+      await deleteScheduleItem.mutateAsync({
+        courseId,
+        day: scheduleToDelete.day,
+      });
+      toast.success('Schedule deleted successfully');
+      setShowDeleteScheduleModal(false);
+      setScheduleToDelete(null);
+    } catch (error) {
+      console.error('Failed to delete schedule item:', error);
+      toast.error('Failed to delete schedule item');
+    }
   };
 
   return (
@@ -167,18 +313,103 @@ const CourseDetailPage = ({
       <div className="space-y-4">
         <div className="flex items-center space-x-4">
           <Button
-            variant="ghost"
-            size="icon"
-            // onClick={onBack}
-            className="hover:scale-110 transition-transform flex-shrink-0"
+            variant="link"
+            className="cursor-pointer hover:bg-muted-foreground sm:hidden"
+            onClick={handleNavigate}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 mr-2" />
           </Button>
           <div className="flex-1 min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
-              {courseData.name}
-            </h1>
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-gray-600 mt-1">
+            {/* Inline Editable Course Name */}
+            <div className="flex items-center gap-2 mb-1">
+              {isEditingName ? (
+                <div className="flex flex-col gap-1 flex-1">
+                  <div className="flex items-center gap-2">
+                    <Input
+                      ref={inputRef}
+                      value={editedCourseName}
+                      onChange={(e) => setEditedCourseName(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      onBlur={handleSaveCourseName}
+                      className="text-xl sm:text-2xl font-bold h-auto py-1 px-2 border-2 border-primary"
+                      disabled={updateCourseMutation.isPending}
+                      maxLength={50}
+                      placeholder="Enter course name"
+                    />
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleSaveCourseName}
+                        disabled={
+                          updateCourseMutation.isPending ||
+                          editedCourseName.trim().length === 0
+                        }
+                        className="h-8 w-8 p-0"
+                      >
+                        <Check className="h-4 w-4 text-green-600" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={handleCancelEditing}
+                        disabled={updateCourseMutation.isPending}
+                        className="h-8 w-8 p-0"
+                      >
+                        <X className="h-4 w-4 text-red-600" />
+                      </Button>
+                    </div>
+                  </div>
+                  {/* Character count indicator */}
+                  <div className="text-xs text-muted-foreground">
+                    {editedCourseName.length}/50 characters
+                    {editedCourseName.length > 25 && (
+                      <span className="ml-2 text-amber-600">
+                        • Will be truncated on small screens
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 flex-1 group">
+                  {typeof courseNameDisplay === 'object' ? (
+                    <>
+                      {/* Mobile version - show truncated at 15 chars */}
+                      <h1
+                        className="text-xl font-bold sm:hidden"
+                        title={courseNameDisplay.full}
+                      >
+                        {courseNameDisplay.mobile}
+                      </h1>
+                      {/* Desktop version - show truncated at 25 chars */}
+                      <h1
+                        className="hidden sm:block text-2xl font-bold"
+                        title={courseNameDisplay.full}
+                      >
+                        {courseNameDisplay.desktop}
+                      </h1>
+                    </>
+                  ) : (
+                    <h1 className="text-xl sm:text-2xl font-bold">
+                      {courseNameDisplay}
+                    </h1>
+                  )}
+                  {!isArchived && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={handleStartEditing}
+                      className="h-8 w-8 p-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                      title="Edit course name"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-muted-foreground">
               <span className="font-medium">{courseData.code}</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">
@@ -194,24 +425,177 @@ const CourseDetailPage = ({
         </div>
 
         {/* Action Buttons - Mobile Responsive */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-          <Button
-            variant="outline"
-            // onClick={() => onAttendanceHistoryClick?.(courseId)}
-            className="w-full sm:w-auto text-sm"
-          >
-            View History
-          </Button>
-          <AttendanceSessionModal
-            courseId={courseId}
-            courseName={courseData.name}
-            // onStartSession={handleStartAttendance}
-          >
-            <Button className="w-full sm:w-auto text-sm">
-              <ClipboardCheck className="h-4 w-4 mr-2" />
-              Take Attendance
-            </Button>
-          </AttendanceSessionModal>
+        <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
+          {/* Left side - Take Attendance */}
+          <div className="flex flex-col gap-2">
+            <AttendanceSessionModal
+              courseId={courseId}
+              courseName={courseData.name}
+              disabled={hasActiveSession || isArchived || !hasStudents}
+              // onStartSession={handleStartAttendance}
+            >
+              <Button
+                className="w-full sm:w-auto text-sm"
+                disabled={hasActiveSession || isArchived || !hasStudents}
+                title={
+                  isArchived
+                    ? 'Cannot take attendance for archived courses'
+                    : hasActiveSession
+                      ? 'An attendance session is already active for this course'
+                      : !hasStudents
+                        ? 'Cannot take attendance: No students are enrolled in this course'
+                        : 'Start a new attendance session'
+                }
+              >
+                <ClipboardCheck className="h-4 w-4 mr-2" />
+                {hasActiveSession ? 'Session Active' : 'Take Attendance'}
+              </Button>
+            </AttendanceSessionModal>
+
+            {/* Hint text for when no students are enrolled */}
+            {!hasStudents && !isArchived && (
+              <p className="text-xs text-primary text-center sm:text-left opacity-75 px-2 sm:px-0">
+                Add students to start taking attendance
+              </p>
+            )}
+          </div>
+
+          {/* Right side - Course Actions */}
+          <div className="flex flex-col sm:flex-row gap-2">
+            {/* Desktop: Individual buttons */}
+            <div className="hidden sm:flex gap-2">
+              {/* Export button for archived courses */}
+              {isArchived && attendanceSessions.length > 0 && (
+                <AttendanceExportDropdown
+                  courseId={courseId}
+                  courseName={courseData.name}
+                  courseCode={courseData.code}
+                  className="text-sm"
+                />
+              )}
+
+              {isArchived ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Unarchive button clicked');
+                    setShowUnarchiveModal(true);
+                  }}
+                  disabled={unarchiveMutation.isPending}
+                  className="text-sm"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Unarchive
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Archive button clicked');
+                    setShowArchiveModal(true);
+                  }}
+                  disabled={archiveMutation.isPending}
+                  className="text-sm"
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Archive
+                </Button>
+              )}
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('Delete button clicked');
+                  setShowDeleteModal(true);
+                }}
+                disabled={deleteMutation.isPending}
+                className="text-sm"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </Button>
+            </div>
+
+            {/* Mobile: Dropdown menu */}
+            <div className="sm:hidden">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full">
+                    <MoreVertical className="h-4 w-4 mr-2" />
+                    Course Actions
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {/* Export option for archived courses with attendance sessions */}
+                  {isArchived && attendanceSessions.length > 0 && (
+                    <>
+                      <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
+                        Export Data
+                      </div>
+                      <div className="px-2 pb-2">
+                        <AttendanceExportDropdown
+                          courseId={courseId}
+                          courseName={courseData.name}
+                          courseCode={courseData.code}
+                          className="w-full text-sm"
+                        />
+                      </div>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+
+                  {isArchived ? (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Mobile Unarchive clicked');
+                        setShowUnarchiveModal(true);
+                      }}
+                      disabled={unarchiveMutation.isPending}
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Unarchive Course
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        console.log('Mobile Archive clicked');
+                        setShowArchiveModal(true);
+                      }}
+                      disabled={archiveMutation.isPending}
+                    >
+                      <Archive className="h-4 w-4 mr-2" />
+                      Archive Course
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Mobile Delete clicked');
+                      setShowDeleteModal(true);
+                    }}
+                    disabled={deleteMutation.isPending}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Course
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -221,7 +605,7 @@ const CourseDetailPage = ({
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger
             value="overview"
             className="transition-all text-xs sm:text-sm"
@@ -234,210 +618,188 @@ const CourseDetailPage = ({
           >
             Students
           </TabsTrigger>
-          <TabsTrigger
-            value="requests"
-            className="transition-all text-xs sm:text-sm"
-          >
-            <span className="hidden sm:inline">Join Requests</span>
-            <span className="sm:hidden">Requests</span>
-          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6 animate-fade-in">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5 text-blue-600" />
-                  Course Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">
-                    Course Name
-                  </Label>
-                  <p className="text-sm text-gray-900">{courseData.name}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">
-                    Course Code
-                  </Label>
-                  <p className="text-sm text-gray-900">{courseData.code}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">
-                    Status
-                  </Label>
-                  <p className="text-sm text-gray-900">{courseData.status}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-700">
-                    Description
-                  </Label>
-                  <p className="text-sm text-gray-900">
-                    {courseData.description}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BarChart className="h-5 w-5 text-green-600" />
-                  Class Analytics
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 bg-blue-50 rounded-lg">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {courseData.enrolledCount}
-                    </p>
-                    <p className="text-xs text-gray-600">Total Students</p>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart className="h-5 w-5" />
+                    Class Analytics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold">
+                        {courseData.enrolledCount}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Total Students
+                      </p>
+                    </div>
+                    <div className="text-center p-3 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold">{avgAttendance}%</p>
+                      <p className="text-xs text-muted-foreground">
+                        Avg Attendance
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-center p-3 bg-green-50 rounded-lg">
-                    <p className="text-2xl font-bold text-green-600">
-                      {avgAttendance}%
-                    </p>
-                    <p className="text-xs text-gray-600">Avg Attendance</p>
-                  </div>
-                </div>
 
-                <div className="space-y-2">
-                  {bestStudent && (
+                  <div className="space-y-2">
+                    {bestStudent && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <TrendingUp className="h-4 w-4" />
+                        <span className="font-medium">
+                          Best: {bestStudent.name}
+                        </span>
+                        <Badge variant="secondary">
+                          {bestStudent.attendanceRate}%
+                        </Badge>
+                      </div>
+                    )}
+
+                    {worstStudent && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <AlertTriangle className="h-4 w-4" />
+                        <span className="font-medium">
+                          Needs Attention: {worstStudent.name}
+                        </span>
+                        <Badge variant="destructive">
+                          {worstStudent.attendanceRate}%
+                        </Badge>
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-2 text-sm">
-                      <TrendingUp className="h-4 w-4 text-green-600" />
-                      <span className="font-medium">
-                        Best: {bestStudent.name}
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>
+                        {lowAttendanceCount} students below 50% attendance
                       </span>
-                      <Badge variant="secondary">
-                        {bestStudent.attendanceRate}%
-                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Course Schedule Card */}
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="flex items-center gap-2">
+                      <Calendar className="h-5 w-5" />
+                      Lecture Schedule
+                    </CardTitle>
+                    {!isArchived && (
+                      <CourseScheduleModal
+                        courseId={courseId}
+                        courseName={courseData.name}
+                        currentSchedule={courseData.schedule || []}
+                        disabled={isArchived}
+                        onSuccess={() => {
+                          // Data will update automatically via Convex reactivity
+                        }}
+                      >
+                        <Button variant="outline" size="sm">
+                          <Calendar className="h-4 w-4 mr-2" />
+                          Manage
+                        </Button>
+                      </CourseScheduleModal>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {courseData.schedule && courseData.schedule.length > 0 ? (
+                    <div className="space-y-2">
+                      {courseData.schedule.map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center gap-3 p-2 bg-muted/30 rounded-lg border border-border/50 hover:bg-muted/50 transition-colors group"
+                        >
+                          {/* Day Badge */}
+                          <Badge
+                            variant="secondary"
+                            className="shrink-0 min-w-12 justify-center text-xs"
+                          >
+                            {item.day.slice(0, 3)}
+                          </Badge>
+
+                          {/* Time Display */}
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <Clock className="h-3 w-3 text-muted-foreground shrink-0" />
+                            <span className="text-sm text-muted-foreground truncate">
+                              {formatTimeRange(item.startTime, item.endTime)}
+                            </span>
+                          </div>
+
+                          {/* Delete Button - Only show for non-archived courses */}
+                          {!isArchived && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() =>
+                                handleShowDeleteScheduleConfirmation(
+                                  item.day,
+                                  item.startTime,
+                                  item.endTime,
+                                )
+                              }
+                              className="h-6 w-6 p-0 shrink-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/10 hover:text-destructive transition-all"
+                              title={`Remove ${item.day} schedule`}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-6">
+                      <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm text-muted-foreground mb-3">
+                        No schedule set
+                      </p>
+                      {!isArchived && (
+                        <CourseScheduleModal
+                          courseId={courseId}
+                          courseName={courseData.name}
+                          currentSchedule={[]}
+                          disabled={isArchived}
+                        >
+                          <Button variant="outline" size="sm">
+                            <Calendar className="h-4 w-4 mr-2" />
+                            Add Schedule
+                          </Button>
+                        </CourseScheduleModal>
+                      )}
                     </div>
                   )}
+                </CardContent>
+              </Card>
+            </div>
 
-                  {worstStudent && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                      <span className="font-medium">
-                        Needs Attention: {worstStudent.name}
-                      </span>
-                      <Badge variant="destructive">
-                        {worstStudent.attendanceRate}%
-                      </Badge>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <AlertTriangle className="h-4 w-4 text-orange-600" />
-                    <span>
-                      {lowAttendanceCount} students below 50% attendance
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
+            <Card className="lg:col-span-2">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <ClipboardCheck className="h-5 w-5 text-green-600" />
+                  <ClipboardCheck className="h-5 w-5" />
                   Attendance Sessions
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {/* list out and map the attendnace session for the course ,where clicking on each would navigate to the specific attendnaceSession */}
-
-                {/* <div className="space-y-3"> */}
-                {/* <h3 className="text-sm font-medium text-gray-700">
-                    Recent Attendance Sessions
-                  </h3> */}
-                {attendanceSessions.length === 0 ? (
-                  <p className="text-sm text-gray-500">
-                    No attendance sessions yet
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {attendanceSessions.map((session) => (
-                      <Link
-                        to="/dashboard/$role/$lecturerCourseId/$attendanceSessionId"
-                        params={{
-                          attendanceSessionId: session._id,
-                          role: 'lecturer',
-                          lecturerCourseId: courseId,
-                        }}
-                        key={session._id}
-                        className="p-3 border rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <h4 className="font-medium text-sm">
-                              {'Attendance Session'}
-                            </h4>
-                            <p className="text-xs text-gray-500">
-                              {new Date(
-                                session._creationTime,
-                              ).toLocaleDateString()}
-                            </p>
-                          </div>
-                          <Badge
-                            variant={
-                              session.status === 'active'
-                                ? 'default'
-                                : 'secondary'
-                            }
-                          >
-                            {session.status}
-                          </Badge>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                {/* </div> */}
+                <AttendanceSessionsTable
+                  sessions={attendanceSessions.map((session, index) => ({
+                    ...session,
+                    sn: index + 1,
+                  }))}
+                  // courseId={courseId}
+                />
               </CardContent>
             </Card>
           </div>
         </TabsContent>
 
         <TabsContent value="students" className="space-y-6 animate-fade-in">
-          {/* Bulk Actions */}
-          {selectedStudents.length > 0 && (
-            <Card className="border-blue-200 bg-blue-50 animate-scale-in">
-              <CardContent className="py-3">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <span className="text-sm font-medium">
-                    {selectedStudents.length} student(s) selected
-                  </span>
-                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={handleBulkMessage}
-                      className="w-full sm:w-auto text-xs sm:text-sm"
-                    >
-                      <MessageSquare className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Send Message</span>
-                      <span className="sm:hidden">Message</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={handleBulkRemoveStudents}
-                      className="w-full sm:w-auto text-xs sm:text-sm"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Remove Selected</span>
-                      <span className="sm:hidden">Remove</span>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
           <Card>
             <CardHeader>
               <CardTitle>Enrolled Students</CardTitle>
@@ -446,379 +808,48 @@ const CourseDetailPage = ({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {/* Desktop Table View */}
-              <div className="hidden md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={selectedStudents.length === students.length}
-                          onCheckedChange={handleSelectAllStudents}
-                        />
-                      </TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Gender</TableHead>
-                      <TableHead>Reg Number</TableHead>
-                      <TableHead>Attendance</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {students.map((student) => (
-                      <TableRow
-                        key={student.id}
-                        className="hover:bg-gray-50 transition-colors cursor-pointer"
-                        // onClick={() => onStudentClick(student)}
-                      >
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <Checkbox
-                            checked={selectedStudents.includes(student.id)}
-                            onCheckedChange={(checked) =>
-                              handleSelectStudent(
-                                student.id,
-                                checked as boolean,
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {student.name}
-                        </TableCell>
-                        <TableCell>{student.gender}</TableCell>
-                        <TableCell>{student.regNumber}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              student.attendanceRate >= 75
-                                ? 'default'
-                                : student.attendanceRate >= 50
-                                  ? 'secondary'
-                                  : 'destructive'
-                            }
-                          >
-                            {student.attendanceRate}%
-                          </Badge>
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                              <DropdownMenuItem
-                              // onClick={() => onStudentClick(student)}
-                              >
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>Remove</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-3">
-                <div className="flex items-center gap-2 mb-4">
-                  <Checkbox
-                    checked={selectedStudents.length === students.length}
-                    onCheckedChange={handleSelectAllStudents}
-                  />
-                  <span className="text-sm text-gray-600">Select All</span>
-                </div>
-                {students.map((student) => (
-                  <Card
-                    key={student.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow"
-                    // onClick={() => onStudentClick(student)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Checkbox
-                            checked={selectedStudents.includes(student.id)}
-                            onCheckedChange={(checked) =>
-                              handleSelectStudent(
-                                student.id,
-                                checked as boolean,
-                              )
-                            }
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                          <div>
-                            <h3 className="font-medium text-gray-900">
-                              {student.name}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {student.regNumber}
-                            </p>
-                          </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
-                            <DropdownMenuItem
-                            // onClick={() => onStudentClick(student)}
-                            >
-                              View Details
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>Remove</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-600">{student.gender}</span>
-                        <Badge
-                          variant={
-                            student.attendanceRate >= 75
-                              ? 'default'
-                              : student.attendanceRate >= 50
-                                ? 'secondary'
-                                : 'destructive'
-                          }
-                        >
-                          {student.attendanceRate}%
-                        </Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="requests" className="space-y-6 animate-fade-in">
-          {/* Filter */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Filter Requests</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Select value={requestFilter} onValueChange={setRequestFilter}>
-                <SelectTrigger className="w-full max-w-md">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Requests</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="rejected">Rejected</SelectItem>
-                </SelectContent>
-              </Select>
-            </CardContent>
-          </Card>
-
-          {/* Bulk Actions */}
-          {selectedRequests.length > 0 && (
-            <Card className="border-green-200 bg-green-50 animate-scale-in">
-              <CardContent className="py-3">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <span className="text-sm font-medium">
-                    {selectedRequests.length} request(s) selected
-                  </span>
-                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <Button
-                      size="sm"
-                      variant="default"
-                      onClick={handleBulkApprove}
-                      className="w-full sm:w-auto text-xs sm:text-sm"
-                    >
-                      <Check className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Approve Selected</span>
-                      <span className="sm:hidden">Approve</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="destructive"
-                      onClick={handleBulkReject}
-                      className="w-full sm:w-auto text-xs sm:text-sm"
-                    >
-                      <X className="h-4 w-4 mr-1" />
-                      <span className="hidden sm:inline">Reject Selected</span>
-                      <span className="sm:hidden">Reject</span>
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Join Requests</CardTitle>
-              <CardDescription>
-                Review and manage student join requests
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {/* Desktop Table View */}
-              <div className="hidden md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">
-                        <Checkbox
-                          checked={
-                            selectedRequests.length === filteredRequests.length
-                          }
-                          onCheckedChange={handleSelectAllRequests}
-                        />
-                      </TableHead>
-                      <TableHead>Student</TableHead>
-                      <TableHead>Reg Number</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredRequests.map((request) => (
-                      <TableRow
-                        key={request.id}
-                        className="hover:bg-gray-50 transition-colors"
-                      >
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedRequests.includes(request.id)}
-                            onCheckedChange={(checked) =>
-                              handleSelectRequest(
-                                request.id,
-                                checked as boolean,
-                              )
-                            }
-                          />
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {request.student.name}
-                        </TableCell>
-                        <TableCell>{request.student.regNumber}</TableCell>
-                        <TableCell>{request.student.department}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              request.status === 'approved'
-                                ? 'default'
-                                : request.status === 'rejected'
-                                  ? 'destructive'
-                                  : 'secondary'
-                            }
-                          >
-                            {request.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {request.status === 'pending' && (
-                            <div className="flex gap-1">
-                              <Button size="sm" variant="default">
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button size="sm" variant="destructive">
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-3">
-                <div className="flex items-center gap-2 mb-4">
-                  <Checkbox
-                    checked={
-                      selectedRequests.length === filteredRequests.length
-                    }
-                    onCheckedChange={handleSelectAllRequests}
-                  />
-                  <span className="text-sm text-gray-600">Select All</span>
-                </div>
-                {filteredRequests.map((request) => (
-                  <Card
-                    key={request.id}
-                    className="hover:shadow-md transition-shadow"
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <Checkbox
-                            checked={selectedRequests.includes(request.id)}
-                            onCheckedChange={(checked) =>
-                              handleSelectRequest(
-                                request.id,
-                                checked as boolean,
-                              )
-                            }
-                          />
-                          <div>
-                            <h3 className="font-medium text-gray-900">
-                              {request.student.name}
-                            </h3>
-                            <p className="text-sm text-gray-600">
-                              {request.student.regNumber}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {request.student.department}
-                            </p>
-                          </div>
-                        </div>
-                        <Badge
-                          variant={
-                            request.status === 'approved'
-                              ? 'default'
-                              : request.status === 'rejected'
-                                ? 'destructive'
-                                : 'secondary'
-                          }
-                        >
-                          {request.status}
-                        </Badge>
-                      </div>
-                      {request.status === 'pending' && (
-                        <div className="flex gap-2 mt-3">
-                          <Button
-                            size="sm"
-                            variant="default"
-                            className="flex-1"
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Approve
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            className="flex-1"
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            Reject
-                          </Button>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+              <StudentsTable students={students} />
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Confirmation Modals */}
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        courseName={courseData.name}
+        onConfirm={handleDelete}
+        isLoading={deleteMutation.isPending}
+      />
+
+      <ArchiveConfirmationModal
+        isOpen={showArchiveModal}
+        onClose={() => setShowArchiveModal(false)}
+        courseName={courseData.name}
+        onConfirm={handleArchive}
+        isLoading={archiveMutation.isPending}
+      />
+
+      <UnarchiveConfirmationModal
+        isOpen={showUnarchiveModal}
+        onClose={() => setShowUnarchiveModal(false)}
+        courseName={courseData.name}
+        onConfirm={handleUnarchive}
+        isLoading={unarchiveMutation.isPending}
+      />
+
+      <DeleteScheduleConfirmationModal
+        isOpen={showDeleteScheduleModal}
+        onClose={() => {
+          setShowDeleteScheduleModal(false);
+          setScheduleToDelete(null);
+        }}
+        onConfirm={handleDeleteScheduleItem}
+        dayName={scheduleToDelete?.day || ''}
+        timeRange={scheduleToDelete?.timeRange || ''}
+        isLoading={deleteScheduleItem.isPending}
+      />
     </div>
   );
 };

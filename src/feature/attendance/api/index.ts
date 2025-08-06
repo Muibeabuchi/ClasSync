@@ -50,3 +50,55 @@ export const useStudentTakeAttendance = () =>
   useMutation({
     mutationFn: useConvexMutation(api.attendance.checkInToAttendance),
   });
+
+// Course management hooks
+export const useUnlinkStudentFromCourse = () =>
+  useMutation({
+    mutationFn: useConvexMutation(
+      api.courses.unLinkStudentFromCourseAttendanceList,
+    ),
+  });
+
+// Cancel attendance session hooks
+export const useCancelAttendanceSession = () =>
+  useMutation({
+    mutationFn: useConvexMutation(api.attendance.cancelAttendanceSession),
+  });
+
+export const useCanCancelAttendanceSession = ({
+  attendanceSessionId,
+  courseId,
+}: {
+  attendanceSessionId: Id<'attendanceSessions'>;
+  courseId: Id<'courses'>;
+}) =>
+  useSuspenseQuery(
+    convexQuery(api.attendance.canCancelAttendanceSession, {
+      attendanceSessionId,
+      courseId,
+    }),
+  );
+
+// Attendance export hooks
+export const useGetAttendanceExportData = ({
+  courseId,
+}: {
+  courseId: Id<'courses'>;
+}) =>
+  useSuspenseQuery(
+    convexQuery(api.attendance.getAttendanceExportData, { courseId }),
+  );
+
+export const useGetSessionExportData = ({
+  attendanceSessionId,
+  courseId,
+}: {
+  attendanceSessionId: Id<'attendanceSessions'>;
+  courseId: Id<'courses'>;
+}) =>
+  useSuspenseQuery(
+    convexQuery(api.attendance.getSessionExportData, {
+      attendanceSessionId,
+      courseId,
+    }),
+  );

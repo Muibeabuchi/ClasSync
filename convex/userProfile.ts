@@ -1,17 +1,11 @@
 import { ConvexError, v } from 'convex/values';
-import {
-  AuthenticatedUserMutation,
-  // AuthenticatedUserQuery,
-} from './middlewares/authenticatedMiddleware';
-import {
-  lecturerTitleSchema,
-  studentGenderSchema,
-  studentYearLevelSchema,
-  userRoleSchema,
-} from './schema';
+import { AuthenticatedUserMutation } from './middlewares/authenticatedMiddleware';
+import { studentGenderSchema, userRoleSchema } from './schema';
 import { query } from './_generated/server';
-import { getCurrentUser } from './models/userprofileModel';
-// import { createAuth } from './auth';
+import {
+  getCurrentUser,
+  //  getUserReturnType
+} from './models/userprofileModel';
 
 // ? ====================QUERIES====================
 
@@ -40,28 +34,35 @@ export const getUserOnboardedStatus = query({
     v.object({
       isOnboarded: v.union(v.boolean(), v.null()),
       role: v.optional(userRoleSchema),
+      fullName: v.string(),
+      userImage: v.string(),
+      registrationNumber: v.optional(v.string()),
     }),
     v.null(),
   ),
   handler: async (ctx) => {
     const user = await getCurrentUser({ ctx });
     if (!user) return null;
-    return { isOnboarded: user.isOnboarded, role: user.role };
+
+    let userImage: string = '';
+    if (user.isOnboarded) {
+      userImage =
+        user.role === 'student'
+          ? ((await ctx.storage.getUrl(user.student_passport_photo_id!)) ?? '')
+          : ((await ctx.storage.getUrl(user.lecturerPassportImage!)) ?? '');
+    }
+
+    return {
+      isOnboarded: user.isOnboarded,
+      role: user.role,
+      fullName: user.fullName,
+      registrationNumber: user.registrationNumber,
+      userImage,
+    };
   },
 });
 
 // ? ====================MUTATIONS====================
-
-export const updateUserOnboardedStatus = AuthenticatedUserMutation({
-  args: {
-    isOnboarded: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.patch(ctx.userId, {
-      isOnboarded: args.isOnboarded,
-    });
-  },
-});
 
 export const updateUserRole = AuthenticatedUserMutation({
   args: {
@@ -76,15 +77,55 @@ export const updateUserRole = AuthenticatedUserMutation({
   },
 });
 
+export const updateUserProfile = AuthenticatedUserMutation({
+  args: {
+    fullName: v.optional(v.string()),
+    registrationNumber: v.optional(v.string()),
+    // email: v.optional(v.string()),
+    // gender: v.optional(studentGenderSchema),
+  },
+  returns: {
+    success: v.boolean(),
+    message: v.string(),
+  },
+  async handler(ctx, args) {
+    try {
+      // Build update object with only provided fields
+      const updateData: any = {};
+      if (args.fullName !== undefined) {
+        updateData.fullName = args.fullName;
+      }
+      if (args.registrationNumber !== undefined) {
+        updateData.registrationNumber = args.registrationNumber;
+      }
+
+      await ctx.db.patch(ctx.userId, updateData);
+
+      return {
+        success: true,
+        message: 'Profile updated successfully',
+      };
+    } catch (error) {
+      console.error('Failed to update user profile:', error);
+      throw new ConvexError(
+        error instanceof ConvexError
+          ? error.message
+          : 'Failed to update profile',
+      );
+    }
+  },
+});
+
 export const completeUserOnboarding = AuthenticatedUserMutation({
   args: {
     fullName: v.string(),
-    title: v.optional(lecturerTitleSchema),
-    faculty: v.optional(v.string()),
-    department: v.optional(v.string()),
-    registrationNumber: v.optional(v.string()),
-    yearLevel: v.optional(studentYearLevelSchema),
+    // title: v.optional(lecturerTitleSchema),
+    // faculty: v.optional(v.string()),
+    // department: v.optional(v.string()),
+    // registrationNumber: v.optional(v.string()),
+    // yearLevel: v.optional(studentYearLevelSchema),
     gender: v.optional(studentGenderSchema),
+    // profileImageId: v.optional(v.id('_storage')),
   },
   returns: {
     success: v.boolean(),
@@ -108,11 +149,12 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
     if (userRole === 'student') {
       const onboardingData = {
         fullName: args.fullName,
-        registrationNumber: args.registrationNumber,
+        // registrationNumber: args.registrationNumber,
         gender: args.gender,
-        yearLevel: args.yearLevel,
-        faculty: args.faculty,
-        department: args.department,
+        // yearLevel: args.yearLevel,
+        // faculty: args.faculty,
+        // department: args.department,
+        // student_passport_photo_id: args.profileImageId,
       };
 
       await ctx.db.patch(ctx.userId, {
@@ -123,9 +165,10 @@ export const completeUserOnboarding = AuthenticatedUserMutation({
     if (userRole === 'lecturer') {
       const onboardingData = {
         fullName: args.fullName,
-        title: args.title,
-        faculty: args.faculty,
-        department: args.department,
+        // title: args.title,
+        // faculty: args.faculty,
+        // department: args.department,
+        // lecturerPassportImage: args.profileImageId,
       };
 
       // create a lecturerPlan
