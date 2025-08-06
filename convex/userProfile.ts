@@ -70,6 +70,7 @@ export const updateUserRole = AuthenticatedUserMutation({
   },
   returns: userRoleSchema,
   async handler(ctx, args) {
+    console.log({ ctx });
     await ctx.db.patch(ctx.userId, {
       role: args.role,
     });
