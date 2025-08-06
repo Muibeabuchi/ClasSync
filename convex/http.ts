@@ -3,11 +3,12 @@
 //   subscription_events,
 //   // transaction_events,
 // } from './../src/constants/paystack-events';
-import { createAuth } from './../src/lib/auth';
+// import { createAuth } from './../src/lib/auth';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { HonoWithConvex, HttpRouterWithHono } from 'convex-helpers/server/hono';
 import { ActionCtx } from './_generated/server';
+import { createAuth } from './auth';
 // import { createAuth } from './auth';
 // import { internal } from './_generated/api';
 
