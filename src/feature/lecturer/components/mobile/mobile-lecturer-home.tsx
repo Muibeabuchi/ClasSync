@@ -13,7 +13,8 @@ import {
   Activity,
   Plus,
   Bell,
-  Settings,
+  //   Settings,
+  LogOut,
   //   ChevronRight,
   //   Zap,
 } from 'lucide-react';
@@ -22,6 +23,7 @@ import {
   useLecturerDashboardStats,
   useLecturerRecentCourses,
 } from '@/feature/lecturer/api/dashboard';
+import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
 import type { Id } from 'convex/_generated/dataModel';
 
 interface MobileLecturerHomeProps {
@@ -36,6 +38,7 @@ export const MobileLecturerHome: React.FC<MobileLecturerHomeProps> = ({
   const { data: dashboardStats } = useLecturerDashboardStats();
   const { data: recentCourses } = useLecturerRecentCourses(3);
   const navigate = useNavigate();
+  const signOut = useSignOut();
 
   const handleCourseNavigation = (courseId: Id<'courses'>) => {
     navigate({
@@ -58,6 +61,10 @@ export const MobileLecturerHome: React.FC<MobileLecturerHomeProps> = ({
 
   const handleProfile = () => {
     navigate({ to: '/dashboard/lecturer/profile' });
+  };
+
+  const handleSignOut = () => {
+    signOut();
   };
 
   const truncatedCourseName = (courseName: string) => {
@@ -105,10 +112,10 @@ export const MobileLecturerHome: React.FC<MobileLecturerHomeProps> = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 rounded-full"
-            onClick={handleProfile}
+            className="h-10 w-10 rounded-full text-destructive hover:text-destructive hover:bg-destructive/10"
+            onClick={handleSignOut}
           >
-            <Settings className="h-5 w-5" />
+            <LogOut className="h-5 w-5" />
           </Button>
         </div>
       </div>
