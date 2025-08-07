@@ -213,6 +213,14 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
+  /* Status colors for mobile components */
+  --color-success: oklch(0.6171 0.1375 142.4956);
+  --color-success-foreground: oklch(1 0 0);
+  --color-warning: oklch(0.7621 0.1581 38.7559);
+  --color-warning-foreground: oklch(1 0 0);
+  --color-info: oklch(0.6171 0.1375 220.4956);
+  --color-info-foreground: oklch(1 0 0);
+
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);

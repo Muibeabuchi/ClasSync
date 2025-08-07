@@ -5,8 +5,10 @@ import {
 } from '@/components/ui/sidebar';
 import { LecturerDashboardSkeleton } from '@/feature/lecturer/components/lecturer-dashboard-content';
 import LecturerSidebar from '@/feature/lecturer/components/lecturer-sidebar';
+import MobileLecturerDashboard from '@/feature/lecturer/components/mobile-lecturer-dashboard';
 import { userOnBoardedQueries } from '@/feature/onboarding/api/api-hooks';
 import { useLecturerDashboardRedirect } from '@/feature/onboarding/hooks/use-lecturer-dashboard-redirect';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Outlet } from '@tanstack/react-router';
 import { createFileRoute } from '@tanstack/react-router';
 import { Authenticated } from 'convex/react';
@@ -25,12 +27,23 @@ export const Route = createFileRoute('/dashboard/lecturer')({
 function RouteComponent() {
   const { isLoading, data } = useLecturerDashboardRedirect();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   if (isLoading) {
     return <LecturerDashboardSkeleton />;
   }
 
   if (data) {
+    // Render mobile version for mobile devices
+    if (isMobile) {
+      return (
+        <Authenticated>
+          <MobileLecturerDashboard />
+        </Authenticated>
+      );
+    }
+
+    // Render desktop/tablet version for larger screens
     return (
       <Authenticated>
         <SidebarProvider open={sidebarOpen} onOpenChange={setSidebarOpen}>
@@ -40,9 +53,7 @@ function RouteComponent() {
               profileImage={data?.userImage}
             />
             <SidebarInset className="flex-1">
-              {/* <div className="flex items-center gap-2 px-4 py-2 border-b"> */}
               <SidebarTrigger />
-              {/* </div> */}
               <div className="p-6">
                 <Outlet />
               </div>

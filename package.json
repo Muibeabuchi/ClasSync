@@ -19,6 +19,7 @@
     "@convex-dev/migrations": "^0.2.9",
     "@convex-dev/rate-limiter": "^0.2.12",
     "@convex-dev/react-query": "0.0.0-alpha.8",
+    "@fingerprintjs/fingerprintjs": "^4.6.2",
     "@google/genai": "^1.11.0",
     "@hookform/resolvers": "^5.1.1",
     "@radix-ui/react-accordion": "^1.2.11",
