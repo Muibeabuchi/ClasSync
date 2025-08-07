@@ -23,7 +23,7 @@ export const createAuth = (ctx: GenericCtx) =>
     database: convexAdapter(ctx, betterAuthComponent),
     socialProviders: {
       google: {
-        // prompt: "select_account",
+        prompt: 'select_account',
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       },

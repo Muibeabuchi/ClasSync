@@ -12,13 +12,21 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookOpen, Clock, Bell, TrendingUp, CheckCircle } from 'lucide-react';
+import {
+  BookOpen,
+  Clock,
+  Bell,
+  TrendingUp,
+  CheckCircle,
+  LogOut,
+} from 'lucide-react';
 import { convexQuery } from '@convex-dev/react-query';
 import { api } from 'convex/_generated/api';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { Link } from '@tanstack/react-router';
 import { useGetStudentDashboardStats } from '@/feature/course/api/get-student-dashboard-stats';
+import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
 
 export const Route = createFileRoute('/dashboard/student/')({
   component: RouteComponent,
@@ -38,6 +46,11 @@ function RouteComponent() {
   const { data: userData } = useQuery(AuthQueryOptions.getCurrentUser);
   const { data: dashboardStats } = useGetStudentDashboardStats();
   const isMobile = useIsMobile();
+  const signOut = useSignOut();
+
+  const handleSignOut = () => {
+    signOut();
+  };
 
   // Text truncation utility
   const truncateText = (
@@ -97,7 +110,7 @@ function RouteComponent() {
     return (
       <Authenticated>
         <div className="space-y-6 p-4">
-          {/* Mobile Header with Avatar and Bell Icon */}
+          {/* Mobile Header with Avatar and Action Buttons */}
           <div className="flex items-center justify-between mb-4">
             <Avatar className="h-10 w-10">
               <AvatarImage src={userData?.userImage} />
@@ -108,23 +121,33 @@ function RouteComponent() {
                   .join('')}
               </AvatarFallback>
             </Avatar>
-            <Button
-              variant="ghost"
-              size="sm"
-              asChild
-              className="relative p-2 mobile-tap-feedback"
-            >
-              <Link to="/dashboard/student/notifications">
-                <Bell className="h-5 w-5" />
-                {/* Mock notification badge - replace with real count */}
-                <Badge
-                  variant="destructive"
-                  className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-semibold flex items-center justify-center"
-                >
-                  3
-                </Badge>
-              </Link>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                className="relative p-2 mobile-tap-feedback"
+              >
+                <Link to="/dashboard/student/notifications">
+                  <Bell className="h-5 w-5" />
+                  {/* Mock notification badge - replace with real count */}
+                  <Badge
+                    variant="destructive"
+                    className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 text-[10px] font-semibold flex items-center justify-center"
+                  >
+                    3
+                  </Badge>
+                </Link>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSignOut}
+                className="p-2 mobile-tap-feedback text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Welcome Header */}
