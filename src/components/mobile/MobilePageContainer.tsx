@@ -118,7 +118,7 @@ export const MobilePageContainer = forwardRef<
               'bg-background/95 backdrop-blur-sm',
               'border-b border-border',
               'shrink-0',
-              'sticky z-99 top-0 left-0 right-0 w-full',
+              'sticky z-99 -top-3   left-0 right-0 w-full',
               // Safe area for notched devices
               'safe-area-top',
             )}
