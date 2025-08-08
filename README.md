@@ -1,5 +1,5 @@
 ---
-# 🎓 ClassSync — Smart Attendance for Smart Classrooms
+# 🎓 ClassSynk — Smart Attendance for Smart Classrooms
 
 ClassSync is a modern, scalable web app designed to digitize attendance for Nigerian universities and beyond. It allows lecturers to easily take attendance using GPS verification and code input, while students check in from their own devices — all powered by intuitive UI and secure backend architecture.
 
