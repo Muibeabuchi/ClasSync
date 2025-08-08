@@ -40,6 +40,8 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
   useEffect(() => {
     if (currentUser?.registrationNumber) {
       setEditableRegNumber(currentUser.registrationNumber);
+    } else {
+      setEditableRegNumber(''); // Clear if no registration number
     }
   }, [currentUser]);
 
@@ -90,6 +92,8 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
       // Reset editable registration number to original value
       if (currentUser?.registrationNumber) {
         setEditableRegNumber(currentUser.registrationNumber);
+      } else {
+        setEditableRegNumber('');
       }
 
       // Call success callback to close modal

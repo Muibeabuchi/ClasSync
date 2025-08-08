@@ -123,25 +123,25 @@ const AttendanceSessionModal = ({
     onError: (error) => {
       setIsCreatingSession(false);
 
-      let errorMessage =
+      const errorMessage =
         'Location access is required to start an attendance session.';
 
-      switch (error.code) {
-        case error.PERMISSION_DENIED:
-          errorMessage =
-            'Location permission denied. Please enable location access in your browser settings.';
-          break;
-        case error.POSITION_UNAVAILABLE:
-          errorMessage =
-            'Location information is unavailable. Please check your GPS settings.';
-          break;
-        case error.TIMEOUT:
-          errorMessage = 'Location request timed out. Please try again.';
-          break;
-        default:
-          errorMessage =
-            'Unable to get your location. Please check your GPS settings and try again.';
-      }
+      // switch (error.code) {
+      //   case error.PERMISSION_DENIED:
+      //     errorMessage =
+      //       'Location permission denied. Please enable location access in your browser settings.';
+      //     break;
+      //   case error.POSITION_UNAVAILABLE:
+      //     errorMessage =
+      //       'Location information is unavailable. Please check your GPS settings.';
+      //     break;
+      //   case error.TIMEOUT:
+      //     errorMessage = 'Location request timed out. Please try again.';
+      //     break;
+      //   default:
+      //     errorMessage =
+      //       'Unable to get your location. Please check your GPS settings and try again.';
+      // }
 
       setGpsError(errorMessage);
       toast.error('Location Error', {
@@ -231,7 +231,7 @@ const AttendanceSessionModal = ({
               GPS Not Available
             </p>
             <p className="text-xs text-red-600">
-              Your device doesn't support location services
+              Your device doesn&apos;t support location services
             </p>
           </div>
         </div>

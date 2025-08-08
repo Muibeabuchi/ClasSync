@@ -354,13 +354,15 @@ const StudentRequestCard = ({
               {request.student.fullName}
             </h4>
             <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-              {request.student.registrationNumber && (
+              {(request.student.registrationNumber || request.uniqueCode) && (
                 <>
                   <span className="text-muted-foreground text-xs">
-                    Registration Number:
+                    {request.student.registrationNumber
+                      ? 'Registration Number:'
+                      : 'Unique Code:'}
                   </span>
-                  <span className="truncate">
-                    {request.student.registrationNumber}
+                  <span className="truncate font-mono">
+                    {request.student.registrationNumber || request.uniqueCode}
                   </span>
                 </>
               )}
@@ -412,7 +414,7 @@ const NoMatchesCard = () => (
           No Available Matches
         </h3>
         <p className="text-xs md:text-sm text-muted-foreground max-w-md mx-auto">
-          Couldn&apos;t find any unbound students in your class lists. You may
+          Could&apos;t find any unbound students in your class lists. You may
           need to upload a new class list or reject this request.
         </p>
       </div>
