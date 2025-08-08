@@ -32,6 +32,7 @@ import {
   getOverrideErrorMessage,
 } from './schemas/overrideValidation';
 import { query } from './_generated/server';
+import { AuthenticatedUserQuery } from './middlewares/authenticatedMiddleware';
 
 export const startAttendanceSession = courseMutation({
   args: {
@@ -267,18 +268,14 @@ export const getActiveSessionsForStudent = StudentQueryMiddleware({
  * Get a specific attendance session for a student
  * This allows students to get detailed information about a session they want to check into
  */
-export const getAttendanceSessionForStudent = query({
+export const getAttendanceSessionForStudent = StudentQueryMiddleware({
   args: {
     attendanceSessionId: v.id('attendanceSessions'),
   },
   handler: async (ctx, args) => {
     // Verify user authentication
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError('Authentication required');
-    }
 
-    const studentId = identity.subject as any;
+    const studentId = ctx.user._id;
 
     // Get the attendance session
     const session = await ctx.db.get(args.attendanceSessionId);
@@ -577,7 +574,7 @@ export const getAttendanceSessionRecords = LecturerCourseQuery({
  * Enhanced attendance session query with override metadata
  * Requirements: 1.1, 5.4, 6.3 - Override eligibility calculation and time window information
  */
-export const getAttendanceSessionWithOverrideInfo = query({
+export const getAttendanceSessionWithOverrideInfo = AuthenticatedUserQuery({
   args: {
     attendanceSessionId: v.id('attendanceSessions'),
     currentTime: v.optional(v.number()),
@@ -596,13 +593,10 @@ export const getAttendanceSessionWithOverrideInfo = query({
     }
 
     // Verify user has access to this session
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError('Authentication required');
-    }
+    const userId = ctx.user._id;
 
     // Check if user is the lecturer for this session
-    const isLecturer = session.lecturerId === identity.subject;
+    const isLecturer = session.lecturerId === userId;
 
     // Check if user is a student enrolled in the course
     let isEnrolledStudent = false;
@@ -610,9 +604,7 @@ export const getAttendanceSessionWithOverrideInfo = query({
       const enrollment = await ctx.db
         .query('courseAttendanceList')
         .withIndex('by_courseId_by_studentId', (q) =>
-          q
-            .eq('courseId', session.courseId)
-            .eq('studentId', identity.subject as any),
+          q.eq('courseId', session.courseId).eq('studentId', userId),
         )
         .first();
       isEnrolledStudent = !!enrollment;
