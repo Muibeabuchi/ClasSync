@@ -383,7 +383,7 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
                                     {request.student.registrationNumber ? (
                                       <Badge
                                         variant="outline"
-                                        className="text-xs px-2 py-0 self-start md:self-auto flex items-center gap-1"
+                                        className="text-xs px-2 py-0 self-start md:self-auto flex items-center gap-1 font-mono"
                                       >
                                         <User className="h-3 w-3" />
                                         {request.student.registrationNumber}
@@ -391,7 +391,7 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
                                     ) : request.uniqueCode ? (
                                       <Badge
                                         variant="outline"
-                                        className="text-xs px-2 py-0 self-start md:self-auto flex items-center gap-1"
+                                        className="text-xs px-2 py-0 self-start md:self-auto flex items-center gap-1 font-mono"
                                       >
                                         <Key className="h-3 w-3" />
                                         {request.uniqueCode}
