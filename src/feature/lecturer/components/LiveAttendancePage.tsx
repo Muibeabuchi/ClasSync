@@ -511,48 +511,50 @@ const LiveAttendancePage = ({
               </div>
 
               {/* Attendance Code */}
-              <div className="flex items-center justify-between lg:justify-end gap-2">
-                <span
-                  className={cn(
-                    'font-medium text-foreground',
-                    'text-sm sm:text-base',
-                  )}
-                >
-                  Attendance Code:
-                </span>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant="outline"
+              {sessionData.attendanceCode ? (
+                <div className="flex items-center justify-between lg:justify-end gap-2">
+                  <span
                     className={cn(
-                      'font-mono font-bold border-2',
-                      // Mobile: larger, more prominent
-                      'px-3 py-1 text-base',
-                      isTouchDevice && 'px-4 py-2 text-lg',
-                      // Status-based styling
-                      sessionState === 'active' &&
-                        'border-green-500 bg-green-50 text-green-700',
-                      sessionState === 'pending' &&
-                        'border-yellow-500 bg-yellow-50 text-yellow-700',
+                      'font-medium text-foreground',
+                      'text-sm sm:text-base',
                     )}
                   >
-                    {sessionData.attendanceCode}
-                  </Badge>
-                  <Button
-                    variant="ghost"
-                    size={isMobile ? 'default' : 'sm'}
-                    onClick={copyAttendanceCode}
-                    className={cn(
-                      'transition-all duration-200',
-                      // Touch-friendly sizing
-                      isTouchDevice && 'min-h-[44px] min-w-[44px]',
-                      'active:scale-95 hover:bg-muted',
-                    )}
-                    aria-label="Copy attendance code"
-                  >
-                    <Copy className={cn('h-4 w-4', isMobile && 'h-5 w-5')} />
-                  </Button>
+                    Attendance Code:
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        'font-mono font-bold border-2',
+                        // Mobile: larger, more prominent
+                        'px-3 py-1 text-base',
+                        isTouchDevice && 'px-4 py-2 text-lg',
+                        // Status-based styling
+                        sessionState === 'active' &&
+                          'border-green-500 bg-green-50 text-green-700',
+                        sessionState === 'pending' &&
+                          'border-yellow-500 bg-yellow-50 text-yellow-700',
+                      )}
+                    >
+                      {sessionData.attendanceCode}
+                    </Badge>
+                    <Button
+                      variant="ghost"
+                      size={isMobile ? 'default' : 'sm'}
+                      onClick={copyAttendanceCode}
+                      className={cn(
+                        'transition-all duration-200',
+                        // Touch-friendly sizing
+                        isTouchDevice && 'min-h-[44px] min-w-[44px]',
+                        'active:scale-95 hover:bg-muted',
+                      )}
+                      aria-label="Copy attendance code"
+                    >
+                      <Copy className={cn('h-4 w-4', isMobile && 'h-5 w-5')} />
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           </div>
 
