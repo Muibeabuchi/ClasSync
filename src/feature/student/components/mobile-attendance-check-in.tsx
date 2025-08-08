@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  MapPin,
+  // MapPin,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -13,41 +13,27 @@ import {
   Navigation,
   BookOpen,
   Users,
-  // Timer,
   Target,
   MapPinOff,
   Radar,
+  // Settings,
+  RefreshCw,
 } from 'lucide-react';
 import { SessionTimer } from '@/components/attendance/SessionTimer';
 import { toast } from 'sonner';
 import { useGetStudentCoursesWithActiveAttendance } from '@/feature/course/api/get-student-courses-with-active-attendance';
-import { useOptimizedGPS } from '@/hooks/useOptimizedGPS';
+import { useGeolocated } from 'react-geolocated';
 import { useStudentTakeAttendance } from '@/feature/attendance/api';
 import { cn } from '@/lib/utils';
 import type { Id } from 'convex/_generated/dataModel';
 import MobilePageContainer from '@/components/mobile/MobilePageContainer';
 import type { GetCoursesWithActiveAttendanceReturnType } from 'convex/schema';
 
-// Utility function to calculate distance between two coordinates using Haversine formula
-const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number => {
-  const R = 6371e3; // Earth's radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // Distance in meters
-};
+import {
+  calculateDistance,
+  formatDistance,
+  createGPSStatus,
+} from '@/utils/gps';
 
 interface CompactGPSStatusProps {
   isAvailable: boolean;
@@ -140,13 +126,6 @@ const DistanceIndicator: React.FC<DistanceIndicatorProps> = ({
     );
   }
 
-  const formatDistance = (meters: number) => {
-    if (meters < 1000) {
-      return `${Math.round(meters)}m`;
-    }
-    return `${(meters / 1000).toFixed(1)}km`;
-  };
-
   const getStatusInfo = () => {
     if (isWithinRange) {
       return {
@@ -236,6 +215,7 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
   const currentDistance = distance;
   const currentIsWithinRange = isWithinRange;
 
+  // Allow check-in even if distance hasn't been calculated yet
   const canCheckIn =
     course?.session.status === 'active' &&
     gpsReady &&
@@ -344,24 +324,13 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
         {/* Check-in Button */}
         <Button
           onClick={handleCheckIn}
-          disabled={
-            !canCheckIn ||
-            (course?.session.status === 'active' &&
-              gpsReady &&
-              currentDistance !== null &&
-              !currentIsWithinRange)
-          }
+          disabled={!canCheckIn}
           className={cn(
-            'w-full h-14 text-lg font-semibold',
-            'mobile-touch-feedback',
-            canCheckIn &&
-              (currentDistance === null || currentIsWithinRange) &&
-              'bg-green-600 hover:bg-green-700',
-            currentDistance !== null &&
-              !currentIsWithinRange &&
-              course?.session.status === 'active' &&
-              gpsReady &&
-              'bg-red-600 hover:bg-red-700',
+            'w-full h-14 text-lg font-semibold mobile-touch-feedback',
+            // Green for ready to check in
+            canCheckIn && 'bg-green-600 hover:bg-green-700 text-white',
+            // Default styling for disabled states
+            !canCheckIn && 'bg-muted text-muted-foreground',
           )}
         >
           {isLoading ? (
@@ -382,22 +351,22 @@ const CourseSessionCard: React.FC<CourseSessionCardProps> = ({
           ) : !gpsReady ? (
             <>
               <Navigation className="h-5 w-5 mr-2" />
-              Waiting for GPS
-            </>
-          ) : currentDistance === null ? (
-            <>
-              <Radar className="h-5 w-5 mr-2" />
-              Calculating Distance...
-            </>
-          ) : !currentIsWithinRange ? (
-            <>
-              <MapPin className="h-5 w-5 mr-2" />
-              Move Closer to Check In
+              Enable GPS to Check In
             </>
           ) : course?.session.attendanceCode && !showCodeInput ? (
             <>
               <CheckCircle className="h-5 w-5 mr-2" />
               Take Attendance
+            </>
+          ) : currentDistance === null ? (
+            <>
+              <CheckCircle className="h-5 w-5 mr-2" />
+              Check In Now
+            </>
+          ) : !currentIsWithinRange ? (
+            <>
+              <CheckCircle className="h-5 w-5 mr-2" />
+              Check In (Distance Warning)
             </>
           ) : (
             <>
@@ -480,19 +449,51 @@ const MobileAttendanceCheckIn: React.FC = () => {
 
   // Only enable GPS tracking when there are active sessions
   const hasActiveSessions = activeCourses.length > 0;
+  const [gpsError, setGpsError] = useState<string | null>(null);
 
   const {
     isGeolocationAvailable,
     isGeolocationEnabled,
     coords,
     positionError,
-    isTracking,
-    // getPosition,
-  } = useOptimizedGPS({
-    enableTracking: hasActiveSessions,
-    onLocationUpdate: calculateDistancesAndRange,
+    getPosition,
+  } = useGeolocated({
+    positionOptions: {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 30000,
+    },
+    userDecisionTimeout: 10000,
+    suppressLocationOnMount: !hasActiveSessions,
+    watchPosition: hasActiveSessions, // Watch position only when there are active sessions
+    onSuccess: (position) => {
+      setGpsError(null);
+      calculateDistancesAndRange(position.coords);
+    },
     onError: (error) => {
       console.error('GPS error:', error);
+
+      const errorMessage =
+        'Location access is required to check in to attendance.';
+
+      // switch (error.code) {
+      //   case error.PERMISSION_DENIED:
+      //     errorMessage =
+      //       'Location permission denied. Please enable location access in your browser settings.';
+      //     break;
+      //   case error.POSITION_UNAVAILABLE:
+      //     errorMessage =
+      //       'Location information is unavailable. Please check your GPS settings.';
+      //     break;
+      //   case error.TIMEOUT:
+      //     errorMessage = 'Location request timed out. Please try again.';
+      //     break;
+      //   default:
+      //     errorMessage =
+      //       'Unable to get your location. Please check your GPS settings and try again.';
+      // }
+
+      setGpsError(errorMessage);
       // Clear distances on error
       setDistances({});
       setIsWithinRange({});
@@ -506,8 +507,17 @@ const MobileAttendanceCheckIn: React.FC = () => {
     }
   }, [activeCourses, calculateDistancesAndRange, coords]);
 
-  const gpsReady =
-    isGeolocationAvailable && isGeolocationEnabled && !positionError;
+  // Enhanced GPS status check using shared utility
+  const gpsStatus = createGPSStatus(
+    isGeolocationAvailable,
+    isGeolocationEnabled,
+    positionError,
+    gpsError,
+    hasActiveSessions,
+    coords,
+  );
+
+  const gpsReady = gpsStatus.isReady;
 
   const handleCheckIn = async (
     sessionId: Id<'attendanceSessions'>,
@@ -520,12 +530,12 @@ const MobileAttendanceCheckIn: React.FC = () => {
       return;
     }
 
-    // Check if we're within range before proceeding (only if distance has been calculated)
+    // Show warning if distance has been calculated and student is too far, but still allow check-in
     if (distances[sessionId] !== undefined && !isWithinRange[sessionId]) {
-      toast.error('Too far from session', {
-        description: 'Move closer to the classroom to check in.',
+      toast.warning('Distance Warning', {
+        description:
+          'You appear to be far from the session location. The server will verify your location.',
       });
-      return;
     }
 
     setIsCheckingIn(true);
@@ -613,13 +623,44 @@ const MobileAttendanceCheckIn: React.FC = () => {
               <h2 className="mobile-text-lg font-semibold">Active Sessions</h2>
             </div>
             <CompactGPSStatus
-              isAvailable={isGeolocationAvailable}
-              isEnabled={isGeolocationEnabled}
-              error={positionError?.message}
+              isAvailable={gpsStatus.isAvailable}
+              isEnabled={gpsStatus.isEnabled}
+              error={gpsStatus.errorMessage}
               hasActiveSessions={hasActiveSessions}
-              isTracking={isTracking}
+              isTracking={gpsStatus.isTracking}
             />
           </div>
+
+          {/* GPS Error Display */}
+          {gpsStatus.hasError && hasActiveSessions && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="pt-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <h3 className="font-medium text-red-800 mobile-text-sm mb-1">
+                      Location Access Required
+                    </h3>
+                    <p className="text-red-700 mobile-text-xs mb-3">
+                      {gpsStatus.errorMessage}
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setGpsError(null);
+                        getPosition();
+                      }}
+                      className="border-red-300 text-red-700 hover:bg-red-100"
+                    >
+                      <RefreshCw className="h-3 w-3 mr-1" />
+                      Try Again
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {activeCourses.length === 0 ? (
             <Card>

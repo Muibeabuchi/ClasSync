@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,18 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Copy, RefreshCw, MapPin, Clock, Code, Loader2 } from 'lucide-react';
+import {
+  Copy,
+  RefreshCw,
+  MapPin,
+  Clock,
+  Code,
+  Loader2,
+  AlertTriangle,
+  Navigation,
+  MapPinOff,
+  CheckCircle,
+} from 'lucide-react';
 import { useCreateAttendanceSession } from '@/feature/attendance/api';
 import type { Id } from 'convex/_generated/dataModel';
 import { toast } from 'sonner';
@@ -42,72 +53,122 @@ const AttendanceSessionModal = ({
   courseName,
   children,
   disabled = false,
-  // onStartSession,
 }: AttendanceSessionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [requireCode, setRequireCode] = useState(false);
   const [attendanceCode, setAttendanceCode] = useState('');
   const [locationRadius, setLocationRadius] = useState(50);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [gpsError, setGpsError] = useState<string | null>(null);
 
   const navigate = useNavigate();
   const isDesktop = useMediaQuery('(min-width: 768px)');
 
   const { mutateAsync: createAttendanceSession } = useCreateAttendanceSession();
-  const { isGeolocationAvailable, isGeolocationEnabled, getPosition } =
-    useGeolocated({
-      positionOptions: {
-        enableHighAccuracy: true,
-      },
-      userDecisionTimeout: 5000,
-      suppressLocationOnMount: true,
-      onSuccess: async ({ coords }) => {
-        if (!isGeolocationAvailable && !isGeolocationEnabled) {
-          setIsCreatingSession(false);
-          return;
-        }
 
-        try {
-          const { sessionId, courseId: CourseId } =
-            await createAttendanceSession({
-              courseId,
-              requireCode: attendanceCode,
-              radiusMeters: locationRadius,
-              gpsCoordinates: {
-                lat: coords.latitude,
-                long: coords.longitude,
-              },
-            });
-          toast.success('Attendance Session Starting', {
-            description: '30-second preparation phase has begun.',
-          });
+  // Enhanced GPS handling with proper error states
+  const {
+    isGeolocationAvailable,
+    isGeolocationEnabled,
+    coords,
+    positionError,
+    getPosition,
+  } = useGeolocated({
+    positionOptions: {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 30000,
+    },
+    userDecisionTimeout: 10000,
+    suppressLocationOnMount: true,
+    watchPosition: false,
+    onSuccess: async (position) => {
+      setGpsError(null);
 
-          // Close modal and trigger navigation
-          setIsOpen(false);
-          navigate({
-            to: '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId',
-            params: {
-              lecturerCourseId: CourseId,
-              attendanceSessionId: sessionId,
+      try {
+        const { sessionId, courseId: CourseId } = await createAttendanceSession(
+          {
+            courseId,
+            requireCode: attendanceCode,
+            radiusMeters: locationRadius,
+            gpsCoordinates: {
+              lat: position.coords.latitude,
+              long: position.coords.longitude,
             },
-          });
-        } catch (error) {
-          toast.error('Failed to create session', {
-            description:
-              error instanceof Error ? error.message : 'Please try again.',
-          });
-        } finally {
-          setIsCreatingSession(false);
-        }
-      },
-      onError: () => {
-        setIsCreatingSession(false);
-        toast.error('Location access required', {
-          description:
-            'Please enable location access to start an attendance session.',
+          },
+        );
+
+        toast.success('Attendance Session Starting', {
+          description: '30-second preparation phase has begun.',
         });
-      },
-    });
+
+        // Close modal and navigate
+        setIsOpen(false);
+        navigate({
+          to: '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId',
+          params: {
+            lecturerCourseId: CourseId,
+            attendanceSessionId: sessionId,
+          },
+        });
+      } catch (error) {
+        toast.error('Failed to create session', {
+          description:
+            error instanceof Error ? error.message : 'Please try again.',
+        });
+      } finally {
+        setIsCreatingSession(false);
+      }
+    },
+    onError: (error) => {
+      setIsCreatingSession(false);
+
+      let errorMessage =
+        'Location access is required to start an attendance session.';
+
+      switch (error.code) {
+        case error.PERMISSION_DENIED:
+          errorMessage =
+            'Location permission denied. Please enable location access in your browser settings.';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          errorMessage =
+            'Location information is unavailable. Please check your GPS settings.';
+          break;
+        case error.TIMEOUT:
+          errorMessage = 'Location request timed out. Please try again.';
+          break;
+        default:
+          errorMessage =
+            'Unable to get your location. Please check your GPS settings and try again.';
+      }
+
+      setGpsError(errorMessage);
+      toast.error('Location Error', {
+        description: errorMessage,
+      });
+    },
+  });
+
+  // Check GPS status
+  const gpsStatus = {
+    isAvailable: isGeolocationAvailable,
+    isEnabled: isGeolocationEnabled,
+    hasError: !!positionError || !!gpsError,
+    errorMessage: gpsError || positionError?.message,
+    isReady:
+      isGeolocationAvailable &&
+      isGeolocationEnabled &&
+      !positionError &&
+      !gpsError,
+  };
+
+  // Reset GPS error when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setGpsError(null);
+    }
+  }, [isOpen]);
 
   const generateCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -126,20 +187,104 @@ const AttendanceSessionModal = ({
   };
 
   const handleStartSession = () => {
+    // Prevent starting session without GPS
+    if (!gpsStatus.isReady) {
+      toast.error('GPS Required', {
+        description:
+          'Please enable location services before starting a session.',
+      });
+      return;
+    }
+
     setIsCreatingSession(true);
+    setGpsError(null);
     getPosition();
   };
 
   const handleOpenChange = (open: boolean) => {
     if (disabled && open) {
-      return; // Prevent opening when disabled
+      return;
     }
     setIsOpen(open);
+
+    // Reset states when closing
+    if (!open) {
+      setIsCreatingSession(false);
+      setGpsError(null);
+    }
+  };
+
+  // Check if start button should be disabled
+  const isStartDisabled =
+    !gpsStatus.isReady ||
+    (requireCode && !attendanceCode.trim()) ||
+    isCreatingSession;
+
+  // GPS Status Component
+  const GPSStatusIndicator = () => {
+    if (!gpsStatus.isAvailable) {
+      return (
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <MapPinOff className="h-4 w-4 text-red-600" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-800">
+              GPS Not Available
+            </p>
+            <p className="text-xs text-red-600">
+              Your device doesn't support location services
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (!gpsStatus.isEnabled) {
+      return (
+        <div className="flex items-center gap-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <AlertTriangle className="h-4 w-4 text-yellow-600" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-yellow-800">
+              Location Access Required
+            </p>
+            <p className="text-xs text-yellow-600">
+              Please enable location services to start a session
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    if (gpsStatus.hasError) {
+      return (
+        <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-800">Location Error</p>
+            <p className="text-xs text-red-600">{gpsStatus.errorMessage}</p>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+        <CheckCircle className="h-4 w-4 text-green-600" />
+        <div className="flex-1">
+          <p className="text-sm font-medium text-green-800">GPS Ready</p>
+          <p className="text-xs text-green-600">
+            Location services are enabled and working
+          </p>
+        </div>
+      </div>
+    );
   };
 
   // Shared content component for both dialog and drawer
   const SessionContent = () => (
     <div className="space-y-4 sm:space-y-6">
+      {/* GPS Status */}
+      <GPSStatusIndicator />
+
       {/* Session Info */}
       <div className="bg-primary/10 p-3 sm:p-4 rounded-lg space-y-2">
         <div className="flex items-center gap-2 text-sm font-medium">
@@ -170,6 +315,7 @@ const AttendanceSessionModal = ({
               value={locationRadius}
               onChange={(e) => setLocationRadius(Number(e.target.value))}
               className="flex-1 h-8 sm:h-10"
+              disabled={!gpsStatus.isReady}
             />
             <Badge variant="outline" className="min-w-[60px] justify-center">
               {locationRadius}m
@@ -192,6 +338,7 @@ const AttendanceSessionModal = ({
             checked={requireCode}
             onCheckedChange={setRequireCode}
             className="data-[state=checked]:bg-primary"
+            disabled={!gpsStatus.isReady}
           />
         </div>
 
@@ -206,6 +353,7 @@ const AttendanceSessionModal = ({
                 placeholder="Enter code or generate"
                 maxLength={6}
                 className="font-mono text-center text-lg sm:text-base tracking-wider h-12 sm:h-10"
+                disabled={!gpsStatus.isReady}
               />
               <Button
                 type="button"
@@ -213,6 +361,7 @@ const AttendanceSessionModal = ({
                 size="icon"
                 onClick={generateCode}
                 className="h-12 w-12 sm:h-10 sm:w-10 shrink-0"
+                disabled={!gpsStatus.isReady}
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>
@@ -223,6 +372,7 @@ const AttendanceSessionModal = ({
                   size="icon"
                   onClick={copyCode}
                   className="h-12 w-12 sm:h-10 sm:w-10 shrink-0"
+                  disabled={!gpsStatus.isReady}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
@@ -247,9 +397,7 @@ const AttendanceSessionModal = ({
         <Button
           onClick={handleStartSession}
           className="flex-1 h-12 sm:h-10 order-1 sm:order-2"
-          disabled={
-            (requireCode && !attendanceCode.trim()) || isCreatingSession
-          }
+          disabled={isStartDisabled}
         >
           {isCreatingSession ? (
             <>
@@ -257,8 +405,17 @@ const AttendanceSessionModal = ({
               <span className="hidden sm:inline">Creating Session...</span>
               <span className="sm:hidden">Creating...</span>
             </>
+          ) : !gpsStatus.isReady ? (
+            <>
+              <Navigation className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Enable GPS to Start</span>
+              <span className="sm:hidden">Enable GPS</span>
+            </>
           ) : (
-            'Start Session'
+            <>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Start Session
+            </>
           )}
         </Button>
       </div>

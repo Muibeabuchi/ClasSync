@@ -32,7 +32,7 @@ import {
 import { SessionTimer } from '@/components/attendance/SessionTimer';
 import { toast } from 'sonner';
 import { useGetStudentCoursesWithActiveAttendance } from '@/feature/course/api/get-student-courses-with-active-attendance';
-import { useOptimizedGPS } from '@/hooks/useOptimizedGPS';
+import { useGeolocated } from 'react-geolocated';
 import { useStudentTakeAttendance } from '@/feature/attendance/api';
 import type { Id } from 'convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
@@ -41,26 +41,11 @@ import { cn } from '@/lib/utils';
 //   onBack: () => void;
 // }
 
-// Utility function to calculate distance between two coordinates using Haversine formula
-const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number,
-): number => {
-  const R = 6371e3; // Earth's radius in meters
-  const φ1 = (lat1 * Math.PI) / 180;
-  const φ2 = (lat2 * Math.PI) / 180;
-  const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-  const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
-  const a =
-    Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-    Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  return R * c; // Distance in meters
-};
+import {
+  calculateDistance,
+  // formatDistance,
+  createGPSStatus,
+} from '@/utils/gps';
 
 const AttendanceCheckIn = () => {
   const { data: activeCourses = [] } =
@@ -115,18 +100,51 @@ const AttendanceCheckIn = () => {
   // Only enable GPS tracking when there are active sessions
   const hasActiveSessions = activeCourses.length > 0;
 
+  const [gpsError, setGpsError] = useState<string | null>(null);
+
   const {
     isGeolocationAvailable,
     isGeolocationEnabled,
     coords,
     getPosition,
     positionError,
-    isTracking,
-  } = useOptimizedGPS({
-    enableTracking: hasActiveSessions,
-    onLocationUpdate: calculateDistancesAndRange,
+  } = useGeolocated({
+    positionOptions: {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 30000,
+    },
+    userDecisionTimeout: 10000,
+    suppressLocationOnMount: !hasActiveSessions,
+    watchPosition: hasActiveSessions, // Watch position only when there are active sessions
+    onSuccess: (position) => {
+      setGpsError(null);
+      calculateDistancesAndRange(position.coords);
+    },
     onError: (error) => {
       console.error('GPS error:', error);
+
+      const errorMessage =
+        'Location access is required to check in to attendance.';
+
+      // switch (error.code) {
+      //   case error.PERMISSION_DENIED:
+      //     errorMessage =
+      //       'Location permission denied. Please enable location access in your browser settings.';
+      //     break;
+      //   case error.POSITION_UNAVAILABLE:
+      //     errorMessage =
+      //       'Location information is unavailable. Please check your GPS settings.';
+      //     break;
+      //   case error.TIMEOUT:
+      //     errorMessage = 'Location request timed out. Please try again.';
+      //     break;
+      //   default:
+      //     errorMessage =
+      //       'Unable to get your location. Please check your GPS settings and try again.';
+      // }
+
+      setGpsError(errorMessage);
       // Clear distances on error
       setDistances({});
       setIsWithinRange({});
@@ -140,9 +158,17 @@ const AttendanceCheckIn = () => {
     }
   }, [activeCourses, calculateDistancesAndRange, coords]);
 
-  // More flexible GPS ready check
-  const gpsReady =
-    isGeolocationAvailable && isGeolocationEnabled && !positionError;
+  // Enhanced GPS status check using shared utility
+  const gpsStatus = createGPSStatus(
+    isGeolocationAvailable,
+    isGeolocationEnabled,
+    positionError,
+    gpsError,
+    hasActiveSessions,
+    coords,
+  );
+
+  const gpsReady = gpsStatus.isReady;
 
   const handleCheckInClick = (course: any) => {
     if (!course?.session) return;
@@ -163,17 +189,17 @@ const AttendanceCheckIn = () => {
   const handleCheckIn = async (code?: string) => {
     if (!selectedSession || !currentCourse) return;
 
-    // Check if we're within range before proceeding
+    // Show warning if distance has been calculated and student is too far, but still allow check-in
     if (
       currentCourse.session.status === 'active' &&
       gpsReady &&
       distances[selectedSession] !== undefined &&
       !isWithinRange[selectedSession]
     ) {
-      toast.error('Too far from session', {
-        description: 'Move closer to the classroom to check in.',
+      toast.warning('Distance Warning', {
+        description:
+          'You appear to be far from the session location. The server will verify your location.',
       });
-      return;
     }
 
     setIsCheckingIn(true);
@@ -320,7 +346,7 @@ const AttendanceCheckIn = () => {
                       ? 'Enable GPS'
                       : positionError
                         ? 'GPS error'
-                        : coords && isTracking
+                        : coords
                           ? 'GPS tracking'
                           : 'Getting GPS...'}
               </span>
@@ -524,24 +550,10 @@ const AttendanceCheckIn = () => {
                             'w-full',
                             canCheckIn &&
                               gpsReady &&
-                              (isWithinRange[course?.session._id] ||
-                                distances[course?.session._id] === undefined) &&
-                              'bg-green-600 hover:bg-green-700',
-                            !isWithinRange[course?.session._id] &&
-                              course?.session.status === 'active' &&
-                              gpsReady &&
-                              distances[course?.session._id] !== undefined &&
-                              'bg-red-600 hover:bg-red-700',
+                              'bg-green-600 hover:bg-green-700 text-white',
+                            !canCheckIn && 'bg-muted text-muted-foreground',
                           )}
-                          variant={canCheckIn ? 'default' : 'secondary'}
-                          disabled={
-                            !canCheckIn ||
-                            !isGeolocationAvailable ||
-                            (course?.session.status === 'active' &&
-                              gpsReady &&
-                              distances[course?.session._id] !== undefined &&
-                              !isWithinRange[course?.session._id])
-                          }
+                          disabled={!canCheckIn || !gpsStatus.isReady}
                           onClick={() => handleCheckInClick(course)}
                         >
                           {isCurrentlyChecking ? (
