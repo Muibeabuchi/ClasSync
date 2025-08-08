@@ -83,20 +83,12 @@ export const startAttendanceSession = courseMutation({
       lecturerId,
       attendanceCode: args.requireCode,
       location: args.gpsCoordinates,
-      status: 'pending',
+      status: 'active', // Start immediately as active (no prep period)
       endedAt,
       radius: args.radiusMeters,
     });
 
-    // Schedule the activation and end functions, storing their IDs for potential cancellation
-    const activateScheduledFunctionId = await ctx.scheduler.runAfter(
-      AttendanceSessionPrepDuration,
-      internal.attendance.activateAttendanceSession,
-      {
-        attendanceSessionId: sessionId,
-      },
-    );
-
+    // Only schedule the end function since session starts immediately
     const endScheduledFunctionId = await ctx.scheduler.runAt(
       endedAt,
       internal.attendance.endAttendanceSession,
@@ -105,9 +97,8 @@ export const startAttendanceSession = courseMutation({
       },
     );
 
-    // Update the session with the scheduled function IDs
+    // Update the session with the scheduled function ID
     await ctx.db.patch(sessionId, {
-      activateScheduledFunctionId,
       endScheduledFunctionId,
     });
 
@@ -115,7 +106,7 @@ export const startAttendanceSession = courseMutation({
       sessionId,
       courseId: course._id,
       attendanceCode: args.requireCode,
-      status: 'pending',
+      status: 'active',
     };
   },
 });
@@ -223,13 +214,9 @@ export const getActiveSessionsForStudent = StudentQueryMiddleware({
             ) {
               if (currentTime >= session.endedAt) {
                 computedState = 'complete';
-              } else if (
-                currentTime >=
-                session._creationTime + AttendanceSessionPrepDuration
-              ) {
-                computedState = 'active';
               } else {
-                computedState = 'pending';
+                // Since there's no prep period, sessions are immediately active
+                computedState = 'active';
               }
             }
 
@@ -323,13 +310,9 @@ export const getAttendanceSessionForStudent = StudentQueryMiddleware({
     ) {
       if (currentTime >= session.endedAt) {
         computedState = 'complete';
-      } else if (
-        currentTime >=
-        session._creationTime + AttendanceSessionPrepDuration
-      ) {
-        computedState = 'active';
       } else {
-        computedState = 'pending';
+        // Since there's no prep period, sessions are immediately active
+        computedState = 'active';
       }
     }
 
@@ -390,13 +373,9 @@ export const checkInToAttendance = StudentMutationMiddleware({
     ) {
       if (currentTime >= attendanceSession.endedAt) {
         computedState = 'complete';
-      } else if (
-        currentTime >=
-        attendanceSession._creationTime + AttendanceSessionPrepDuration
-      ) {
-        computedState = 'active';
       } else {
-        computedState = 'pending';
+        // Since there's no prep period, sessions are immediately active
+        computedState = 'active';
       }
     }
 
@@ -685,13 +664,9 @@ export const getAttendanceSessionWithOverrideInfo = AuthenticatedUserQuery({
     ) {
       if (currentTime >= session.endedAt) {
         computedState = 'complete';
-      } else if (
-        currentTime >=
-        session._creationTime + AttendanceSessionPrepDuration
-      ) {
-        computedState = 'active';
       } else {
-        computedState = 'pending';
+        // Since there's no prep period, sessions are immediately active
+        computedState = 'active';
       }
     }
 

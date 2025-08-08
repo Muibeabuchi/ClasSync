@@ -8,16 +8,8 @@ import { MobilePageContainer } from '@/components/mobile/MobilePageContainer';
 import { cn } from '@/lib/utils';
 import MobileCourseCard from './mobile-course-card';
 import JoinCourseSheet from './join-course-sheet';
-import { useNavigate } from '@tanstack/react-router';
 
 const MobileStudentCoursesPage = () => {
-  const navigate = useNavigate();
-
-  const handleAttendanceClick = () => {
-    navigate({
-      to: '/dashboard/student/attendance',
-    });
-  };
   const { data: enrolledCourses } = useGetStudentCourses();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -137,13 +129,7 @@ const MobileStudentCoursesPage = () => {
             <div className="space-y-3 pb-4">
               {filteredCourses.map((course) => {
                 if (!course) return null;
-                return (
-                  <MobileCourseCard
-                    key={course.id}
-                    course={course}
-                    onAttendanceClick={handleAttendanceClick}
-                  />
-                );
+                return <MobileCourseCard key={course.id} course={course} />;
               })}
             </div>
           ) : (

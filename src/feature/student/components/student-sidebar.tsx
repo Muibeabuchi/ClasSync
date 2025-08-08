@@ -17,7 +17,6 @@ import {
 import {
   Home,
   BookOpen,
-  Clock,
   Bell,
   LogOut,
   User,
@@ -48,13 +47,6 @@ const navigationItems = [
     label: 'My Courses',
     icon: BookOpen,
     to: '/dashboard/student/courses',
-  },
-  {
-    id: 'attendance',
-    label: 'Check In',
-    icon: Clock,
-    badge: null,
-    to: '/dashboard/student/attendance',
   },
   {
     id: 'join-requests',

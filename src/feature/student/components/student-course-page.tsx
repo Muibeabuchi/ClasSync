@@ -14,11 +14,7 @@ import { Input } from '@/components/ui/input';
 import CourseCard from './student-course-card';
 import JoinCourseSheet from './join-course-sheet';
 
-interface StudentCoursesPageProps {
-  onAttendanceClick?: () => void;
-}
-
-const StudentCoursesPage = ({ onAttendanceClick }: StudentCoursesPageProps) => {
+const StudentCoursesPage = () => {
   const { data: enrolledCourses } = useGetStudentCourses();
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -129,13 +125,7 @@ const StudentCoursesPage = ({ onAttendanceClick }: StudentCoursesPageProps) => {
         {enrolledCourses && enrolledCourses.length > 0
           ? filteredCourses.map((course) => {
               if (!course) return;
-              return (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  onAttendanceClick={onAttendanceClick}
-                />
-              );
+              return <CourseCard key={course.id} course={course} />;
             })
           : null}
       </div>

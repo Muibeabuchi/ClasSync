@@ -7,25 +7,17 @@ import {
 } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import type { GetStudentsCoursesReturnType } from 'convex/schema';
-import {
-  Badge,
-  // Eye,
-  // MoreVertical,
-  Clock,
-  Calendar,
-} from 'lucide-react';
+import { Badge, Clock, Calendar, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-// import { toast } from 'sonner';
+import { Link } from '@tanstack/react-router';
 
 type StudentCourseType = NonNullable<GetStudentsCoursesReturnType[number]>;
 
 interface CourseCardProps {
   course: StudentCourseType;
-  onAttendanceClick?: () => void;
 }
 
-const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
+const CourseCard = ({ course }: CourseCardProps) => {
   const attendancePercentage = Math.round(
     course.attendanceStats.attendanceRate,
   );
@@ -107,8 +99,12 @@ const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
   const nextClass = getNextClass();
 
   return (
-    <article className="group relative">
-      <Card className="h-full  transition-all duration-200 hover:scale-[1.02] hover:shadow-lg border-border/50 hover:border-primary">
+    <Link
+      to="/dashboard/student/courses/$courseId"
+      params={{ courseId: course.id }}
+      className="group relative block"
+    >
+      <Card className="h-full transition-all duration-200 hover:scale-[1.02] hover:shadow-lg border-border/50 hover:border-primary cursor-pointer">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex-1 min-w-0">
@@ -127,16 +123,16 @@ const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
                 <div className="flex items-center gap-1.5">
                   <div className="w-2 h-2 bg-success rounded-full animate-pulse" />
                   <span className="text-xs font-medium text-success">
-                    Session in progress
+                    Live Session
                   </span>
                 </div>
               )}
               <Badge
-                // variant="outline"
                 className={`text-xs capitalize ${getStatusColor(course.status)}`}
               >
                 {course.status}
               </Badge>
+              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
           </div>
         </CardHeader>
@@ -205,28 +201,18 @@ const CourseCard = ({ course, onAttendanceClick }: CourseCardProps) => {
             )}
           </div>
 
-          <div className="flex items-center justify-between pt-2 gap-2">
-            {course.hasActiveSession ? (
-              <Button
-                onClick={onAttendanceClick}
-                size="sm"
-                className="flex-1 bg-success cursor-pointer hover:bg-success/90 text-success-foreground transition-colors"
-              >
-                <Clock className="h-4 w-4 mr-1.5" />
-                Check In Now
-              </Button>
-            ) : null}
-            {/* <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground transition-colors p-2"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button> */}
-          </div>
+          {/* Active Session Indicator */}
+          {course.hasActiveSession && (
+            <div className="flex items-center gap-2 p-2 bg-success/10 rounded-lg border border-success/20">
+              <Clock className="h-4 w-4 text-success" />
+              <span className="text-sm font-medium text-success">
+                Tap to check in to live session
+              </span>
+            </div>
+          )}
         </CardContent>
       </Card>
-    </article>
+    </Link>
   );
 };
 

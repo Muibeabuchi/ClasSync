@@ -30,6 +30,7 @@ import { Route as DashboardLecturerProfileRouteImport } from './routes/dashboard
 import { Route as DashboardLecturerJoinRequestsRouteImport } from './routes/dashboard/lecturer/joinRequests'
 import { Route as DashboardLecturerCoursesRouteImport } from './routes/dashboard/lecturer/courses'
 import { Route as DashboardLecturerClassListsRouteImport } from './routes/dashboard/lecturer/classLists'
+import { Route as DashboardStudentCoursesCourseIdRouteImport } from './routes/dashboard/student/courses.$courseId'
 import { Route as DashboardLecturerCoursesCourseIdRouteImport } from './routes/dashboard/lecturer/_courses.$courseId'
 import { Route as DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRouteImport } from './routes/dashboard/lecturer/_courses.$lecturerCourseId.$attendanceSessionId'
 
@@ -145,6 +146,12 @@ const DashboardLecturerClassListsRoute =
     path: '/classLists',
     getParentRoute: () => DashboardLecturerRouteRoute,
   } as any)
+const DashboardStudentCoursesCourseIdRoute =
+  DashboardStudentCoursesCourseIdRouteImport.update({
+    id: '/$courseId',
+    path: '/$courseId',
+    getParentRoute: () => DashboardStudentCoursesRoute,
+  } as any)
 const DashboardLecturerCoursesCourseIdRoute =
   DashboardLecturerCoursesCourseIdRouteImport.update({
     id: '/_courses/$courseId',
@@ -174,7 +181,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
   '/dashboard/lecturer/profile': typeof DashboardLecturerProfileRoute
   '/dashboard/student/attendance': typeof DashboardStudentAttendanceRoute
-  '/dashboard/student/courses': typeof DashboardStudentCoursesRoute
+  '/dashboard/student/courses': typeof DashboardStudentCoursesRouteWithChildren
   '/dashboard/student/join-requests': typeof DashboardStudentJoinRequestsRoute
   '/dashboard/student/notifications': typeof DashboardStudentNotificationsRoute
   '/dashboard/student/profile': typeof DashboardStudentProfileRoute
@@ -182,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/lecturer/': typeof DashboardLecturerIndexRoute
   '/dashboard/student/': typeof DashboardStudentIndexRoute
   '/dashboard/lecturer/$courseId': typeof DashboardLecturerCoursesCourseIdRoute
+  '/dashboard/student/courses/$courseId': typeof DashboardStudentCoursesCourseIdRoute
   '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId': typeof DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 export interface FileRoutesByTo {
@@ -196,7 +204,7 @@ export interface FileRoutesByTo {
   '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
   '/dashboard/lecturer/profile': typeof DashboardLecturerProfileRoute
   '/dashboard/student/attendance': typeof DashboardStudentAttendanceRoute
-  '/dashboard/student/courses': typeof DashboardStudentCoursesRoute
+  '/dashboard/student/courses': typeof DashboardStudentCoursesRouteWithChildren
   '/dashboard/student/join-requests': typeof DashboardStudentJoinRequestsRoute
   '/dashboard/student/notifications': typeof DashboardStudentNotificationsRoute
   '/dashboard/student/profile': typeof DashboardStudentProfileRoute
@@ -204,6 +212,7 @@ export interface FileRoutesByTo {
   '/dashboard/lecturer': typeof DashboardLecturerIndexRoute
   '/dashboard/student': typeof DashboardStudentIndexRoute
   '/dashboard/lecturer/$courseId': typeof DashboardLecturerCoursesCourseIdRoute
+  '/dashboard/student/courses/$courseId': typeof DashboardStudentCoursesCourseIdRoute
   '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId': typeof DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 export interface FileRoutesById {
@@ -222,7 +231,7 @@ export interface FileRoutesById {
   '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
   '/dashboard/lecturer/profile': typeof DashboardLecturerProfileRoute
   '/dashboard/student/attendance': typeof DashboardStudentAttendanceRoute
-  '/dashboard/student/courses': typeof DashboardStudentCoursesRoute
+  '/dashboard/student/courses': typeof DashboardStudentCoursesRouteWithChildren
   '/dashboard/student/join-requests': typeof DashboardStudentJoinRequestsRoute
   '/dashboard/student/notifications': typeof DashboardStudentNotificationsRoute
   '/dashboard/student/profile': typeof DashboardStudentProfileRoute
@@ -230,6 +239,7 @@ export interface FileRoutesById {
   '/dashboard/lecturer/': typeof DashboardLecturerIndexRoute
   '/dashboard/student/': typeof DashboardStudentIndexRoute
   '/dashboard/lecturer/_courses/$courseId': typeof DashboardLecturerCoursesCourseIdRoute
+  '/dashboard/student/courses/$courseId': typeof DashboardStudentCoursesCourseIdRoute
   '/dashboard/lecturer/_courses/$lecturerCourseId/$attendanceSessionId': typeof DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute
 }
 export interface FileRouteTypes {
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/dashboard/lecturer/'
     | '/dashboard/student/'
     | '/dashboard/lecturer/$courseId'
+    | '/dashboard/student/courses/$courseId'
     | '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -278,6 +289,7 @@ export interface FileRouteTypes {
     | '/dashboard/lecturer'
     | '/dashboard/student'
     | '/dashboard/lecturer/$courseId'
+    | '/dashboard/student/courses/$courseId'
     | '/dashboard/lecturer/$lecturerCourseId/$attendanceSessionId'
   id:
     | '__root__'
@@ -303,6 +315,7 @@ export interface FileRouteTypes {
     | '/dashboard/lecturer/'
     | '/dashboard/student/'
     | '/dashboard/lecturer/_courses/$courseId'
+    | '/dashboard/student/courses/$courseId'
     | '/dashboard/lecturer/_courses/$lecturerCourseId/$attendanceSessionId'
   fileRoutesById: FileRoutesById
 }
@@ -465,6 +478,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardLecturerClassListsRouteImport
       parentRoute: typeof DashboardLecturerRouteRoute
     }
+    '/dashboard/student/courses/$courseId': {
+      id: '/dashboard/student/courses/$courseId'
+      path: '/$courseId'
+      fullPath: '/dashboard/student/courses/$courseId'
+      preLoaderRoute: typeof DashboardStudentCoursesCourseIdRouteImport
+      parentRoute: typeof DashboardStudentCoursesRoute
+    }
     '/dashboard/lecturer/_courses/$courseId': {
       id: '/dashboard/lecturer/_courses/$courseId'
       path: '/$courseId'
@@ -524,9 +544,23 @@ const DashboardLecturerRouteRouteWithChildren =
     DashboardLecturerRouteRouteChildren,
   )
 
+interface DashboardStudentCoursesRouteChildren {
+  DashboardStudentCoursesCourseIdRoute: typeof DashboardStudentCoursesCourseIdRoute
+}
+
+const DashboardStudentCoursesRouteChildren: DashboardStudentCoursesRouteChildren =
+  {
+    DashboardStudentCoursesCourseIdRoute: DashboardStudentCoursesCourseIdRoute,
+  }
+
+const DashboardStudentCoursesRouteWithChildren =
+  DashboardStudentCoursesRoute._addFileChildren(
+    DashboardStudentCoursesRouteChildren,
+  )
+
 interface DashboardStudentRouteRouteChildren {
   DashboardStudentAttendanceRoute: typeof DashboardStudentAttendanceRoute
-  DashboardStudentCoursesRoute: typeof DashboardStudentCoursesRoute
+  DashboardStudentCoursesRoute: typeof DashboardStudentCoursesRouteWithChildren
   DashboardStudentJoinRequestsRoute: typeof DashboardStudentJoinRequestsRoute
   DashboardStudentNotificationsRoute: typeof DashboardStudentNotificationsRoute
   DashboardStudentProfileRoute: typeof DashboardStudentProfileRoute
@@ -536,7 +570,7 @@ interface DashboardStudentRouteRouteChildren {
 
 const DashboardStudentRouteRouteChildren: DashboardStudentRouteRouteChildren = {
   DashboardStudentAttendanceRoute: DashboardStudentAttendanceRoute,
-  DashboardStudentCoursesRoute: DashboardStudentCoursesRoute,
+  DashboardStudentCoursesRoute: DashboardStudentCoursesRouteWithChildren,
   DashboardStudentJoinRequestsRoute: DashboardStudentJoinRequestsRoute,
   DashboardStudentNotificationsRoute: DashboardStudentNotificationsRoute,
   DashboardStudentProfileRoute: DashboardStudentProfileRoute,

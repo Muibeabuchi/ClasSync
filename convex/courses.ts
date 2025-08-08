@@ -966,6 +966,143 @@ export const getStudentCourses = StudentQueryMiddleware({
   },
 });
 
+export const getStudentCourseDetail = StudentQueryMiddleware({
+  args: {
+    courseId: v.id('courses'),
+  },
+  handler: async (ctx, args) => {
+    const studentId = ctx.user._id;
+
+    // Check if student is enrolled in this course
+    const enrollment = await ctx.db
+      .query('courseAttendanceList')
+      .withIndex('by_courseId_by_studentId', (q) =>
+        q.eq('courseId', args.courseId).eq('studentId', studentId),
+      )
+      .first();
+
+    if (!enrollment) {
+      throw new ConvexError('You are not enrolled in this course');
+    }
+
+    // Get course details
+    const course = await ctx.db.get(args.courseId);
+    if (!course) {
+      throw new ConvexError('Course not found');
+    }
+
+    // Get lecturer info
+    const lecturer = await ctx.db.get(course.lecturerId);
+    if (!lecturer) {
+      throw new ConvexError('Lecturer not found');
+    }
+
+    // Calculate student's attendance stats for this course
+    const totalSessions = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .filter((q) => q.neq(q.field('status'), 'pending'))
+      .collect();
+
+    const attendedSessions = await ctx.db
+      .query('attendanceRecords')
+      .withIndex('by_studentId_by_courseId', (q) =>
+        q.eq('studentId', studentId).eq('courseId', course._id),
+      )
+      .collect();
+
+    const attendanceRate =
+      totalSessions.length > 0
+        ? (attendedSessions.length / totalSessions.length) * 100
+        : 0;
+
+    // Get active session with full details
+    const activeSession = await ctx.db
+      .query('attendanceSessions')
+      .withIndex('by_courseId', (q) => q.eq('courseId', course._id))
+      .filter((q) =>
+        q.or(
+          q.eq(q.field('status'), 'active'),
+          q.eq(q.field('status'), 'pending'),
+        ),
+      )
+      .first();
+
+    // Check if student has already checked in to the active session
+    let hasCheckedIn = false;
+    if (activeSession) {
+      const existingRecord = await ctx.db
+        .query('attendanceRecords')
+        .withIndex('by_attendanceSessionId_by_StudentId', (q) =>
+          q
+            .eq('attendanceSessionId', activeSession._id)
+            .eq('studentId', studentId),
+        )
+        .first();
+      hasCheckedIn = !!existingRecord;
+    }
+
+    // Calculate computed state for active session
+    let computedSessionState: 'pending' | 'active' | 'complete' | null = null;
+    if (activeSession) {
+      const currentTime = Date.now();
+      if (
+        activeSession.status !== 'complete' &&
+        activeSession.status !== 'cancelled' &&
+        activeSession.endedAt
+      ) {
+        if (currentTime >= activeSession.endedAt) {
+          computedSessionState = 'complete';
+        } else {
+          // Since there's no prep period, sessions are immediately active
+          computedSessionState = 'active';
+        }
+      } else {
+        computedSessionState = activeSession.status as any;
+      }
+    }
+
+    return {
+      _id: course._id,
+      courseName: course.courseName,
+      courseCode: course.courseCode,
+      status: course.status,
+      schedule: course.schedule || [],
+      lecturer: {
+        _id: lecturer._id,
+        name: lecturer.fullName,
+        title: lecturer.title,
+        email: lecturer.email,
+      },
+      attendanceStats: {
+        totalSessions: totalSessions.length,
+        attendedSessions: attendedSessions.length,
+        attendancePercentage: Math.round(attendanceRate),
+        lastAttended:
+          attendedSessions.length > 0
+            ? Math.max(
+                ...attendedSessions.map((s) =>
+                  new Date(s.checkedInAt).getTime(),
+                ),
+              )
+            : null,
+      },
+      session: activeSession
+        ? {
+            _id: activeSession._id,
+            status: computedSessionState || activeSession.status,
+            _creationTime: activeSession._creationTime,
+            endedAt: activeSession.endedAt,
+            attendanceCode: activeSession.attendanceCode,
+            location: activeSession.location,
+            radius: activeSession.radius,
+            hasCheckedIn,
+          }
+        : null,
+    };
+  },
+});
+
 export const getStudentDashboardStats = StudentQueryMiddleware({
   args: {},
   handler: async (ctx) => {
