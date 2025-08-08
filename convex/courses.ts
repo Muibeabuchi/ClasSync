@@ -840,11 +840,13 @@ export const getCoursesWithActiveAttendance = StudentQueryMiddleware({
           return null;
         }
 
-        // filter out the courses with active sesion which you have already taken attendnace in
+        // filter out the courses with active session which the current student has already taken attendance in
         const hasTakenAttendance = await ctx.db
           .query('attendanceRecords')
-          .withIndex('by_attendanceSessionId', (q) =>
-            q.eq('attendanceSessionId', activeSession._id),
+          .withIndex('by_attendanceSessionId_by_StudentId', (q) =>
+            q
+              .eq('attendanceSessionId', activeSession._id)
+              .eq('studentId', studentId),
           )
           .first();
         if (hasTakenAttendance) return null;
