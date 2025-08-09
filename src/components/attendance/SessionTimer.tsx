@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Clock, Timer } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 interface SessionTimerProps {
   endTime: number;
   creationTime: number;
-  status: 'pending' | 'active' | 'complete';
+  status: 'active' | 'complete' | 'cancelled';
   className?: string;
   showProgress?: boolean;
   size?: 'sm' | 'md' | 'lg';
@@ -22,50 +22,75 @@ export const SessionTimer = ({
   size = 'md',
   variant = 'default',
 }: SessionTimerProps) => {
-  const [timeRemaining, setTimeRemaining] = useState(0);
+  // Calculate the effective creation time once and store it
+  const effectiveCreationTime = useMemo(() => {
+    const now = Date.now();
+
+    if (creationTime) {
+      const timeDifference = Math.abs(now - creationTime);
+      const oneHourMs = 60 * 60 * 1000; // 1 hour in milliseconds
+
+      // If the creation time is more than 1 hour different from now, it's likely invalid
+      if (timeDifference < oneHourMs) {
+        return creationTime;
+      } else {
+        console.warn(
+          'SessionTimer: Invalid creation time detected, using current time as fallback:',
+          {
+            creationTime,
+            creationDate: new Date(creationTime).toISOString(),
+            now,
+            nowDate: new Date(now).toISOString(),
+            timeDifferenceHours: timeDifference / (60 * 60 * 1000),
+          },
+        );
+      }
+    }
+
+    return now; // Default to current time
+  }, [creationTime]);
+
+  const [timeRemaining, setTimeRemaining] = useState(() => {
+    const now = Date.now();
+    const sessionDurationMs = 2 * 60 * 1000; // 2 minutes in milliseconds
+    const expectedEndTime = effectiveCreationTime + sessionDurationMs;
+    const remaining = Math.max(0, (expectedEndTime - now) / 1000);
+
+    return remaining;
+  });
 
   useEffect(() => {
-    const calculateTimeRemaining = () => {
-      const targetTime = endTime || creationTime + 60000; // 60 seconds default
-      const remaining = Math.max(0, targetTime - Date.now());
-      setTimeRemaining(remaining / 1000);
-    };
+    if (status !== 'complete' && status !== 'cancelled') {
+      const timer = setInterval(() => {
+        const now = Date.now();
+        const sessionDurationMs = 2 * 60 * 1000; // 2 minutes in milliseconds
 
-    calculateTimeRemaining();
+        // Use the memoized effectiveCreationTime instead of endTime
+        const expectedEndTime = effectiveCreationTime + sessionDurationMs;
+        const remaining = Math.max(0, (expectedEndTime - now) / 1000);
+        setTimeRemaining(remaining);
 
-    if (status !== 'complete') {
-      const timer = setInterval(calculateTimeRemaining, 1000);
+        // Clear timer when time reaches 0
+        if (remaining <= 0) {
+          clearInterval(timer);
+        }
+      }, 1000);
+
       return () => clearInterval(timer);
     }
-  }, [endTime, creationTime, status]);
+  }, [status, effectiveCreationTime]);
 
   const formatTime = (seconds: number) => {
     const totalSeconds = Math.floor(seconds);
     const minutes = Math.floor(totalSeconds / 60);
     const remainingSeconds = totalSeconds % 60;
 
-    if (variant === 'circular') {
-      // For circular variant, show just seconds for better readability
-      return `${totalSeconds}`;
-    }
-
-    if (minutes > 0) {
-      return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-    return `${remainingSeconds}s`;
+    // Always show MM:SS format for consistency
+    return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
   const getStatusInfo = () => {
     switch (status) {
-      case 'pending':
-        return {
-          label: 'Starts in',
-          color: 'text-yellow-600',
-          bgColor: 'bg-yellow-50',
-          borderColor: 'border-yellow-200',
-          strokeColor: '#d97706', // yellow-600
-          icon: Clock,
-        };
       case 'active':
         return {
           label: 'Time left',
@@ -82,6 +107,15 @@ export const SessionTimer = ({
           bgColor: 'bg-gray-50',
           borderColor: 'border-gray-200',
           strokeColor: '#6b7280', // gray-500
+          icon: Clock,
+        };
+      case 'cancelled':
+        return {
+          label: 'Cancelled',
+          color: 'text-red-600',
+          bgColor: 'bg-red-50',
+          borderColor: 'border-red-200',
+          strokeColor: '#dc2626', // red-600
           icon: Clock,
         };
       default:
@@ -158,9 +192,9 @@ export const SessionTimer = ({
 
   // Calculate progress percentage for sessions
   const getProgressValue = () => {
-    const totalDuration = 60; // 60 seconds total
-    const elapsed = totalDuration - timeRemaining;
-    return Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
+    const sessionDurationSeconds = 2 * 60; // 2 minutes in seconds
+    const elapsed = sessionDurationSeconds - timeRemaining;
+    return Math.max(0, Math.min(100, (elapsed / sessionDurationSeconds) * 100));
   };
 
   // Circular progress calculation
@@ -205,7 +239,7 @@ export const SessionTimer = ({
               className="text-gray-200"
             />
             {/* Progress circle */}
-            {status !== 'complete' && (
+            {status !== 'complete' && status !== 'cancelled' && (
               <circle
                 cx={center}
                 cy={center}
@@ -226,12 +260,14 @@ export const SessionTimer = ({
             <StatusIcon
               className={cn(sizeClasses.icon, statusInfo.color, 'mb-1')}
             />
-            {status !== 'complete' ? (
+            {status !== 'complete' && status !== 'cancelled' ? (
               <span className={cn(sizeClasses.time, statusInfo.color)}>
                 {formatTime(timeRemaining)}
               </span>
             ) : (
-              <span className={cn(sizeClasses.time, 'text-gray-500')}>0</span>
+              <span className={cn(sizeClasses.time, 'text-gray-500')}>
+                0:00
+              </span>
             )}
           </div>
         </div>
@@ -244,7 +280,11 @@ export const SessionTimer = ({
             'mt-1 text-center',
           )}
         >
-          {status === 'complete' ? 'Ended' : statusInfo.label}
+          {status === 'complete'
+            ? 'Ended'
+            : status === 'cancelled'
+              ? 'Cancelled'
+              : statusInfo.label}
         </span>
       </div>
     );
@@ -266,7 +306,7 @@ export const SessionTimer = ({
         <span className={cn(sizeClasses.label, statusInfo.color)}>
           {statusInfo.label}
         </span>
-        {status !== 'complete' ? (
+        {status !== 'complete' && status !== 'cancelled' ? (
           <span
             className={cn(sizeClasses.time, statusInfo.color, 'font-semibold')}
           >
@@ -274,7 +314,7 @@ export const SessionTimer = ({
           </span>
         ) : (
           <span className={cn(sizeClasses.label, 'text-muted-foreground')}>
-            Session ended
+            {status === 'cancelled' ? 'Session cancelled' : 'Session ended'}
           </span>
         )}
       </div>

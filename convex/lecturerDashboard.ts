@@ -212,9 +212,7 @@ export const getLecturerRecentCourses = lecturerQuery({
           students: studentCount.length,
           progress: attendanceProgress,
           lastActivity: latestSession?._creationTime || course._creationTime,
-          hasActiveSession:
-            latestSession?.status === 'active' ||
-            latestSession?.status === 'pending',
+          hasActiveSession: latestSession?.status === 'active',
         };
       }),
     );

@@ -6,7 +6,7 @@ import StudentCoursesPage from '@/feature/student/components/student-course-page
 import MobileStudentCoursesPage from '@/feature/student/components/mobile-student-courses-page';
 import { useIsMobile } from '@/hooks/use-mobile';
 
-export const Route = createFileRoute('/dashboard/student/courses')({
+export const Route = createFileRoute('/dashboard/student/courses/')({
   component: RouteComponent,
   async loader({ context }) {
     // Prefetch student courses data

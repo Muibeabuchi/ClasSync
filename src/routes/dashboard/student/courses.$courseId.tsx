@@ -8,12 +8,19 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import type { Id } from 'convex/_generated/dataModel';
 
 export const Route = createFileRoute('/dashboard/student/courses/$courseId')({
+  params: {
+    parse: (params) => {
+      return {
+        courseId: params.courseId as Id<'courses'>,
+      };
+    },
+  },
   component: RouteComponent,
   async loader({ context, params }) {
     // Prefetch course detail data
     await context.queryClient.ensureQueryData(
       convexQuery(api.courses.getStudentCourseDetail, {
-        courseId: params.courseId as Id<'courses'>,
+        courseId: params.courseId,
       }),
     );
   },

@@ -233,7 +233,6 @@ const applicationTables = {
     }),
     status: v.union(
       v.literal('active'),
-      v.literal('pending'),
       v.literal('complete'),
       v.literal('cancelled'),
     ),

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -30,7 +30,7 @@ import type {
 } from 'convex/schema';
 import { toast } from 'sonner';
 import { useNavigate } from '@tanstack/react-router';
-import { LecturerLocationStabilityMessage } from '@/components/attendance/LecturerLocationStabilityMessage';
+// import { LecturerLocationStabilityMessage } from '@/components/attendance/LecturerLocationStabilityMessage';
 import {
   AttendanceStatisticsCard,
   AttendanceStatisticsCardSkeleton,
@@ -127,11 +127,61 @@ const LiveAttendancePage = ({
     return `${minutes}m`;
   };
 
+  // Calculate the effective creation time once and store it
+  const effectiveCreationTime = useMemo(() => {
+    const now = Date.now();
+
+    if (attendanceSession?._creationTime) {
+      const creationTime = attendanceSession._creationTime;
+      const timeDifference = Math.abs(now - creationTime);
+      const oneHourMs = 60 * 60 * 1000; // 1 hour in milliseconds
+
+      // If the creation time is more than 1 hour different from now, it's likely invalid
+      if (timeDifference < oneHourMs) {
+        console.log(
+          'Using actual creation time:',
+          new Date(creationTime).toISOString(),
+        );
+        return creationTime;
+      } else {
+        console.warn(
+          'Invalid creation time detected, using current time as fallback:',
+          {
+            creationTime,
+            creationDate: new Date(creationTime).toISOString(),
+            now,
+            nowDate: new Date(now).toISOString(),
+            timeDifferenceHours: timeDifference / (60 * 60 * 1000),
+          },
+        );
+      }
+    }
+
+    return now; // Default to current time
+  }, [attendanceSession?._creationTime]);
+
   const [timeRemaining, setTimeRemaining] = useState(() => {
-    const endTime =
-      attendanceSession?.endedAt ?? attendanceSession._creationTime + 60000; // 60 seconds in milliseconds
-    return Math.max(0, (endTime - Date.now()) / 1000);
+    const now = Date.now();
+    const sessionDurationMs = 2 * 60 * 1000; // 2 minutes in milliseconds
+    const expectedEndTime = effectiveCreationTime + sessionDurationMs;
+    const remaining = Math.max(0, (expectedEndTime - now) / 1000);
+
+    console.log('Initial session timing:', {
+      effectiveCreationTime,
+      effectiveCreationDate: new Date(effectiveCreationTime).toISOString(),
+      now,
+      nowDate: new Date(now).toISOString(),
+      expectedEndTime,
+      expectedEndDate: new Date(expectedEndTime).toISOString(),
+      remainingSeconds: remaining,
+      remainingMinutes: remaining / 60,
+    });
+
+    return remaining;
   });
+
+  console.log({ endedAt: attendanceSession.endedAt });
+  console.log({ timeRemaining });
 
   useEffect(() => {
     if (
@@ -139,9 +189,12 @@ const LiveAttendancePage = ({
       attendanceSession.status !== 'cancelled'
     ) {
       const timer = setInterval(() => {
-        const endTime =
-          attendanceSession?.endedAt ?? attendanceSession._creationTime + 60000; // 60 seconds in milliseconds
-        const remaining = Math.max(0, (endTime - Date.now()) / 1000);
+        const now = Date.now();
+        const sessionDurationMs = 2 * 60 * 1000; // 2 minutes in milliseconds
+
+        // Use the memoized effectiveCreationTime instead of recalculating
+        const expectedEndTime = effectiveCreationTime + sessionDurationMs;
+        const remaining = Math.max(0, (expectedEndTime - now) / 1000);
         setTimeRemaining(remaining);
 
         // Clear timer when time reaches 0
@@ -152,11 +205,7 @@ const LiveAttendancePage = ({
 
       return () => clearInterval(timer);
     }
-  }, [
-    attendanceSession.endedAt,
-    attendanceSession._creationTime,
-    attendanceSession.status,
-  ]);
+  }, [attendanceSession.status, effectiveCreationTime]);
 
   const sessionData = {
     courseCode: attendanceSession.courseCode,
@@ -173,10 +222,8 @@ const LiveAttendancePage = ({
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
 
-    if (mins > 0) {
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${secs.toString().padStart(2, '0')}s`;
+    // Always show MM:SS format for consistency
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const navigate = useNavigate();
@@ -198,15 +245,11 @@ const LiveAttendancePage = ({
 
   // Format override time remaining
   const formatOverrideTimeRemaining = (timeRemaining: number) => {
-    const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
-    const minutes = Math.floor(
-      (timeRemaining % (1000 * 60 * 60)) / (1000 * 60),
-    );
+    const totalSeconds = Math.floor(timeRemaining / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
 
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -352,7 +395,7 @@ const LiveAttendancePage = ({
       </div>
 
       {/* Location Stability Message - Mobile optimized */}
-      <div
+      {/* <div
         className={cn(
           'mb-4',
           // Hide on mobile when space is limited
@@ -360,17 +403,17 @@ const LiveAttendancePage = ({
         )}
       >
         <LecturerLocationStabilityMessage
-          isVisible={sessionState === 'pending' || sessionState === 'active'}
+          isVisible={sessionState === 'active'}
           variant={isMobile ? 'compact' : 'default'}
         />
-      </div>
+      </div> */}
 
       {/* Mobile-First Session State Card */}
       <Card
         className={cn(
           'transition-all duration-500 mb-6',
           // Status-based border colors using theme variables
-          sessionState === 'pending' && 'border-warning bg-warning/5',
+          // sessionState === 'pending' && 'border-warning bg-warning/5',
           sessionState === 'active' && 'border-success bg-success/5',
           sessionState === 'complete' && 'border-muted bg-muted/20',
           sessionState === 'cancelled' && 'border-destructive bg-destructive/5',
@@ -400,7 +443,7 @@ const LiveAttendancePage = ({
                   // Mobile: larger icon container
                   isMobile && 'p-4',
                   // Status-based styling using theme variables
-                  sessionState === 'pending' && 'bg-warning/20',
+                  // sessionState === 'pending' && 'bg-warning/20',
                   sessionState === 'active' && 'bg-success/20',
                   sessionState === 'complete' && 'bg-muted',
                   sessionState === 'cancelled' && 'bg-destructive/20',
@@ -413,7 +456,7 @@ const LiveAttendancePage = ({
                     'h-5 w-5 sm:h-6 w-6',
                     isMobile && 'h-6 w-6',
                     // Status-based colors using theme variables
-                    sessionState === 'pending' && 'text-warning-foreground',
+                    // sessionState === 'pending' && 'text-warning-foreground',
                     sessionState === 'active' && 'text-success-foreground',
                     sessionState === 'complete' && 'text-muted-foreground',
                     sessionState === 'cancelled' &&
@@ -430,7 +473,7 @@ const LiveAttendancePage = ({
                     isMobile && 'text-lg',
                   )}
                 >
-                  {sessionState === 'pending' && 'Session Starts In'}
+                  {/* {sessionState === 'pending' && 'Session Starts In'} */}
                   {sessionState === 'active' && 'Time Remaining'}
                   {sessionState === 'complete' && 'Session Completed'}
                   {sessionState === 'cancelled' && 'Session Cancelled'}
@@ -539,8 +582,8 @@ const LiveAttendancePage = ({
                         // Status-based styling using theme variables
                         sessionState === 'active' &&
                           'border-success bg-success/10 text-success-foreground',
-                        sessionState === 'pending' &&
-                          'border-warning bg-warning/10 text-warning-foreground',
+                        // sessionState === 'pending' &&
+                        //   'border-warning bg-warning/10 text-warning-foreground',
                       )}
                     >
                       {sessionData.attendanceCode}
@@ -565,8 +608,8 @@ const LiveAttendancePage = ({
             </div>
           </div>
 
-          {/* Cancel Session Button - Only during prep period */}
-          {sessionState === 'pending' && cancelEligibility?.canCancel && (
+          {/* Cancel Session Button - Available during pending and active states */}
+          {sessionState === 'active' && (
             <div className="mt-4 pt-4 border-t">
               <div
                 className={cn(
@@ -582,19 +625,20 @@ const LiveAttendancePage = ({
                       isMobile && 'text-center sm:text-left',
                     )}
                   >
-                    You can cancel this session during the preparation period
+                    You can cancel this active session
                   </p>
-                  {cancelEligibility.timeRemaining > 0 && (
-                    <p
-                      className={cn(
-                        'text-xs text-warning-foreground font-medium mt-1',
-                        isMobile && 'text-center sm:text-left',
-                      )}
-                    >
-                      Time remaining to cancel:{' '}
-                      {formatTime(cancelEligibility.timeRemaining / 1000)}
-                    </p>
-                  )}
+                  {cancelEligibility?.timeRemaining &&
+                    cancelEligibility.timeRemaining > 0 && (
+                      <p
+                        className={cn(
+                          'text-xs text-warning-foreground font-medium mt-1',
+                          isMobile && 'text-center sm:text-left',
+                        )}
+                      >
+                        Time remaining to cancel:{' '}
+                        {formatTime(cancelEligibility.timeRemaining / 1000)}
+                      </p>
+                    )}
                 </div>
                 <div
                   className={cn(
@@ -607,9 +651,13 @@ const LiveAttendancePage = ({
                     courseId={attendanceSession.courseId}
                     courseName={attendanceSession.courseName}
                     courseCode={attendanceSession.courseCode}
-                    timeRemaining={cancelEligibility.timeRemaining / 1000}
-                    canCancel={cancelEligibility.canCancel}
-                    reason={cancelEligibility.reason}
+                    timeRemaining={
+                      (cancelEligibility?.timeRemaining || 0) / 1000
+                    }
+                    canCancel={cancelEligibility?.canCancel || true}
+                    reason={
+                      cancelEligibility?.reason || 'Session can be cancelled'
+                    }
                     variant="destructive"
                     size={isMobile ? 'default' : 'sm'}
                     className={cn(
@@ -626,18 +674,23 @@ const LiveAttendancePage = ({
           {sessionState !== 'complete' && sessionState !== 'cancelled' && (
             <div className="mt-6">
               <Progress
-                value={(timeRemaining / 60) * 100}
+                value={Math.max(
+                  0,
+                  Math.min(100, ((120 - timeRemaining) / 120) * 100),
+                )}
                 className={cn(
                   'transition-all duration-300',
                   // Mobile: thicker progress bar
                   'h-2 sm:h-3',
                   isMobile && 'h-3',
                 )}
-                aria-label={`Session progress: ${Math.round((timeRemaining / 60) * 100)}% remaining`}
+                aria-label={`Session progress: ${Math.round(((120 - timeRemaining) / 120) * 100)}% complete`}
               />
               <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                 <span>Session Progress</span>
-                <span>{Math.round((timeRemaining / 60) * 100)}% remaining</span>
+                <span>
+                  {Math.round(((120 - timeRemaining) / 120) * 100)}% complete
+                </span>
               </div>
             </div>
           )}
@@ -901,13 +954,11 @@ const LiveAttendancePage = ({
                 >
                   <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="text-muted-foreground">
-                    {sessionState === 'pending'
-                      ? 'Waiting for session to begin...'
-                      : sessionState === 'complete'
-                        ? 'Session has ended - No students marked attendance'
-                        : sessionState === 'cancelled'
-                          ? 'Session was cancelled - No attendance was taken'
-                          : 'Waiting for students to check in...'}
+                    {sessionState === 'complete'
+                      ? 'Session has ended - No students marked attendance'
+                      : sessionState === 'cancelled'
+                        ? 'Session was cancelled - No attendance was taken'
+                        : 'Waiting for students to check in...'}
                   </p>
                 </div>
               </div>

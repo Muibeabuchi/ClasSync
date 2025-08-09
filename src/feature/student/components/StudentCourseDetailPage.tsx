@@ -259,8 +259,8 @@ const StudentCourseDetailPage = () => {
           </div>
         </div>
 
-        {/* Active Session Card */}
-        {hasActiveSession && (
+        {/* Active Session Card - Only show if session is active and student hasn't checked in */}
+        {hasActiveSession && !courseData.session?.hasCheckedIn && (
           <Card className="border-primary/20 bg-primary/5">
             <CardHeader>
               <div className="flex items-center justify-between">
@@ -503,6 +503,90 @@ const StudentCourseDetailPage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Attendance History */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5" />
+              Attendance History
+            </CardTitle>
+            <CardDescription>
+              Your attendance record for all sessions in this course
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {courseData.attendanceHistory &&
+            courseData.attendanceHistory.length > 0 ? (
+              <div className="space-y-3">
+                {courseData.attendanceHistory.map((session, index) => (
+                  <div
+                    key={session._id}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm font-medium">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          Session {index + 1}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(session._creationTime).toLocaleDateString()}{' '}
+                          at{' '}
+                          {new Date(session._creationTime).toLocaleTimeString(
+                            [],
+                            {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            },
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {session.attended ? (
+                        <>
+                          <Badge className="bg-green-100 text-green-800 border-green-200">
+                            <CheckCircle className="h-3 w-3 mr-1" />
+                            Present
+                          </Badge>
+                          {session.isManualOverride && (
+                            <Badge
+                              variant="outline"
+                              className="text-amber-600 border-amber-200"
+                            >
+                              Manual
+                            </Badge>
+                          )}
+                        </>
+                      ) : (
+                        <Badge
+                          variant="secondary"
+                          className="bg-red-100 text-red-800 border-red-200"
+                        >
+                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          Absent
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">
+                  No Sessions Yet
+                </h3>
+                <p className="text-muted-foreground">
+                  No attendance sessions have been held for this course yet.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Course Information */}
         <Card>

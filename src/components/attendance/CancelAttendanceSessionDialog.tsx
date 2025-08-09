@@ -11,7 +11,7 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+// import { Badge } from '@/components/ui/badge';
 import { X, AlertTriangle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCancelAttendanceSession } from '@/feature/attendance/api';
@@ -83,7 +83,7 @@ export const CancelAttendanceSessionDialog = ({
 
       // Navigate back to course page
       navigate({
-        to: '/dashboard/lecturer/_courses/$courseId',
+        to: '/dashboard/lecturer/$courseId',
         params: { courseId },
       });
     } catch (error) {
@@ -172,8 +172,7 @@ export const CancelAttendanceSessionDialog = ({
                   </span>
                 </div>
                 <p className="text-sm text-red-700 mt-1">
-                  {reason ||
-                    'The preparation period has ended and the session is now active.'}
+                  {reason || 'The session cannot be cancelled at this time.'}
                 </p>
               </div>
             )}

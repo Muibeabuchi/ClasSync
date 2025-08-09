@@ -7,7 +7,6 @@ import {
 import * as AttendanceModel from './models/attendanceModel';
 import {
   AttendanceSessionDuration,
-  AttendanceSessionPrepDuration,
   DefaultAttendanceRadius,
 } from './constants/attendance';
 import { internal } from './_generated/api';
@@ -140,12 +139,8 @@ export const activateAttendanceSession = internalMutation({
       return;
     }
 
-    // Only update to active if the session is still pending (not cancelled)
-    if (session.status === 'pending') {
-      await ctx.db.patch(args.attendanceSessionId, {
-        status: 'active',
-      });
-    }
+    // Sessions are created as active, so no status update needed
+    // This function can be used for other session initialization if needed
   },
 });
 
@@ -179,12 +174,7 @@ export const getActiveSessionsForStudent = StudentQueryMiddleware({
           .withIndex('by_courseId', (q) =>
             q.eq('courseId', enrollment.courseId),
           )
-          .filter((q) =>
-            q.or(
-              q.eq(q.field('status'), 'active'),
-              q.eq(q.field('status'), 'pending'),
-            ),
-          )
+          .filter((q) => q.eq(q.field('status'), 'active'))
           .collect();
 
         // Get course information
@@ -204,7 +194,7 @@ export const getActiveSessionsForStudent = StudentQueryMiddleware({
 
             // Calculate computed state based on current time
             const currentTime = Date.now();
-            let computedState: 'pending' | 'active' | 'complete' =
+            let computedState: 'active' | 'complete' | 'cancelled' =
               session.status as any;
 
             if (
@@ -240,11 +230,7 @@ export const getActiveSessionsForStudent = StudentQueryMiddleware({
     // Flatten the array and filter out completed sessions
     const flatSessions = activeSessions
       .flat()
-      .filter(
-        (session) =>
-          session.computedState === 'active' ||
-          session.computedState === 'pending',
-      );
+      .filter((session) => session.computedState === 'active');
 
     // Sort by creation time (newest first)
     return flatSessions.sort((a, b) => b._creationTime - a._creationTime);
@@ -300,8 +286,7 @@ export const getAttendanceSessionForStudent = StudentQueryMiddleware({
 
     // Calculate computed state based on current time
     const currentTime = Date.now();
-    let computedState: 'pending' | 'active' | 'complete' | 'cancelled' =
-      session.status;
+    let computedState: 'active' | 'complete' | 'cancelled' = session.status;
 
     if (
       session.status !== 'complete' &&
@@ -325,15 +310,7 @@ export const getAttendanceSessionForStudent = StudentQueryMiddleware({
       timeRemaining: session.endedAt
         ? Math.max(0, session.endedAt - currentTime)
         : 0,
-      prepTimeRemaining:
-        computedState === 'pending'
-          ? Math.max(
-              0,
-              session._creationTime +
-                AttendanceSessionPrepDuration -
-                currentTime,
-            )
-          : 0,
+      prepTimeRemaining: 0, // No prep period anymore
       canCheckIn: computedState === 'active' && !existingRecord,
       checkInRecord: existingRecord,
     };
@@ -363,7 +340,7 @@ export const checkInToAttendance = StudentMutationMiddleware({
 
     // Check computed state based on current time (not just database status)
     const currentTime = Date.now();
-    let computedState: 'pending' | 'active' | 'complete' =
+    let computedState: 'active' | 'complete' | 'cancelled' =
       attendanceSession.status as any;
 
     if (
@@ -381,12 +358,10 @@ export const checkInToAttendance = StudentMutationMiddleware({
 
     // Ensure the attendanceSession is active (computed state)
     if (computedState !== 'active') {
-      if (computedState === 'pending') {
-        throw new ConvexError(
-          'Attendance Session is still in preparation phase. Please wait.',
-        );
-      } else if (computedState === 'complete') {
+      if (computedState === 'complete') {
         throw new ConvexError('Attendance Session has ended.');
+      } else if (computedState === 'cancelled') {
+        throw new ConvexError('Attendance Session has been cancelled.');
       } else {
         throw new ConvexError('Attendance Session is not Active');
       }
@@ -472,17 +447,27 @@ export const checkInToAttendance = StudentMutationMiddleware({
 // });
 
 export const getAttendanceSessionById = LecturerCourseQuery({
-  args: { attendanceSessionId: v.id('attendanceSessions') },
+  args: {
+    courseId: v.id('courses'),
+    attendanceSessionId: v.id('attendanceSessions'),
+  },
   async handler(ctx, args) {
     const lecturerId = ctx.user._id;
     const course = ctx.course;
     const attendanceSession = await ctx.db.get(args.attendanceSessionId);
     if (!attendanceSession)
       throw new ConvexError('Attendance Session does not exist');
+
     // check if the attendanceSession belongs to the lecturer
     if (attendanceSession.lecturerId !== lecturerId)
       throw new ConvexError(
         'Attendance Session does not belong to the lecturer ',
+      );
+
+    // Verify the session belongs to the specified course
+    if (attendanceSession.courseId !== args.courseId)
+      throw new ConvexError(
+        'Attendance Session does not belong to the specified course',
       );
 
     return {
@@ -494,7 +479,7 @@ export const getAttendanceSessionById = LecturerCourseQuery({
 });
 
 export const getCourseAttendanceSessions = LecturerCourseQuery({
-  args: {},
+  args: { courseId: v.id('courses') },
   async handler(ctx, args) {
     const lecturerId = ctx.user._id;
 
@@ -529,8 +514,23 @@ export const getCourseAttendanceSessions = LecturerCourseQuery({
 });
 
 export const getAttendanceSessionRecords = LecturerCourseQuery({
-  args: { attendanceSessionId: v.id('attendanceSessions') },
+  args: {
+    courseId: v.id('courses'),
+    attendanceSessionId: v.id('attendanceSessions'),
+  },
   handler: async (ctx, args) => {
+    // Verify the session belongs to the specified course
+    const attendanceSession = await ctx.db.get(args.attendanceSessionId);
+    if (!attendanceSession) {
+      throw new ConvexError('Attendance Session does not exist');
+    }
+
+    if (attendanceSession.courseId !== args.courseId) {
+      throw new ConvexError(
+        'Attendance Session does not belong to the specified course',
+      );
+    }
+
     const records = await ctx.db
       .query('attendanceRecords')
       .withIndex('by_attendanceSessionId', (q) =>
@@ -655,8 +655,7 @@ export const getAttendanceSessionWithOverrideInfo = AuthenticatedUserQuery({
     ).length;
 
     // Calculate session state based on current time
-    let computedState: 'pending' | 'active' | 'complete' | 'cancelled' =
-      session.status;
+    let computedState: 'active' | 'complete' | 'cancelled' = session.status;
     if (
       session.status !== 'complete' &&
       session.status !== 'cancelled' &&
@@ -1853,8 +1852,8 @@ export const getOverrideLogBySessionAndStudent = query({
 });
 
 /**
- * Cancel attendance session during prep period
- * Requirements: Allow lecturers to cancel sessions only during the prep period (first half of session duration)
+ * Cancel attendance session during active period
+ * Requirements: Allow lecturers to cancel sessions during active period (since there's no prep period)
  */
 export const cancelAttendanceSession = courseMutation({
   args: {
@@ -1889,42 +1888,16 @@ export const cancelAttendanceSession = courseMutation({
       throw new ConvexError('Attendance session is already cancelled');
     }
 
-    // Calculate prep period end time
-    const prepPeriodEndTime =
-      session._creationTime + AttendanceSessionPrepDuration;
+    // Since there's no prep period, allow cancellation during active state
+    // Only prevent cancellation if session has already ended naturally
     const currentTime = Date.now();
-
-    // Check if we're still in the prep period
-    if (currentTime >= prepPeriodEndTime) {
+    if (session.endedAt && currentTime >= session.endedAt) {
       throw new ConvexError(
-        'Cannot cancel attendance session. The preparation period has ended and the session is now active.',
+        'Cannot cancel attendance session. The session has already ended.',
       );
     }
 
-    // Check if any students have already checked in (shouldn't happen during prep period, but safety check)
-    const existingRecords = await ctx.db
-      .query('attendanceRecords')
-      .withIndex('by_attendanceSessionId', (q) =>
-        q.eq('attendanceSessionId', args.attendanceSessionId),
-      )
-      .collect();
-
-    if (existingRecords.length > 0) {
-      throw new ConvexError(
-        'Cannot cancel attendance session. Students have already checked in.',
-      );
-    }
-
-    // Cancel the scheduled functions to prevent them from running
-    if (session.activateScheduledFunctionId) {
-      try {
-        await ctx.scheduler.cancel(session.activateScheduledFunctionId);
-      } catch (error) {
-        // Function might have already run or been cancelled, continue with cancellation
-        console.log('Could not cancel activate function:', error);
-      }
-    }
-
+    // Cancel the scheduled end function to prevent it from running
     if (session.endScheduledFunctionId) {
       try {
         await ctx.scheduler.cancel(session.endScheduledFunctionId);
@@ -1958,10 +1931,11 @@ export const cancelAttendanceSession = courseMutation({
  */
 export const canCancelAttendanceSession = LecturerCourseQuery({
   args: {
+    courseId: v.id('courses'),
     attendanceSessionId: v.id('attendanceSessions'),
   },
   handler: async (ctx, args) => {
-    const lecturerId = ctx.user._id;
+    // const lecturerId = ctx.user._id;
 
     // Get the attendance session
     const session = await ctx.db.get(args.attendanceSessionId);
@@ -1969,15 +1943,6 @@ export const canCancelAttendanceSession = LecturerCourseQuery({
       return {
         canCancel: false,
         reason: 'Session not found',
-        timeRemaining: 0,
-      };
-    }
-
-    // Verify ownership
-    if (session.lecturerId !== lecturerId) {
-      return {
-        canCancel: false,
-        reason: 'Not authorized',
         timeRemaining: 0,
       };
     }
@@ -1999,42 +1964,26 @@ export const canCancelAttendanceSession = LecturerCourseQuery({
       };
     }
 
-    // Calculate prep period end time
-    const prepPeriodEndTime =
-      session._creationTime + AttendanceSessionPrepDuration;
+    // Since there's no prep period, check if session has ended naturally
     const currentTime = Date.now();
-    const timeRemaining = Math.max(0, prepPeriodEndTime - currentTime);
+    const timeRemaining = session.endedAt
+      ? Math.max(0, session.endedAt - currentTime)
+      : 0;
 
-    // Check if we're still in the prep period
-    if (currentTime >= prepPeriodEndTime) {
+    // Check if session has already ended
+    if (session.endedAt && currentTime >= session.endedAt) {
       return {
         canCancel: false,
-        reason: 'Preparation period has ended',
+        reason: 'Session has already ended',
         timeRemaining: 0,
       };
     }
 
-    // Check if any students have checked in
-    const existingRecords = await ctx.db
-      .query('attendanceRecords')
-      .withIndex('by_attendanceSessionId', (q) =>
-        q.eq('attendanceSessionId', args.attendanceSessionId),
-      )
-      .collect();
-
-    if (existingRecords.length > 0) {
-      return {
-        canCancel: false,
-        reason: 'Students have already checked in',
-        timeRemaining: 0,
-      };
-    }
-
+    // Allow cancellation during active period
     return {
       canCancel: true,
-      reason: 'Can cancel during preparation period',
+      reason: 'Can cancel during active session',
       timeRemaining,
-      prepPeriodEndTime,
       sessionStatus: session.status,
     };
   },

@@ -261,8 +261,8 @@ const MobileStudentCourseDetailPage = () => {
         className="bg-background"
       >
         <div className="flex flex-col h-full space-y-4 px-4 pb-4">
-          {/* Active Session Card */}
-          {hasActiveSession && (
+          {/* Active Session Card - Only show if session is active and student hasn't checked in */}
+          {hasActiveSession && !courseData.session?.hasCheckedIn && (
             <Card className="border-primary/20 bg-primary/5 mobile-tap-feedback">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
@@ -520,6 +520,92 @@ const MobileStudentCourseDetailPage = () => {
             </Card>
           </div>
 
+          {/* Attendance History */}
+          <Card className="mobile-tap-feedback">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 mobile-text-lg">
+                <Clock className="h-4 w-4" />
+                Attendance History
+              </CardTitle>
+              <CardDescription className="mobile-text-sm">
+                Your attendance record for all sessions in this course
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {courseData.attendanceHistory &&
+              courseData.attendanceHistory.length > 0 ? (
+                <div className="space-y-3">
+                  {courseData.attendanceHistory.map((session, index) => (
+                    <div
+                      key={session._id}
+                      className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted mobile-text-sm font-medium">
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="mobile-text-sm font-medium">
+                            Session {index + 1}
+                          </p>
+                          <p className="mobile-text-xs text-muted-foreground">
+                            {new Date(
+                              session._creationTime,
+                            ).toLocaleDateString()}{' '}
+                            at{' '}
+                            {new Date(session._creationTime).toLocaleTimeString(
+                              [],
+                              {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              },
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1">
+                        {session.attended ? (
+                          <>
+                            <Badge className="bg-green-100 text-green-800 border-green-200 mobile-text-xs">
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Present
+                            </Badge>
+                            {session.isManualOverride && (
+                              <Badge
+                                variant="outline"
+                                className="text-amber-600 border-amber-200 mobile-text-xs"
+                              >
+                                Manual
+                              </Badge>
+                            )}
+                          </>
+                        ) : (
+                          <Badge
+                            variant="secondary"
+                            className="bg-red-100 text-red-800 border-red-200 mobile-text-xs"
+                          >
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Absent
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Calendar className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <h3 className="mobile-text-lg font-medium text-foreground mb-2">
+                    No Sessions Yet
+                  </h3>
+                  <p className="mobile-text-sm text-muted-foreground">
+                    No attendance sessions have been held for this course yet.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Course Information */}
           <Card className="mobile-tap-feedback">
             <CardHeader className="pb-3">
@@ -572,8 +658,8 @@ const MobileStudentCourseDetailPage = () => {
                 </h3>
                 <p className="mobile-text-sm text-muted-foreground">
                   There is no attendance session currently active for this
-                  course. Your lecturer will start a session when it's time to
-                  take attendance.
+                  course. Your lecturer will start a session when it&apos;s time
+                  to take attendance.
                 </p>
               </CardContent>
             </Card>
