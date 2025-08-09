@@ -504,6 +504,43 @@ const StudentCourseDetailPage = () => {
           </Card>
         </div>
 
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BookOpen className="h-5 w-5" />
+              Course Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label className="text-sm font-medium">Course Name</Label>
+                <p className="text-sm text-muted-foreground">
+                  {courseData.courseName}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Course Code</Label>
+                <p className="text-sm text-muted-foreground">
+                  {courseData.courseCode}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Lecturer</Label>
+                <p className="text-sm text-muted-foreground">
+                  {courseData.lecturer.name}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Email</Label>
+                <p className="text-sm text-muted-foreground">
+                  {courseData.lecturer.email}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Attendance History */}
         <Card>
           <CardHeader>
@@ -589,42 +626,6 @@ const StudentCourseDetailPage = () => {
         </Card>
 
         {/* Course Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BookOpen className="h-5 w-5" />
-              Course Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label className="text-sm font-medium">Course Name</Label>
-                <p className="text-sm text-muted-foreground">
-                  {courseData.courseName}
-                </p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Course Code</Label>
-                <p className="text-sm text-muted-foreground">
-                  {courseData.courseCode}
-                </p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Lecturer</Label>
-                <p className="text-sm text-muted-foreground">
-                  {courseData.lecturer.name}
-                </p>
-              </div>
-              <div>
-                <Label className="text-sm font-medium">Email</Label>
-                <p className="text-sm text-muted-foreground">
-                  {courseData.lecturer.email}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* No Active Session Message */}
         {!hasActiveSession && (

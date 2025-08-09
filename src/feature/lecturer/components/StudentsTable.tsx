@@ -60,6 +60,8 @@ interface Student {
   regNumber: string;
   department: string;
   attendanceRate: number;
+  sessionsAttended: number;
+  totalSessions: number;
   courseAttendanceListId: string;
 }
 
@@ -187,6 +189,30 @@ export const StudentsTable = ({ students }: StudentsTableProps) => {
             >
               {rate}%
             </Badge>
+          );
+        },
+      },
+      {
+        accessorKey: 'sessionsAttended',
+        header: ({ column }) => (
+          <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+            className="h-auto p-0 font-semibold"
+          >
+            Sessions
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        ),
+        cell: ({ row }) => {
+          const student = row.original;
+          return (
+            <div className="text-center">
+              <span className="font-medium">{student.sessionsAttended}</span>
+              <span className="text-muted-foreground">
+                /{student.totalSessions}
+              </span>
+            </div>
           );
         },
       },

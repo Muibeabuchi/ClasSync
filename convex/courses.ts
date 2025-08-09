@@ -1316,6 +1316,8 @@ export const getCourseDetails = LecturerCourseQuery({
           department: studentProfile.department || 'Not specified',
           imageUrl,
           attendanceRate,
+          sessionsAttended: attendedSessions.length,
+          totalSessions: totalSessions.length,
           courseAttendanceListId: attendance._id,
         };
       }),
