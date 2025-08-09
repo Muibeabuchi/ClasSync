@@ -107,7 +107,7 @@ const CourseDetailPage = ({
 
   // Check if there's an active attendance session
   const hasActiveSession = attendanceSessions.some(
-    (session) => session.status === 'active' || session.status === 'pending',
+    (session) => session.status === 'active',
   );
 
   // Check if there are any students enrolled in the course
