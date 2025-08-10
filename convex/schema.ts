@@ -126,6 +126,12 @@ const applicationTables = {
     yearLevel: v.optional(studentYearLevelSchema),
     student_passport_photo_id: v.optional(v.id('_storage')),
     lecturerPassportImage: v.optional(v.id('_storage')),
+    // Face verification fields
+    faceDescriptor: v.optional(v.array(v.number())), // Face-api.js descriptor array
+    onboardingCaptureMethod: v.optional(
+      v.union(v.literal('live_camera'), v.literal('image_upload')),
+    ),
+    faceVerificationEnabled: v.optional(v.boolean()),
   })
     .index('by_role', ['role'])
     .index('by_registration_number', ['registrationNumber'])
@@ -233,7 +239,6 @@ const applicationTables = {
     }),
     status: v.union(
       v.literal('active'),
-      v.literal('pending'),
       v.literal('complete'),
       v.literal('cancelled'),
     ),
@@ -245,6 +250,13 @@ const applicationTables = {
     // Scheduled function IDs for cancellation
     activateScheduledFunctionId: v.optional(v.id('_scheduled_functions')),
     endScheduledFunctionId: v.optional(v.id('_scheduled_functions')),
+
+    // Face verification settings
+    verificationMethod: v.union(
+      v.literal('gps_only'),
+      v.literal('gps_face_verification'),
+      v.literal('gps_code'),
+    ),
   })
     .index('by_courseId_by_lecturerId', ['courseId', 'lecturerId'])
     .index('by_courseId', ['courseId'])
@@ -270,6 +282,22 @@ const applicationTables = {
     overrideReason: v.optional(v.string()),
     overriddenBy: v.optional(v.id('userProfiles')),
     originalStatus: v.optional(v.literal('absent')),
+    // Face verification fields
+    verificationMethod: v.optional(
+      v.union(
+        v.literal('gps_only'),
+        v.literal('gps_face_verification'),
+        v.literal('gps_code'),
+      ),
+    ),
+    faceVerificationStatus: v.optional(
+      v.union(
+        v.literal('verified'),
+        v.literal('failed'),
+        v.literal('fallback_gps_only'),
+      ),
+    ),
+    faceMatchScore: v.optional(v.number()), // Euclidean distance score
   })
     .index('by_attendanceSessionId_by_StudentId', [
       'attendanceSessionId',
@@ -310,6 +338,28 @@ const applicationTables = {
     overrideWindowHours: v.number(), // 1-24 hours, default 24
     notifyOnOverride: v.optional(v.boolean()),
   }).index('by_lecturer', ['lecturerId']),
+
+  // Face Verification Logs
+  // Stores face verification attempts for attendance sessions
+  faceVerificationLogs: defineTable({
+    attendanceSessionId: v.id('attendanceSessions'),
+    studentId: v.id('userProfiles'),
+    courseId: v.id('courses'),
+    verificationTimestamp: v.string(),
+    verificationStatus: v.union(
+      v.literal('success'),
+      v.literal('failed'),
+      v.literal('fallback_used'),
+    ),
+    matchScore: v.optional(v.number()), // Euclidean distance
+    retryAttempt: v.number(), // 1, 2, or 3 (max retries)
+    fallbackReason: v.optional(v.string()), // Why fallback was used
+  })
+    .index('by_session', ['attendanceSessionId'])
+    .index('by_student', ['studentId'])
+    .index('by_session_student', ['attendanceSessionId', 'studentId'])
+    .index('by_verification_status', ['verificationStatus'])
+    .index('by_timestamp', ['verificationTimestamp']),
 };
 
 // ? ==================== WILL LOOK AT THIS LATER ========================  //

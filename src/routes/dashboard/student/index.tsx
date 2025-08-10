@@ -18,7 +18,7 @@ import {
   Bell,
   TrendingUp,
   CheckCircle,
-  LogOut,
+  Settings,
 } from 'lucide-react';
 import { convexQuery } from '@convex-dev/react-query';
 import { api } from 'convex/_generated/api';
@@ -26,7 +26,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { Link } from '@tanstack/react-router';
 import { useGetStudentDashboardStats } from '@/feature/course/api/get-student-dashboard-stats';
-import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
 
 export const Route = createFileRoute('/dashboard/student/')({
   component: RouteComponent,
@@ -46,11 +45,6 @@ function RouteComponent() {
   const { data: userData } = useQuery(AuthQueryOptions.getCurrentUser);
   const { data: dashboardStats } = useGetStudentDashboardStats();
   const isMobile = useIsMobile();
-  const signOut = useSignOut();
-
-  const handleSignOut = () => {
-    signOut();
-  };
 
   // Text truncation utility
   const truncateText = (
@@ -142,10 +136,12 @@ function RouteComponent() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleSignOut}
-                className="p-2 mobile-tap-feedback text-destructive hover:text-destructive hover:bg-destructive/10"
+                asChild
+                className="p-2 mobile-tap-feedback"
               >
-                <LogOut className="h-5 w-5" />
+                <Link to="/dashboard/student/settings">
+                  <Settings className="h-5 w-5" />
+                </Link>
               </Button>
             </div>
           </div>

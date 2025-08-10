@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Card,
   CardContent,
@@ -30,7 +30,7 @@ import type {
 } from 'convex/schema';
 import { toast } from 'sonner';
 import { useNavigate } from '@tanstack/react-router';
-import { LecturerLocationStabilityMessage } from '@/components/attendance/LecturerLocationStabilityMessage';
+// import { LecturerLocationStabilityMessage } from '@/components/attendance/LecturerLocationStabilityMessage';
 import {
   AttendanceStatisticsCard,
   AttendanceStatisticsCardSkeleton,
@@ -127,11 +127,61 @@ const LiveAttendancePage = ({
     return `${minutes}m`;
   };
 
+  // Calculate the effective creation time once and store it
+  const effectiveCreationTime = useMemo(() => {
+    const now = Date.now();
+
+    if (attendanceSession?._creationTime) {
+      const creationTime = attendanceSession._creationTime;
+      const timeDifference = Math.abs(now - creationTime);
+      const oneHourMs = 60 * 60 * 1000; // 1 hour in milliseconds
+
+      // If the creation time is more than 1 hour different from now, it's likely invalid
+      if (timeDifference < oneHourMs) {
+        console.log(
+          'Using actual creation time:',
+          new Date(creationTime).toISOString(),
+        );
+        return creationTime;
+      } else {
+        console.warn(
+          'Invalid creation time detected, using current time as fallback:',
+          {
+            creationTime,
+            creationDate: new Date(creationTime).toISOString(),
+            now,
+            nowDate: new Date(now).toISOString(),
+            timeDifferenceHours: timeDifference / (60 * 60 * 1000),
+          },
+        );
+      }
+    }
+
+    return now; // Default to current time
+  }, [attendanceSession?._creationTime]);
+
   const [timeRemaining, setTimeRemaining] = useState(() => {
-    const endTime =
-      attendanceSession?.endedAt ?? attendanceSession._creationTime + 60000; // 60 seconds in milliseconds
-    return Math.max(0, (endTime - Date.now()) / 1000);
+    const now = Date.now();
+    const sessionDurationMs = 2 * 60 * 1000; // 2 minutes in milliseconds
+    const expectedEndTime = effectiveCreationTime + sessionDurationMs;
+    const remaining = Math.max(0, (expectedEndTime - now) / 1000);
+
+    console.log('Initial session timing:', {
+      effectiveCreationTime,
+      effectiveCreationDate: new Date(effectiveCreationTime).toISOString(),
+      now,
+      nowDate: new Date(now).toISOString(),
+      expectedEndTime,
+      expectedEndDate: new Date(expectedEndTime).toISOString(),
+      remainingSeconds: remaining,
+      remainingMinutes: remaining / 60,
+    });
+
+    return remaining;
   });
+
+  console.log({ endedAt: attendanceSession.endedAt });
+  console.log({ timeRemaining });
 
   useEffect(() => {
     if (
@@ -139,9 +189,12 @@ const LiveAttendancePage = ({
       attendanceSession.status !== 'cancelled'
     ) {
       const timer = setInterval(() => {
-        const endTime =
-          attendanceSession?.endedAt ?? attendanceSession._creationTime + 60000; // 60 seconds in milliseconds
-        const remaining = Math.max(0, (endTime - Date.now()) / 1000);
+        const now = Date.now();
+        const sessionDurationMs = 2 * 60 * 1000; // 2 minutes in milliseconds
+
+        // Use the memoized effectiveCreationTime instead of recalculating
+        const expectedEndTime = effectiveCreationTime + sessionDurationMs;
+        const remaining = Math.max(0, (expectedEndTime - now) / 1000);
         setTimeRemaining(remaining);
 
         // Clear timer when time reaches 0
@@ -152,11 +205,7 @@ const LiveAttendancePage = ({
 
       return () => clearInterval(timer);
     }
-  }, [
-    attendanceSession.endedAt,
-    attendanceSession._creationTime,
-    attendanceSession.status,
-  ]);
+  }, [attendanceSession.status, effectiveCreationTime]);
 
   const sessionData = {
     courseCode: attendanceSession.courseCode,
@@ -173,10 +222,8 @@ const LiveAttendancePage = ({
     const mins = Math.floor(totalSeconds / 60);
     const secs = totalSeconds % 60;
 
-    if (mins > 0) {
-      return `${mins}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${secs.toString().padStart(2, '0')}s`;
+    // Always show MM:SS format for consistency
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const navigate = useNavigate();
@@ -198,49 +245,54 @@ const LiveAttendancePage = ({
 
   // Format override time remaining
   const formatOverrideTimeRemaining = (timeRemaining: number) => {
-    const hours = Math.floor(timeRemaining / (1000 * 60 * 60));
-    const minutes = Math.floor(
-      (timeRemaining % (1000 * 60 * 60)) / (1000 * 60),
-    );
+    const totalSeconds = Math.floor(timeRemaining / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
 
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
-    return `${minutes}m`;
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
   return (
     <div
       className={cn(
         'min-h-screen bg-background',
-        // Mobile-first spacing and padding
-        'px-4 py-4 sm:px-6 sm:py-6 lg:px-8',
+        // Mobile-first spacing with safe area support
+        'px-4 py-4 pb-safe-bottom',
+        'sm:px-6 sm:py-6 lg:px-8 lg:py-8',
         // Responsive container
         'max-w-7xl mx-auto',
         // Smooth animations
-        'animate-fade-in',
+        'animate-in fade-in-0 duration-300',
       )}
     >
-      {/* Mobile-First Header */}
+      {/* Mobile-Native Header */}
       <div
         className={cn(
-          'flex flex-col gap-4 mb-6',
+          'flex flex-col gap-3 mb-6',
           // Desktop layout
           'lg:flex-row lg:items-center lg:justify-between',
+          // Mobile: sticky header with native app feel
+          isMobile && [
+            'sticky top-0 z-50 bg-background/95 backdrop-blur-md',
+            '-mx-4 px-4 py-3 border-b',
+            'shadow-sm',
+          ],
         )}
       >
         {/* Navigation and Title */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
-            size={isMobile ? 'sm' : 'default'}
+            size={isMobile ? 'icon' : 'default'}
             onClick={handleNavigate}
             className={cn(
               'flex-shrink-0 transition-all duration-200',
-              // Touch-friendly sizing
-              isTouchDevice && 'min-h-[44px] min-w-[44px]',
-              // Active state for mobile
+              // Touch-friendly sizing for mobile
+              isTouchDevice && 'h-11 w-11 rounded-full',
+              // Native app-like active state
               'active:scale-95',
+              // Better visual feedback
+              'hover:bg-accent',
             )}
             aria-label="Go back to course dashboard"
           >
@@ -252,21 +304,21 @@ const LiveAttendancePage = ({
             <h1
               className={cn(
                 'font-bold text-foreground leading-tight',
-                // Responsive text sizing
-                'text-xl sm:text-2xl lg:text-3xl',
-                // Better line height for mobile
-                isMobile && 'leading-tight',
+                // Responsive text sizing with better mobile hierarchy
+                'text-lg sm:text-xl lg:text-2xl',
+                // Native app typography
+                isMobile && 'text-xl font-extrabold tracking-tight',
               )}
             >
               Live Attendance Session
             </h1>
             <p
               className={cn(
-                'text-muted-foreground mt-1 truncate',
+                'text-muted-foreground mt-0.5 truncate',
                 // Responsive text sizing
                 'text-sm sm:text-base',
-                // Better contrast on mobile
-                isMobile && 'text-gray-700',
+                // Better mobile readability
+                isMobile && 'text-sm font-medium',
               )}
             >
               {sessionData.courseCode} - {sessionData.courseName}
@@ -277,9 +329,11 @@ const LiveAttendancePage = ({
         {/* Action Buttons and Status - Mobile optimized */}
         <div
           className={cn(
-            'flex flex-col gap-3',
+            'flex flex-col gap-2',
             // Desktop layout
-            'lg:flex-row lg:items-center lg:gap-4',
+            'lg:flex-row lg:items-center lg:gap-3',
+            // Mobile: better spacing
+            isMobile && 'gap-3',
           )}
         >
           {/* Export Button - Show for completed sessions */}
@@ -313,10 +367,6 @@ const LiveAttendancePage = ({
                 'px-3 py-2 text-sm',
                 // Touch-friendly sizing
                 isTouchDevice && 'px-4 py-3 text-base',
-                // Status-based styling
-                overrideEligibility.canOverride
-                  ? 'bg-amber-100 text-amber-800 border-amber-200 hover:bg-amber-200'
-                  : 'bg-gray-100 text-gray-600 border-gray-200',
                 // Full width on mobile
                 isMobile && 'w-full justify-center',
               )}
@@ -345,7 +395,7 @@ const LiveAttendancePage = ({
       </div>
 
       {/* Location Stability Message - Mobile optimized */}
-      <div
+      {/* <div
         className={cn(
           'mb-4',
           // Hide on mobile when space is limited
@@ -353,20 +403,20 @@ const LiveAttendancePage = ({
         )}
       >
         <LecturerLocationStabilityMessage
-          isVisible={sessionState === 'pending' || sessionState === 'active'}
+          isVisible={sessionState === 'active'}
           variant={isMobile ? 'compact' : 'default'}
         />
-      </div>
+      </div> */}
 
       {/* Mobile-First Session State Card */}
       <Card
         className={cn(
           'transition-all duration-500 mb-6',
-          // Status-based border colors
-          sessionState === 'pending' && 'border-yellow-500 bg-yellow-50/30',
-          sessionState === 'active' && 'border-green-500 bg-green-50/30',
-          sessionState === 'complete' && 'border-gray-300 bg-gray-50/30',
-          sessionState === 'cancelled' && 'border-red-500 bg-red-50/30',
+          // Status-based border colors using theme variables
+          // sessionState === 'pending' && 'border-warning bg-warning/5',
+          sessionState === 'active' && 'border-success bg-success/5',
+          sessionState === 'complete' && 'border-muted bg-muted/20',
+          sessionState === 'cancelled' && 'border-destructive bg-destructive/5',
           // Enhanced mobile styling
           isMobile && 'shadow-sm',
         )}
@@ -392,11 +442,11 @@ const LiveAttendancePage = ({
                   'p-3 rounded-full transition-colors',
                   // Mobile: larger icon container
                   isMobile && 'p-4',
-                  // Status-based styling
-                  sessionState === 'pending' && 'bg-yellow-100',
-                  sessionState === 'active' && 'bg-green-100',
-                  sessionState === 'complete' && 'bg-gray-100',
-                  sessionState === 'cancelled' && 'bg-red-100',
+                  // Status-based styling using theme variables
+                  // sessionState === 'pending' && 'bg-warning/20',
+                  sessionState === 'active' && 'bg-success/20',
+                  sessionState === 'complete' && 'bg-muted',
+                  sessionState === 'cancelled' && 'bg-destructive/20',
                 )}
               >
                 <Clock
@@ -405,15 +455,15 @@ const LiveAttendancePage = ({
                     // Responsive icon sizing
                     'h-5 w-5 sm:h-6 w-6',
                     isMobile && 'h-6 w-6',
-                    // Status-based colors
-                    sessionState === 'pending' && 'text-yellow-600',
-                    sessionState === 'active' && 'text-green-600',
-                    sessionState === 'complete' && 'text-gray-600',
-                    sessionState === 'cancelled' && 'text-red-600',
+                    // Status-based colors using theme variables
+                    // sessionState === 'pending' && 'text-warning-foreground',
+                    sessionState === 'active' && 'text-success-foreground',
+                    sessionState === 'complete' && 'text-muted-foreground',
+                    sessionState === 'cancelled' &&
+                      'text-destructive-foreground',
                   )}
                 />
               </div>
-
               <div className="flex-1 min-w-0">
                 <h3
                   className={cn(
@@ -423,7 +473,7 @@ const LiveAttendancePage = ({
                     isMobile && 'text-lg',
                   )}
                 >
-                  {sessionState === 'pending' && 'Session Starts In'}
+                  {/* {sessionState === 'pending' && 'Session Starts In'} */}
                   {sessionState === 'active' && 'Time Remaining'}
                   {sessionState === 'complete' && 'Session Completed'}
                   {sessionState === 'cancelled' && 'Session Cancelled'}
@@ -452,7 +502,7 @@ const LiveAttendancePage = ({
                       'text-muted-foreground mt-1',
                       'text-sm sm:text-base',
                       sessionState === 'cancelled' &&
-                        'text-red-600 font-medium',
+                        'text-destructive font-medium',
                     )}
                   >
                     {sessionState === 'cancelled'
@@ -487,7 +537,7 @@ const LiveAttendancePage = ({
                 // Mobile: full width, Desktop: auto width
                 'w-full lg:w-auto',
                 // Mobile: border top for separation
-                isMobile && 'pt-4 border-t border-border',
+                isMobile && 'pt-4 border-t',
               )}
             >
               {/* Location Info */}
@@ -529,24 +579,24 @@ const LiveAttendancePage = ({
                         // Mobile: larger, more prominent
                         'px-3 py-1 text-base',
                         isTouchDevice && 'px-4 py-2 text-lg',
-                        // Status-based styling
+                        // Status-based styling using theme variables
                         sessionState === 'active' &&
-                          'border-green-500 bg-green-50 text-green-700',
-                        sessionState === 'pending' &&
-                          'border-yellow-500 bg-yellow-50 text-yellow-700',
+                          'border-success bg-success/10 text-success-foreground',
+                        // sessionState === 'pending' &&
+                        //   'border-warning bg-warning/10 text-warning-foreground',
                       )}
                     >
                       {sessionData.attendanceCode}
                     </Badge>
                     <Button
                       variant="ghost"
-                      size={isMobile ? 'default' : 'sm'}
+                      size={isMobile ? 'icon' : 'sm'}
                       onClick={copyAttendanceCode}
                       className={cn(
                         'transition-all duration-200',
                         // Touch-friendly sizing
-                        isTouchDevice && 'min-h-[44px] min-w-[44px]',
-                        'active:scale-95 hover:bg-muted',
+                        isTouchDevice && 'h-11 w-11',
+                        'active:scale-95 hover:bg-accent',
                       )}
                       aria-label="Copy attendance code"
                     >
@@ -558,9 +608,9 @@ const LiveAttendancePage = ({
             </div>
           </div>
 
-          {/* Cancel Session Button - Only during prep period */}
-          {sessionState === 'pending' && cancelEligibility?.canCancel && (
-            <div className="mt-4 pt-4 border-t border-border">
+          {/* Cancel Session Button - Available during pending and active states */}
+          {sessionState === 'active' && (
+            <div className="mt-4 pt-4 border-t">
               <div
                 className={cn(
                   'flex flex-col gap-3',
@@ -575,19 +625,20 @@ const LiveAttendancePage = ({
                       isMobile && 'text-center sm:text-left',
                     )}
                   >
-                    You can cancel this session during the preparation period
+                    You can cancel this active session
                   </p>
-                  {cancelEligibility.timeRemaining > 0 && (
-                    <p
-                      className={cn(
-                        'text-xs text-yellow-600 font-medium mt-1',
-                        isMobile && 'text-center sm:text-left',
-                      )}
-                    >
-                      Time remaining to cancel:{' '}
-                      {formatTime(cancelEligibility.timeRemaining / 1000)}
-                    </p>
-                  )}
+                  {cancelEligibility?.timeRemaining &&
+                    cancelEligibility.timeRemaining > 0 && (
+                      <p
+                        className={cn(
+                          'text-xs text-warning-foreground font-medium mt-1',
+                          isMobile && 'text-center sm:text-left',
+                        )}
+                      >
+                        Time remaining to cancel:{' '}
+                        {formatTime(cancelEligibility.timeRemaining / 1000)}
+                      </p>
+                    )}
                 </div>
                 <div
                   className={cn(
@@ -600,9 +651,13 @@ const LiveAttendancePage = ({
                     courseId={attendanceSession.courseId}
                     courseName={attendanceSession.courseName}
                     courseCode={attendanceSession.courseCode}
-                    timeRemaining={cancelEligibility.timeRemaining / 1000}
-                    canCancel={cancelEligibility.canCancel}
-                    reason={cancelEligibility.reason}
+                    timeRemaining={
+                      (cancelEligibility?.timeRemaining || 0) / 1000
+                    }
+                    canCancel={cancelEligibility?.canCancel || true}
+                    reason={
+                      cancelEligibility?.reason || 'Session can be cancelled'
+                    }
                     variant="destructive"
                     size={isMobile ? 'default' : 'sm'}
                     className={cn(
@@ -619,18 +674,23 @@ const LiveAttendancePage = ({
           {sessionState !== 'complete' && sessionState !== 'cancelled' && (
             <div className="mt-6">
               <Progress
-                value={(timeRemaining / 60) * 100}
+                value={Math.max(
+                  0,
+                  Math.min(100, ((120 - timeRemaining) / 120) * 100),
+                )}
                 className={cn(
                   'transition-all duration-300',
                   // Mobile: thicker progress bar
                   'h-2 sm:h-3',
                   isMobile && 'h-3',
                 )}
-                aria-label={`Session progress: ${Math.round((timeRemaining / 60) * 100)}% remaining`}
+                aria-label={`Session progress: ${Math.round(((120 - timeRemaining) / 120) * 100)}% complete`}
               />
               <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                 <span>Session Progress</span>
-                <span>{Math.round((timeRemaining / 60) * 100)}% remaining</span>
+                <span>
+                  {Math.round(((120 - timeRemaining) / 120) * 100)}% complete
+                </span>
               </div>
             </div>
           )}
@@ -645,10 +705,10 @@ const LiveAttendancePage = ({
               'flex items-center gap-3 p-3 rounded-lg border',
               // Mobile-first responsive padding
               'sm:p-4',
-              // Status-based styling
+              // Status-based styling using theme variables
               overrideEligibility.canOverride
-                ? 'bg-amber-50 border-amber-200 text-amber-800'
-                : 'bg-gray-50 border-gray-200 text-gray-600',
+                ? 'bg-warning/10 border-warning text-warning-foreground'
+                : 'bg-muted border-muted-foreground/20 text-muted-foreground',
               // Subtle, non-obtrusive appearance
               'text-sm',
             )}
@@ -657,8 +717,8 @@ const LiveAttendancePage = ({
               className={cn(
                 'h-4 w-4 flex-shrink-0',
                 overrideEligibility.canOverride
-                  ? 'text-amber-600'
-                  : 'text-gray-500',
+                  ? 'text-warning-foreground'
+                  : 'text-muted-foreground',
               )}
             />
             <div className="flex-1 min-w-0">
@@ -686,8 +746,8 @@ const LiveAttendancePage = ({
             onClick={() => setIsStatisticsExpanded(!isStatisticsExpanded)}
             className={cn(
               'w-full justify-between mb-3 p-4 h-auto',
-              'border border-border rounded-lg',
-              'hover:bg-muted/50 transition-colors',
+              'border rounded-lg',
+              'hover:bg-accent transition-colors',
             )}
             aria-expanded={isStatisticsExpanded}
             aria-controls="statistics-section"
@@ -817,7 +877,7 @@ const LiveAttendancePage = ({
                       {statistics.manualOverrides > 0 && (
                         <span
                           className={cn(
-                            'text-amber-600 font-medium',
+                            'text-warning-foreground font-medium',
                             // Mobile: new line, Desktop: inline
                             'block sm:inline',
                           )}
@@ -860,7 +920,7 @@ const LiveAttendancePage = ({
                   <Badge
                     variant="outline"
                     className={cn(
-                      'text-red-600 border-red-200 bg-red-50',
+                      'text-destructive border-destructive/20 bg-destructive/10',
                       // Mobile: larger badges
                       isMobile && 'px-3 py-1 text-sm',
                       isTouchDevice && 'px-4 py-2 text-base',
@@ -892,15 +952,13 @@ const LiveAttendancePage = ({
                 <div
                   className={sessionState === 'complete' ? '' : 'animate-pulse'}
                 >
-                  <Users className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                  <p className="text-gray-500">
-                    {sessionState === 'pending'
-                      ? 'Waiting for session to begin...'
-                      : sessionState === 'complete'
-                        ? 'Session has ended - No students marked attendance'
-                        : sessionState === 'cancelled'
-                          ? 'Session was cancelled - No attendance was taken'
-                          : 'Waiting for students to check in...'}
+                  <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    {sessionState === 'complete'
+                      ? 'Session has ended - No students marked attendance'
+                      : sessionState === 'cancelled'
+                        ? 'Session was cancelled - No attendance was taken'
+                        : 'Waiting for students to check in...'}
                   </p>
                 </div>
               </div>
@@ -936,7 +994,7 @@ const LiveAttendancePage = ({
                       {presentStudents.length > 0 && (
                         <div className="space-y-3">
                           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                            <CheckCircle2 className="h-4 w-4 text-green-600" />
+                            <CheckCircle2 className="h-4 w-4 text-success" />
                             Present Students ({presentStudents.length})
                           </div>
                           <div className="space-y-2">
@@ -961,14 +1019,14 @@ const LiveAttendancePage = ({
                           )}
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                              <AlertCircle className="h-4 w-4 text-red-600" />
+                              <AlertCircle className="h-4 w-4 text-destructive" />
                               Absent Students ({absentStudents.length})
                             </div>
                             {canPerformOverrides &&
                               overrideEligibility?.canOverride && (
                                 <Badge
                                   variant="outline"
-                                  className="text-xs text-amber-600 border-amber-200"
+                                  className="text-xs text-warning-foreground border-warning/20"
                                 >
                                   Override Available
                                 </Badge>
@@ -1033,7 +1091,6 @@ const LiveAttendancePage = ({
     </div>
   );
 };
-
 export default LiveAttendancePage;
 
 export const LiveAttendancePageSkeleton = () => {
@@ -1045,7 +1102,7 @@ export const LiveAttendancePageSkeleton = () => {
       className={cn(
         'min-h-screen bg-background animate-pulse',
         // Mobile-first spacing and padding
-        'px-4 py-4 sm:px-6 sm:py-6 lg:px-8',
+        'px-4 py-4 pb-safe-bottom sm:px-6 sm:py-6 lg:px-8',
         // Responsive container
         'max-w-7xl mx-auto',
       )}

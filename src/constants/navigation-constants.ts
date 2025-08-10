@@ -3,6 +3,7 @@ import {
   BookOpen,
   Users,
   ClipboardList,
+  Settings,
   // Bell,
   //  CreditCard
 } from 'lucide-react';
@@ -32,6 +33,12 @@ export const navigationItems = [
     label: 'Join Requests',
     icon: Users,
     to: 'joinRequests',
+  },
+  {
+    id: 'settings',
+    label: 'Settings',
+    icon: Settings,
+    to: 'settings',
   },
   // {
   //   id: 'notifications',

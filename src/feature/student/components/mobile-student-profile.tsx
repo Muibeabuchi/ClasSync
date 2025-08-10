@@ -10,6 +10,7 @@ import {
   Save,
   Camera,
   Settings,
+  LogOut,
   // Upload,
   Loader2,
 } from 'lucide-react';
@@ -20,6 +21,7 @@ import {
   useUpdateUserProfile,
   useUploadProfileImage,
 } from '@/feature/student/api/student-profile';
+import { useSignOut } from '@/feature/auth/hooks/use-google-auth';
 
 interface MobileStudentProfileProps {
   onOpenSettings?: () => void;
@@ -37,6 +39,7 @@ const MobileStudentProfile = ({
     useGetUserProfileImage();
   const updateProfileMutation = useUpdateUserProfile();
   const uploadImageMutation = useUploadProfileImage();
+  const signOut = useSignOut();
 
   // Form state for editable fields
   const [formData, setFormData] = useState({
@@ -290,6 +293,24 @@ const MobileStudentProfile = ({
                 className="bg-muted min-h-[48px]"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Account Actions */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="mobile-text-lg">Account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Button
+              variant="destructive"
+              size="lg"
+              onClick={() => signOut()}
+              className="w-full min-h-[48px] flex items-center justify-center gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
           </CardContent>
         </Card>
       </div>

@@ -17,9 +17,10 @@ import {
 } from '@/components/ui/drawer';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Copy,
   RefreshCw,
@@ -31,6 +32,9 @@ import {
   Navigation,
   MapPinOff,
   CheckCircle,
+  Eye,
+  Shield,
+  Smartphone,
 } from 'lucide-react';
 import { useCreateAttendanceSession } from '@/feature/attendance/api';
 import type { Id } from 'convex/_generated/dataModel';
@@ -55,11 +59,13 @@ const AttendanceSessionModal = ({
   disabled = false,
 }: AttendanceSessionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [requireCode, setRequireCode] = useState(false);
   const [attendanceCode, setAttendanceCode] = useState('');
   const [locationRadius, setLocationRadius] = useState(50);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
+  const [verificationMethod, setVerificationMethod] = useState<
+    'gps_only' | 'gps_face_verification' | 'gps_code'
+  >('gps_only');
 
   const navigate = useNavigate();
   const isDesktop = useMediaQuery('(min-width: 768px)');
@@ -89,8 +95,10 @@ const AttendanceSessionModal = ({
         const { sessionId, courseId: CourseId } = await createAttendanceSession(
           {
             courseId,
-            requireCode: attendanceCode,
+            requireCode:
+              verificationMethod === 'gps_code' ? attendanceCode : undefined,
             radiusMeters: locationRadius,
+            verificationMethod,
             gpsCoordinates: {
               lat: position.coords.latitude,
               long: position.coords.longitude,
@@ -98,8 +106,9 @@ const AttendanceSessionModal = ({
           },
         );
 
-        toast.success('Attendance Session Starting', {
-          description: '30-second preparation phase has begun.',
+        toast.success('Attendance Session Started', {
+          description:
+            'Session is now active. Students can check-in immediately.',
         });
 
         // Close modal and navigate
@@ -217,7 +226,7 @@ const AttendanceSessionModal = ({
   // Check if start button should be disabled
   const isStartDisabled =
     !gpsStatus.isReady ||
-    (requireCode && !attendanceCode.trim()) ||
+    (verificationMethod === 'gps_code' && !attendanceCode.trim()) ||
     isCreatingSession;
 
   // GPS Status Component
@@ -279,80 +288,146 @@ const AttendanceSessionModal = ({
     );
   };
 
+  // Compact verification method options
+  const verificationOptions = [
+    {
+      value: 'gps_only',
+      icon: Smartphone,
+      label: 'GPS Only',
+      description: 'Location-based',
+      color: 'blue',
+    },
+    {
+      value: 'gps_face_verification',
+      icon: Eye,
+      label: 'GPS + Face',
+      description: 'Most secure',
+      color: 'green',
+    },
+    {
+      value: 'gps_code',
+      icon: Code,
+      label: 'GPS + Code',
+      description: 'Manual entry',
+      color: 'orange',
+    },
+  ] as const;
+
   // Shared content component for both dialog and drawer
   const SessionContent = () => (
-    <div className="space-y-4 sm:space-y-6">
-      {/* GPS Status */}
-      <GPSStatusIndicator />
+    <ScrollArea className="max-h-[70vh] pr-4">
+      <div className="space-y-4">
+        {/* GPS Status - Compact */}
+        <GPSStatusIndicator />
 
-      {/* Session Info */}
-      <div className="bg-primary/10 p-3 sm:p-4 rounded-lg space-y-2">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Clock className="h-4 w-4 text-primary" />
-          Session Duration: 1 minute total
+        {/* Quick Session Info */}
+        <div className="bg-primary/5 p-3 rounded-lg">
+          <div className="flex items-center gap-2 text-sm font-medium text-primary">
+            <Clock className="h-4 w-4" />1 minute active session
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Students can check-in immediately after creation
+          </p>
         </div>
-        <div className="text-xs text-muted-foreground space-y-1">
-          <div>{`• 30 seconds prep time (students see "Get Ready")`}</div>
-          <div>• 30 seconds active time (students can check-in)</div>
-        </div>
-      </div>
 
-      {/* Location Stability Message */}
-      <LecturerLocationStabilityMessage isVisible={true} variant="compact" />
-
-      {/* Location Settings */}
-      <div className="space-y-3">
-        <Label className="flex items-center gap-2 text-sm font-medium">
-          <MapPin className="h-4 w-4" />
-          Location Radius
-        </Label>
+        {/* Compact Verification Method Selection */}
         <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <Input
-              type="range"
-              min="5"
-              max="300"
-              value={locationRadius}
-              onChange={(e) => setLocationRadius(Number(e.target.value))}
-              className="flex-1 h-8 sm:h-10"
-              disabled={!gpsStatus.isReady}
-            />
-            <Badge variant="outline" className="min-w-[60px] justify-center">
+          <Label className="text-sm font-medium">Verification Method</Label>
+          <RadioGroup
+            value={verificationMethod}
+            onValueChange={(value) =>
+              setVerificationMethod(value as typeof verificationMethod)
+            }
+            className="grid grid-cols-3 gap-2"
+          >
+            {verificationOptions.map((option) => {
+              const IconComponent = option.icon;
+              const isSelected = verificationMethod === option.value;
+
+              return (
+                <div key={option.value} className="relative">
+                  <RadioGroupItem
+                    value={option.value}
+                    id={option.value}
+                    className="peer sr-only"
+                  />
+                  <Label
+                    htmlFor={option.value}
+                    className={`
+                      flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer
+                      transition-all duration-200 hover:bg-muted/50
+                      ${
+                        isSelected
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-border'
+                      }
+                    `}
+                  >
+                    <div
+                      className={`
+                      w-8 h-8 rounded-full flex items-center justify-center
+                      ${option.color === 'blue' ? 'bg-blue-100' : ''}
+                      ${option.color === 'green' ? 'bg-green-100' : ''}
+                      ${option.color === 'orange' ? 'bg-orange-100' : ''}
+                    `}
+                    >
+                      <IconComponent
+                        className={`
+                        h-4 w-4
+                        ${option.color === 'blue' ? 'text-blue-600' : ''}
+                        ${option.color === 'green' ? 'text-green-600' : ''}
+                        ${option.color === 'orange' ? 'text-orange-600' : ''}
+                      `}
+                      />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs font-medium">{option.label}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {option.description}
+                      </div>
+                    </div>
+                  </Label>
+                </div>
+              );
+            })}
+          </RadioGroup>
+        </div>
+
+        {/* Location Radius - Compact */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <MapPin className="h-4 w-4" />
+              Radius
+            </Label>
+            <Badge variant="outline" className="text-xs">
               {locationRadius}m
             </Badge>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Students must be within this radius to check-in
-          </p>
-        </div>
-      </div>
-
-      {/* Attendance Code */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <Label className="flex items-center gap-2 text-sm font-medium">
-            <Code className="h-4 w-4" />
-            Require Attendance Code
-          </Label>
-          <Switch
-            checked={requireCode}
-            onCheckedChange={setRequireCode}
-            className="data-[state=checked]:bg-primary"
+          <Input
+            type="range"
+            min="5"
+            max="300"
+            value={locationRadius}
+            onChange={(e) => setLocationRadius(Number(e.target.value))}
+            className="w-full h-2"
             disabled={!gpsStatus.isReady}
           />
         </div>
 
-        {requireCode && (
-          <div className="space-y-3 animate-in slide-in-from-top-2 duration-200">
+        {/* Conditional Content */}
+        {verificationMethod === 'gps_code' && (
+          <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+            <Label className="text-sm font-medium">Attendance Code</Label>
             <div className="flex gap-2">
               <Input
                 value={attendanceCode}
                 onChange={(e) =>
                   setAttendanceCode(e.target.value.toUpperCase())
                 }
-                placeholder="Enter code or generate"
+                placeholder="Generate or enter"
                 maxLength={6}
-                className="font-mono text-center text-lg sm:text-base tracking-wider h-12 sm:h-10"
+                className="font-mono text-center tracking-wider"
                 disabled={!gpsStatus.isReady}
               />
               <Button
@@ -360,7 +435,7 @@ const AttendanceSessionModal = ({
                 variant="outline"
                 size="icon"
                 onClick={generateCode}
-                className="h-12 w-12 sm:h-10 sm:w-10 shrink-0"
+                className="shrink-0"
                 disabled={!gpsStatus.isReady}
               >
                 <RefreshCw className="h-4 w-4" />
@@ -371,55 +446,65 @@ const AttendanceSessionModal = ({
                   variant="outline"
                   size="icon"
                   onClick={copyCode}
-                  className="h-12 w-12 sm:h-10 sm:w-10 shrink-0"
+                  className="shrink-0"
                   disabled={!gpsStatus.isReady}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Students will need to enter this code during check-in
+          </div>
+        )}
+
+        {verificationMethod === 'gps_face_verification' && (
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg animate-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center gap-2 text-sm font-medium text-green-800">
+              <Eye className="h-4 w-4" />
+              Face Verification Active
+            </div>
+            <p className="text-xs text-green-600 mt-1">
+              Students need face verification setup to check-in
             </p>
           </div>
         )}
-      </div>
 
-      {/* Actions */}
-      <div className="flex flex-col sm:flex-row gap-3 pt-2">
-        <Button
-          variant="outline"
-          onClick={() => setIsOpen(false)}
-          className="flex-1 h-12 sm:h-10 order-2 sm:order-1"
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleStartSession}
-          className="flex-1 h-12 sm:h-10 order-1 sm:order-2"
-          disabled={isStartDisabled}
-        >
-          {isCreatingSession ? (
-            <>
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              <span className="hidden sm:inline">Creating Session...</span>
-              <span className="sm:hidden">Creating...</span>
-            </>
-          ) : !gpsStatus.isReady ? (
-            <>
-              <Navigation className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Enable GPS to Start</span>
-              <span className="sm:hidden">Enable GPS</span>
-            </>
-          ) : (
-            <>
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Start Session
-            </>
-          )}
-        </Button>
+        {/* Location Stability Message - Compact */}
+        <LecturerLocationStabilityMessage isVisible={true} variant="compact" />
+
+        {/* Actions */}
+        <div className="flex gap-3 pt-4 border-t">
+          <Button
+            variant="outline"
+            onClick={() => setIsOpen(false)}
+            className="flex-1"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleStartSession}
+            className="flex-1"
+            disabled={isStartDisabled}
+          >
+            {isCreatingSession ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Creating...
+              </>
+            ) : !gpsStatus.isReady ? (
+              <>
+                <Navigation className="h-4 w-4 mr-2" />
+                Enable GPS
+              </>
+            ) : (
+              <>
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Start Session
+              </>
+            )}
+          </Button>
+        </div>
       </div>
-    </div>
+    </ScrollArea>
   );
 
   if (isDesktop) {

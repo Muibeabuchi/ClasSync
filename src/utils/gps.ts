@@ -76,23 +76,26 @@ export interface GPSStatus {
 export const createGPSStatus = (
   isGeolocationAvailable: boolean,
   isGeolocationEnabled: boolean,
-  positionError: GeolocationPositionError | null,
+  positionError: GeolocationPositionError | undefined | null,
   customError: string | null,
   hasActiveSessions: boolean,
   coords: GeolocationCoordinates | null,
 ): GPSStatus => {
+  const normalizedError = positionError || null;
+
   return {
     isAvailable: isGeolocationAvailable,
     isEnabled: isGeolocationEnabled,
-    hasError: !!positionError || !!customError,
+    hasError: !!normalizedError || !!customError,
     errorMessage:
       customError ||
-      (positionError ? getGPSErrorMessage(positionError) : undefined),
+      (normalizedError ? getGPSErrorMessage(normalizedError) : undefined),
     isReady:
       isGeolocationAvailable &&
       isGeolocationEnabled &&
-      !positionError &&
-      !customError,
+      !normalizedError &&
+      !customError &&
+      coords !== null,
     isTracking: hasActiveSessions && coords !== null,
   };
 };

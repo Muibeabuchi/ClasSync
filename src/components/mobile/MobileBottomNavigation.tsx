@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge';
 import {
   Home,
   BookOpen,
-  CheckCircle,
   // Bell,
   User,
   UserPlus,
@@ -12,7 +11,7 @@ import {
 import { Link, useRouterState } from '@tanstack/react-router';
 
 export interface BottomNavItem {
-  id: 'home' | 'courses' | 'checkin' | 'requests' | 'profile';
+  id: 'home' | 'courses' | 'requests' | 'profile';
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   badge?: string | number;
@@ -36,12 +35,6 @@ const navigationItems: Omit<BottomNavItem, 'badge'>[] = [
     label: 'Courses',
     icon: BookOpen,
     to: '/dashboard/student/courses',
-  },
-  {
-    id: 'checkin',
-    label: 'Check In',
-    icon: CheckCircle,
-    to: '/dashboard/student/attendance',
   },
   {
     id: 'requests',
