@@ -15,7 +15,7 @@ import {
   // SidebarTrigger,
 } from '@/components/ui/sidebar';
 // import { SidebarToggle } from '@/components/ui/sidebar-toggle';
-import { BookOpen, Bell, LogOut, User } from 'lucide-react';
+import { BookOpen, Bell, LogOut, User, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -152,9 +152,23 @@ const LecturerSidebar = ({ fullName, profileImage }: LecturerSidebarProps) => {
                 align="end"
                 sideOffset={4}
               >
-                <DropdownMenuItem className="cursor-pointer">
-                  <User className="h-4 w-4 mr-2" />
-                  Profile
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/dashboard/lecturer/profile"
+                    onClick={handleLinkClick}
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Profile
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/dashboard/lecturer/settings"
+                    onClick={handleLinkClick}
+                  >
+                    <Settings className="h-4 w-4 mr-2" />
+                    Settings
+                  </Link>
                 </DropdownMenuItem>
                 <ThemeDropdownToggle />
                 <DropdownMenuSeparator />

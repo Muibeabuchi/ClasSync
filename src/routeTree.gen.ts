@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TestFaceVerificationRouteImport } from './routes/test-face-verification'
 import { Route as MobileDemoRouteImport } from './routes/mobile-demo'
 import { Route as OnboardRouteRouteImport } from './routes/_onboard/route'
 import { Route as IndexRouteImport } from './routes/index'
@@ -24,6 +25,7 @@ import { Route as DashboardStudentSettingsRouteImport } from './routes/dashboard
 import { Route as DashboardStudentProfileRouteImport } from './routes/dashboard/student/profile'
 import { Route as DashboardStudentNotificationsRouteImport } from './routes/dashboard/student/notifications'
 import { Route as DashboardStudentJoinRequestsRouteImport } from './routes/dashboard/student/join-requests'
+import { Route as DashboardLecturerSettingsRouteImport } from './routes/dashboard/lecturer/settings'
 import { Route as DashboardLecturerProfileRouteImport } from './routes/dashboard/lecturer/profile'
 import { Route as DashboardLecturerJoinRequestsRouteImport } from './routes/dashboard/lecturer/joinRequests'
 import { Route as DashboardLecturerCoursesRouteImport } from './routes/dashboard/lecturer/courses'
@@ -33,6 +35,11 @@ import { Route as DashboardStudentCoursesCourseIdRouteImport } from './routes/da
 import { Route as DashboardLecturerCoursesCourseIdRouteImport } from './routes/dashboard/lecturer/_courses.$courseId'
 import { Route as DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRouteImport } from './routes/dashboard/lecturer/_courses.$lecturerCourseId.$attendanceSessionId'
 
+const TestFaceVerificationRoute = TestFaceVerificationRouteImport.update({
+  id: '/test-face-verification',
+  path: '/test-face-verification',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MobileDemoRoute = MobileDemoRouteImport.update({
   id: '/mobile-demo',
   path: '/mobile-demo',
@@ -110,6 +117,12 @@ const DashboardStudentJoinRequestsRoute =
     path: '/join-requests',
     getParentRoute: () => DashboardStudentRouteRoute,
   } as any)
+const DashboardLecturerSettingsRoute =
+  DashboardLecturerSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => DashboardLecturerRouteRoute,
+  } as any)
 const DashboardLecturerProfileRoute =
   DashboardLecturerProfileRouteImport.update({
     id: '/profile',
@@ -164,6 +177,7 @@ const DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/mobile-demo': typeof MobileDemoRoute
+  '/test-face-verification': typeof TestFaceVerificationRoute
   '/dashboard/lecturer': typeof DashboardLecturerRouteRouteWithChildren
   '/dashboard/student': typeof DashboardStudentRouteRouteWithChildren
   '/login': typeof authLoginRoute
@@ -174,6 +188,7 @@ export interface FileRoutesByFullPath {
   '/dashboard/lecturer/courses': typeof DashboardLecturerCoursesRoute
   '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
   '/dashboard/lecturer/profile': typeof DashboardLecturerProfileRoute
+  '/dashboard/lecturer/settings': typeof DashboardLecturerSettingsRoute
   '/dashboard/student/join-requests': typeof DashboardStudentJoinRequestsRoute
   '/dashboard/student/notifications': typeof DashboardStudentNotificationsRoute
   '/dashboard/student/profile': typeof DashboardStudentProfileRoute
@@ -188,6 +203,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/mobile-demo': typeof MobileDemoRoute
+  '/test-face-verification': typeof TestFaceVerificationRoute
   '/login': typeof authLoginRoute
   '/login-success': typeof authLoginSuccessRoute
   '/onboard': typeof OnboardOnboardRoute
@@ -196,6 +212,7 @@ export interface FileRoutesByTo {
   '/dashboard/lecturer/courses': typeof DashboardLecturerCoursesRoute
   '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
   '/dashboard/lecturer/profile': typeof DashboardLecturerProfileRoute
+  '/dashboard/lecturer/settings': typeof DashboardLecturerSettingsRoute
   '/dashboard/student/join-requests': typeof DashboardStudentJoinRequestsRoute
   '/dashboard/student/notifications': typeof DashboardStudentNotificationsRoute
   '/dashboard/student/profile': typeof DashboardStudentProfileRoute
@@ -212,6 +229,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_onboard': typeof OnboardRouteRouteWithChildren
   '/mobile-demo': typeof MobileDemoRoute
+  '/test-face-verification': typeof TestFaceVerificationRoute
   '/dashboard/lecturer': typeof DashboardLecturerRouteRouteWithChildren
   '/dashboard/student': typeof DashboardStudentRouteRouteWithChildren
   '/(auth)/login': typeof authLoginRoute
@@ -222,6 +240,7 @@ export interface FileRoutesById {
   '/dashboard/lecturer/courses': typeof DashboardLecturerCoursesRoute
   '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
   '/dashboard/lecturer/profile': typeof DashboardLecturerProfileRoute
+  '/dashboard/lecturer/settings': typeof DashboardLecturerSettingsRoute
   '/dashboard/student/join-requests': typeof DashboardStudentJoinRequestsRoute
   '/dashboard/student/notifications': typeof DashboardStudentNotificationsRoute
   '/dashboard/student/profile': typeof DashboardStudentProfileRoute
@@ -238,6 +257,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/mobile-demo'
+    | '/test-face-verification'
     | '/dashboard/lecturer'
     | '/dashboard/student'
     | '/login'
@@ -248,6 +268,7 @@ export interface FileRouteTypes {
     | '/dashboard/lecturer/courses'
     | '/dashboard/lecturer/joinRequests'
     | '/dashboard/lecturer/profile'
+    | '/dashboard/lecturer/settings'
     | '/dashboard/student/join-requests'
     | '/dashboard/student/notifications'
     | '/dashboard/student/profile'
@@ -262,6 +283,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/mobile-demo'
+    | '/test-face-verification'
     | '/login'
     | '/login-success'
     | '/onboard'
@@ -270,6 +292,7 @@ export interface FileRouteTypes {
     | '/dashboard/lecturer/courses'
     | '/dashboard/lecturer/joinRequests'
     | '/dashboard/lecturer/profile'
+    | '/dashboard/lecturer/settings'
     | '/dashboard/student/join-requests'
     | '/dashboard/student/notifications'
     | '/dashboard/student/profile'
@@ -285,6 +308,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_onboard'
     | '/mobile-demo'
+    | '/test-face-verification'
     | '/dashboard/lecturer'
     | '/dashboard/student'
     | '/(auth)/login'
@@ -295,6 +319,7 @@ export interface FileRouteTypes {
     | '/dashboard/lecturer/courses'
     | '/dashboard/lecturer/joinRequests'
     | '/dashboard/lecturer/profile'
+    | '/dashboard/lecturer/settings'
     | '/dashboard/student/join-requests'
     | '/dashboard/student/notifications'
     | '/dashboard/student/profile'
@@ -311,6 +336,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   OnboardRouteRoute: typeof OnboardRouteRouteWithChildren
   MobileDemoRoute: typeof MobileDemoRoute
+  TestFaceVerificationRoute: typeof TestFaceVerificationRoute
   DashboardLecturerRouteRoute: typeof DashboardLecturerRouteRouteWithChildren
   DashboardStudentRouteRoute: typeof DashboardStudentRouteRouteWithChildren
   authLoginRoute: typeof authLoginRoute
@@ -319,6 +345,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/test-face-verification': {
+      id: '/test-face-verification'
+      path: '/test-face-verification'
+      fullPath: '/test-face-verification'
+      preLoaderRoute: typeof TestFaceVerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mobile-demo': {
       id: '/mobile-demo'
       path: '/mobile-demo'
@@ -424,6 +457,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardStudentJoinRequestsRouteImport
       parentRoute: typeof DashboardStudentRouteRoute
     }
+    '/dashboard/lecturer/settings': {
+      id: '/dashboard/lecturer/settings'
+      path: '/settings'
+      fullPath: '/dashboard/lecturer/settings'
+      preLoaderRoute: typeof DashboardLecturerSettingsRouteImport
+      parentRoute: typeof DashboardLecturerRouteRoute
+    }
     '/dashboard/lecturer/profile': {
       id: '/dashboard/lecturer/profile'
       path: '/profile'
@@ -502,6 +542,7 @@ interface DashboardLecturerRouteRouteChildren {
   DashboardLecturerCoursesRoute: typeof DashboardLecturerCoursesRoute
   DashboardLecturerJoinRequestsRoute: typeof DashboardLecturerJoinRequestsRoute
   DashboardLecturerProfileRoute: typeof DashboardLecturerProfileRoute
+  DashboardLecturerSettingsRoute: typeof DashboardLecturerSettingsRoute
   DashboardLecturerIndexRoute: typeof DashboardLecturerIndexRoute
   DashboardLecturerCoursesCourseIdRoute: typeof DashboardLecturerCoursesCourseIdRoute
   DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute: typeof DashboardLecturerCoursesLecturerCourseIdAttendanceSessionIdRoute
@@ -513,6 +554,7 @@ const DashboardLecturerRouteRouteChildren: DashboardLecturerRouteRouteChildren =
     DashboardLecturerCoursesRoute: DashboardLecturerCoursesRoute,
     DashboardLecturerJoinRequestsRoute: DashboardLecturerJoinRequestsRoute,
     DashboardLecturerProfileRoute: DashboardLecturerProfileRoute,
+    DashboardLecturerSettingsRoute: DashboardLecturerSettingsRoute,
     DashboardLecturerIndexRoute: DashboardLecturerIndexRoute,
     DashboardLecturerCoursesCourseIdRoute:
       DashboardLecturerCoursesCourseIdRoute,
@@ -554,6 +596,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   OnboardRouteRoute: OnboardRouteRouteWithChildren,
   MobileDemoRoute: MobileDemoRoute,
+  TestFaceVerificationRoute: TestFaceVerificationRoute,
   DashboardLecturerRouteRoute: DashboardLecturerRouteRouteWithChildren,
   DashboardStudentRouteRoute: DashboardStudentRouteRouteWithChildren,
   authLoginRoute: authLoginRoute,

@@ -1119,6 +1119,7 @@ export const getStudentCourseDetail = StudentQueryMiddleware({
             attendanceCode: activeSession.attendanceCode,
             location: activeSession.location,
             radius: activeSession.radius,
+            verificationMethod: activeSession.verificationMethod,
             hasCheckedIn,
           }
         : null,

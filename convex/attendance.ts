@@ -42,6 +42,11 @@ export const startAttendanceSession = courseMutation({
     }),
     radiusMeters: v.optional(v.number()),
     requireCode: v.optional(v.string()),
+    verificationMethod: v.union(
+      v.literal('gps_only'),
+      v.literal('gps_face_verification'),
+      v.literal('gps_code'),
+    ),
   },
   handler: async (ctx, args) => {
     const lecturerId = ctx.user._id;
@@ -85,6 +90,7 @@ export const startAttendanceSession = courseMutation({
       status: 'active', // Start immediately as active (no prep period)
       endedAt,
       radius: args.radiusMeters,
+      verificationMethod: args.verificationMethod,
     });
 
     // Only schedule the end function since session starts immediately
@@ -325,6 +331,8 @@ export const checkInToAttendance = StudentMutationMiddleware({
       lat: v.number(),
       long: v.number(),
     }),
+    faceDescriptor: v.optional(v.array(v.number())), // For face verification
+    retryAttempt: v.optional(v.number()), // Track retry attempts
   },
   handler: async (ctx, args) => {
     const studentId = ctx.user._id;
@@ -407,24 +415,116 @@ export const checkInToAttendance = StudentMutationMiddleware({
       );
     }
 
-    if (attendanceSession.attendanceCode) {
+    // Handle verification method
+    let verificationStatus: 'verified' | 'failed' | 'fallback_gps_only' =
+      'verified';
+    let faceMatchScore: number | undefined;
+
+    if (attendanceSession.verificationMethod === 'gps_face_verification') {
+      // Face verification required
+      if (!args.faceDescriptor) {
+        throw new ConvexError('Face verification required for this session');
+      }
+
+      // Get user's stored face descriptor
+      const userProfile = await ctx.db.get(studentId);
+      if (!userProfile?.faceDescriptor) {
+        throw new ConvexError(
+          'Face descriptor not found. Please complete onboarding.',
+        );
+      }
+
+      // Calculate Euclidean distance
+      const storedDescriptor = userProfile.faceDescriptor;
+      const currentDescriptor = args.faceDescriptor;
+
+      if (storedDescriptor.length !== currentDescriptor.length) {
+        throw new ConvexError('Invalid face descriptor format');
+      }
+
+      let sumSquaredDifferences = 0;
+      for (let i = 0; i < storedDescriptor.length; i++) {
+        const diff = storedDescriptor[i] - currentDescriptor[i];
+        sumSquaredDifferences += diff * diff;
+      }
+      const euclideanDistance = Math.sqrt(sumSquaredDifferences);
+      faceMatchScore = euclideanDistance;
+
+      // Face match threshold (≤ 0.4 = match) - Stricter threshold for better security
+      const FACE_MATCH_THRESHOLD = 0.5;
+      const isMatch = euclideanDistance <= FACE_MATCH_THRESHOLD;
+
+      // Log verification attempt
+      await ctx.db.insert('faceVerificationLogs', {
+        attendanceSessionId: attendanceSession._id,
+        studentId,
+        courseId: attendanceSession.courseId,
+        verificationTimestamp: new Date().toISOString(),
+        verificationStatus: isMatch ? 'success' : 'failed',
+        matchScore: euclideanDistance,
+        retryAttempt: args.retryAttempt || 1,
+        fallbackReason: !isMatch ? 'Face verification failed' : undefined,
+      });
+
+      if (!isMatch) {
+        const maxRetries = 2;
+        const currentRetry = args.retryAttempt || 1;
+
+        if (currentRetry >= maxRetries) {
+          // Use fallback to GPS-only after max retries
+          verificationStatus = 'fallback_gps_only';
+
+          // Log fallback usage
+          await ctx.db.insert('faceVerificationLogs', {
+            attendanceSessionId: attendanceSession._id,
+            studentId,
+            courseId: attendanceSession.courseId,
+            verificationTimestamp: new Date().toISOString(),
+            verificationStatus: 'fallback_used',
+            matchScore: euclideanDistance,
+            retryAttempt: currentRetry,
+            fallbackReason: 'Face verification failed after maximum retries',
+          });
+        } else {
+          throw new ConvexError(
+            `Face verification failed. You have ${maxRetries - currentRetry} attempts remaining.`,
+          );
+        }
+      }
+    } else if (attendanceSession.verificationMethod === 'gps_code') {
+      // Code verification required
+      if (!attendanceSession.attendanceCode) {
+        throw new ConvexError('Attendance code is required for this session');
+      }
       if (args.attendanceCode !== attendanceSession.attendanceCode) {
-        throw new ConvexError('Attendance code is Needed');
+        throw new ConvexError('Invalid attendance code');
       }
     }
 
     const checkedInAt = new Date().toISOString();
 
-    // Create attendance record
+    // Create attendance record with verification info
     const recordId = await ctx.db.insert('attendanceRecords', {
       studentId,
       checkedInAt,
       attendanceSessionId: attendanceSession._id,
       courseId: attendanceSession.courseId,
       location: args.gpsCoordinates,
+      distance,
+      verificationMethod: attendanceSession.verificationMethod,
+      faceVerificationStatus:
+        attendanceSession.verificationMethod === 'gps_face_verification'
+          ? verificationStatus
+          : undefined,
+      faceMatchScore,
     });
 
-    return recordId;
+    return {
+      recordId,
+      verificationStatus,
+      faceMatchScore,
+      verificationMethod: attendanceSession.verificationMethod,
+    };
   },
 });
 

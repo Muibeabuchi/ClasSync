@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useParams, Link } from '@tanstack/react-router';
 import {
   Card,
@@ -31,16 +31,18 @@ import {
   Users,
   Calendar,
   Target,
+  Eye,
+  RefreshCw,
 } from 'lucide-react';
 import { SessionTimer } from '@/components/attendance/SessionTimer';
+import { StudentFaceAttendanceDrawer } from '@/components/face-verification/StudentFaceAttendanceDrawer';
 import { toast } from 'sonner';
-import { useGeolocated } from 'react-geolocated';
 import { useStudentTakeAttendance } from '@/feature/attendance/api';
 import { useGetStudentCourseDetail } from '@/feature/course/api/get-student-course-detail';
+import { useAttendanceGPS } from '@/hooks/useAttendanceGPS';
 import { MobilePageContainer } from '@/components/mobile/MobilePageContainer';
 import type { Id } from 'convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
-import { calculateDistance, createGPSStatus } from '@/utils/gps';
 
 const MobileStudentCourseDetailPage = () => {
   const { courseId } = useParams({
@@ -48,84 +50,38 @@ const MobileStudentCourseDetailPage = () => {
   });
   const [attendanceCode, setAttendanceCode] = useState('');
   const [isCodeModalOpen, setIsCodeModalOpen] = useState(false);
+  const [isFaceVerificationDrawerOpen, setIsFaceVerificationDrawerOpen] =
+    useState(false);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
-  const [distance, setDistance] = useState<number | null>(null);
-  const [isWithinRange, setIsWithinRange] = useState(false);
-
   const { mutateAsync: takeAttendance } = useStudentTakeAttendance();
   const { data: courseData } = useGetStudentCourseDetail(
     courseId as Id<'courses'>,
   );
 
-  // Calculate distance and range status
-  const calculateDistanceAndRange = useCallback(
-    (coords: GeolocationCoordinates) => {
-      if (!coords || !courseData.session?.location) return;
-
-      const calculatedDistance = calculateDistance(
-        coords.latitude,
-        coords.longitude,
-        courseData.session.location.lat,
-        courseData.session.location.long,
-      );
-
-      const maxDistance = courseData.session.radius || 100;
-
-      setDistance(calculatedDistance);
-      setIsWithinRange(calculatedDistance <= maxDistance);
-    },
-    [courseData.session?.location, courseData.session?.radius],
-  );
-
-  // GPS tracking - only when session is active
-  const hasActiveSession = courseData.session?.status === 'active';
-
+  // Use the new GPS hook for better session handling
   const {
-    isGeolocationAvailable,
-    isGeolocationEnabled,
     coords,
-    getPosition,
-    positionError,
-  } = useGeolocated({
-    positionOptions: {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 10000,
-    },
-    userDecisionTimeout: 10000,
-    suppressLocationOnMount: !hasActiveSession,
-    watchPosition: hasActiveSession, // Watch position only when session is active
-    onSuccess: (position) => {
-      calculateDistanceAndRange(position.coords);
-    },
-    onError: (error) => {
-      console.error('GPS error:', error);
-      setDistance(null);
-      setIsWithinRange(false);
-    },
-  });
-
-  // Effect to calculate distance when session changes
-  useEffect(() => {
-    if (coords && hasActiveSession) {
-      calculateDistanceAndRange(coords);
-    }
-  }, [coords, hasActiveSession, calculateDistanceAndRange]);
-
-  // GPS status
-  const gpsStatus = createGPSStatus(
-    isGeolocationAvailable,
-    isGeolocationEnabled,
-    positionError,
-    null,
+    distance,
+    isWithinRange,
+    gpsStatus,
     hasActiveSession,
-    coords,
-  );
+    refreshGPS,
+    isCalculationStale,
+  } = useAttendanceGPS({
+    session: courseData.session,
+    enabled: true,
+  });
 
   const handleCheckInClick = () => {
     if (!courseData.session) return;
 
-    // Always show the modal first if the session requires a code
+    // Check if face verification is required
+    if (courseData.session.verificationMethod === 'gps_face_verification') {
+      setIsFaceVerificationDrawerOpen(true);
+      return;
+    }
+
+    // Show code modal if session requires a code
     if (courseData.session.attendanceCode) {
       setIsCodeModalOpen(true);
       return;
@@ -158,11 +114,11 @@ const MobileStudentCourseDetailPage = () => {
 
       // If we don't have coordinates, try to get them
       if (!currentCoords) {
-        if (!isGeolocationAvailable) {
+        if (!gpsStatus.isAvailable) {
           throw new Error('GPS is not available on this device');
         }
 
-        if (!isGeolocationEnabled) {
+        if (!gpsStatus.isEnabled) {
           throw new Error('Please enable location services in your browser');
         }
 
@@ -368,22 +324,44 @@ const MobileStudentCourseDetailPage = () => {
                     <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
                       <Radar className="h-4 w-4 text-yellow-600" />
                       <span className="mobile-text-sm text-yellow-800">
-                        {!isGeolocationAvailable
-                          ? 'GPS not available'
-                          : !isGeolocationEnabled
-                            ? 'Enable location services'
-                            : 'Getting your location...'}
+                        {gpsStatus.hasError
+                          ? gpsStatus.errorMessage || 'GPS error occurred'
+                          : !gpsStatus.isAvailable
+                            ? 'GPS not available'
+                            : !gpsStatus.isEnabled
+                              ? 'Enable location services'
+                              : 'Getting your location...'}
                       </span>
-                      {isGeolocationAvailable && isGeolocationEnabled && (
+                      {gpsStatus.isAvailable && gpsStatus.isEnabled && (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={getPosition}
+                          onClick={refreshGPS}
                           className="ml-auto mobile-text-xs touch-target-min"
                         >
+                          <RefreshCw className="h-3 w-3 mr-1" />
                           Retry
                         </Button>
                       )}
+                    </div>
+                  )}
+
+                  {/* Show refresh button if calculation seems stale */}
+                  {isCalculationStale && (
+                    <div className="flex items-center gap-2 p-3 bg-amber-50 rounded-lg border border-amber-200">
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <span className="mobile-text-sm text-amber-800">
+                        GPS calculation may be outdated
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={refreshGPS}
+                        className="ml-auto mobile-text-xs touch-target-min"
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Refresh
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -430,10 +408,18 @@ const MobileStudentCourseDetailPage = () => {
                     </>
                   ) : (
                     <>
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      {courseData.session.attendanceCode
-                        ? 'Enter Code & Check In'
-                        : 'Check In Now'}
+                      {courseData.session.verificationMethod ===
+                      'gps_face_verification' ? (
+                        <Eye className="h-4 w-4 mr-2" />
+                      ) : (
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                      )}
+                      {courseData.session.verificationMethod ===
+                      'gps_face_verification'
+                        ? 'Verify Face & Check In'
+                        : courseData.session.attendanceCode
+                          ? 'Enter Code & Check In'
+                          : 'Check In Now'}
                     </>
                   )}
                 </Button>
@@ -666,6 +652,25 @@ const MobileStudentCourseDetailPage = () => {
           )}
         </div>
       </MobilePageContainer>
+
+      {/* Face Verification Drawer */}
+      {courseData.session && (
+        <StudentFaceAttendanceDrawer
+          isOpen={isFaceVerificationDrawerOpen}
+          onClose={() => setIsFaceVerificationDrawerOpen(false)}
+          attendanceSessionId={courseData.session._id}
+          location={
+            coords
+              ? { lat: coords.latitude, long: coords.longitude }
+              : { lat: 0, long: 0 }
+          }
+          courseName={courseData.courseName}
+          onSuccess={() => {
+            // Refresh the page data or update state to show checked in status
+            window.location.reload();
+          }}
+        />
+      )}
 
       {/* Attendance Code Modal */}
       <Dialog open={isCodeModalOpen} onOpenChange={setIsCodeModalOpen}>
