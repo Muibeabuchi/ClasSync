@@ -17,6 +17,10 @@ import { useRequestToJoinCourseClassList } from '@/feature/joinRequest/api';
 import { useQuery } from '@tanstack/react-query';
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useGetCurrentUser } from '@/feature/student/api/student-profile';
+import {
+  useGetPendingRequestForCourse,
+  useCancelJoinRequest,
+} from '@/feature/student/api/join-requests';
 import { faceDetectionValidator } from '@/utils/faceDetectionValidation';
 import type { FaceValidationResult } from '@/utils/faceDetectionValidation';
 
@@ -48,6 +52,11 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
     useRequestToJoinCourseClassList();
   const generateUploadUrl = useConvexMutation(api.fileUpload.generateUploadUrl);
 
+  // Get pending request details and cancel functionality
+  const pendingRequest = useGetPendingRequestForCourse(searchResult?._id || '');
+  const { mutateAsync: cancelRequest, isPending: isCancelling } =
+    useCancelJoinRequest();
+
   // Initialize editable registration number when user data loads
   useEffect(() => {
     if (currentUser?.registrationNumber) {
@@ -59,6 +68,9 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
 
   const hasRegistrationNumber = Boolean(currentUser?.registrationNumber);
   const canSubmitRequest =
+    searchResult &&
+    !searchResult.isMember &&
+    !searchResult.hasPendingRequest &&
     ((hasRegistrationNumber && editableRegNumber.trim().length > 0) ||
       (!hasRegistrationNumber && uniqueCode.trim().length > 0)) &&
     courseImage !== null; // Image is now mandatory
@@ -204,6 +216,22 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
                     {searchResult.courseCode}
                   </CardDescription>
                 </div>
+                {searchResult.isMember && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-800"
+                  >
+                    Already Joined
+                  </Badge>
+                )}
+                {searchResult.hasPendingRequest && (
+                  <Badge
+                    variant="secondary"
+                    className="bg-yellow-100 text-yellow-800"
+                  >
+                    Request Pending
+                  </Badge>
+                )}
               </div>
               <div className="mt-2 text-sm">
                 <span className="opacity-75">Lecturer: </span>
@@ -214,8 +242,81 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
             </CardHeader>
           </Card>
 
+          {/* Pending Request Message */}
+          {searchResult.hasPendingRequest && (
+            <Card className="border-yellow-200 bg-yellow-50">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2 text-yellow-800">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Request Already Sent
+                </CardTitle>
+                <CardDescription className="text-yellow-700 space-y-2">
+                  <p>
+                    You have already sent a join request for this course. Please
+                    wait for your lecturer to review and approve your request.
+                  </p>
+                  <p className="text-sm">
+                    <strong>What happens next:</strong>
+                  </p>
+                  <ul className="text-sm list-disc list-inside space-y-1 ml-2">
+                    <li>Your lecturer will review your request and photo</li>
+                    <li>You'll be notified once they approve or reject it</li>
+                    <li>
+                      If approved, you&apos;ll be automatically enrolled in the
+                      course
+                    </li>
+                  </ul>
+                </CardDescription>
+              </CardHeader>
+              <div className="px-6 pb-6">
+                <div className="flex items-center justify-between p-3 bg-yellow-100 rounded-lg border border-yellow-200">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium text-yellow-800">
+                      Status: Pending Review
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-red-700 border-red-300 hover:bg-red-50"
+                    disabled={isCancelling}
+                    onClick={async () => {
+                      if (!pendingRequest) {
+                        toast.error('No pending request found');
+                        return;
+                      }
+
+                      try {
+                        await cancelRequest({ requestId: pendingRequest._id });
+                        // Reset search to refresh the UI
+                        setSearchQuery('');
+                        setCourseCode('');
+                        toast.success('Your join request has been cancelled');
+                      } catch (error) {
+                        console.error('Cancel request error:', error);
+                        toast.error(
+                          'Failed to cancel request. Please try again.',
+                        );
+                      }
+                    }}
+                  >
+                    {isCancelling ? (
+                      <>
+                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                        Cancelling...
+                      </>
+                    ) : (
+                      'Cancel Request'
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          )}
+
           {/* Student Identification Section */}
-          {!searchResult.isMember && (
+          {!searchResult.isMember && !searchResult.hasPendingRequest && (
             <Card className="border-dashed">
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -273,7 +374,7 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
           )}
 
           {/* Course-Specific Image Upload with Preview */}
-          {!searchResult.isMember && (
+          {!searchResult.isMember && !searchResult.hasPendingRequest && (
             <Card className="border-dashed">
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2">
@@ -373,7 +474,12 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
           <Button
             className="w-full"
             variant="default"
-            disabled={searchResult.isMember || isJoining || !canSubmitRequest}
+            disabled={
+              searchResult.isMember ||
+              searchResult.hasPendingRequest ||
+              isJoining ||
+              !canSubmitRequest
+            }
             onClick={handleSendRequest}
           >
             {isJoining ? (
@@ -384,7 +490,11 @@ const JoinCourseModal = ({ onSuccess }: JoinCourseModalProps) => {
             ) : (
               <>
                 <Send className="h-4 w-4 mr-2" />
-                {searchResult.isMember ? 'Already Joined' : 'Request to Join'}
+                {searchResult.isMember
+                  ? 'Already Joined'
+                  : searchResult.hasPendingRequest
+                    ? 'Request Pending'
+                    : 'Request to Join'}
               </>
             )}
           </Button>

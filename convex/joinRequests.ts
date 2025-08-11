@@ -151,8 +151,23 @@ export const createJoinRequest = StudentMutationMiddleware({
       throw new Error('Course does not Exist');
     }
 
-    // Check if already requested
-    const existingRequest = await ctx.db
+    // Check if there's already a pending request
+    const existingPendingRequest = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_student_by_courseId', (q) =>
+        q.eq('studentId', studentId).eq('courseId', course._id),
+      )
+      .filter((q) => q.eq(q.field('status'), 'pending'))
+      .first();
+
+    if (existingPendingRequest) {
+      throw new ConvexError(
+        'You already have a pending request for this course',
+      );
+    }
+
+    // Check if there's already an approved request
+    const existingApprovedRequest = await ctx.db
       .query('joinRequests')
       .withIndex('by_student_by_courseId', (q) =>
         q.eq('studentId', studentId).eq('courseId', course._id),
@@ -160,9 +175,23 @@ export const createJoinRequest = StudentMutationMiddleware({
       .filter((q) => q.eq(q.field('status'), 'approved'))
       .first();
 
-    if (existingRequest) {
+    if (existingApprovedRequest) {
       throw new ConvexError('Join request already exists');
     }
+
+    // Clean up any rejected requests for this student and course
+    const rejectedRequests = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_student_by_courseId', (q) =>
+        q.eq('studentId', studentId).eq('courseId', course._id),
+      )
+      .filter((q) => q.eq(q.field('status'), 'rejected'))
+      .collect();
+
+    // Delete all rejected requests to clean up
+    await Promise.all(
+      rejectedRequests.map((request) => ctx.db.delete(request._id)),
+    );
 
     // Check if already linked
     const isAlreadyLinked = await ctx.db

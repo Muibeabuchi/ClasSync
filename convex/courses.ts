@@ -157,6 +157,15 @@ export const searchCourse = AuthenticatedUserQuery({
       )
       .first();
 
+    // check if the student has a pending join request for this course
+    const pendingRequest = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_student_by_courseId', (q) =>
+        q.eq('studentId', ctx.user._id).eq('courseId', course._id),
+      )
+      .filter((q) => q.eq(q.field('status'), 'pending'))
+      .first();
+
     return {
       _id: course._id,
       courseName: course.courseName,
@@ -166,6 +175,7 @@ export const searchCourse = AuthenticatedUserQuery({
         id: lecturer._id,
       },
       isMember: !!isMember,
+      hasPendingRequest: !!pendingRequest,
     };
   },
 });
