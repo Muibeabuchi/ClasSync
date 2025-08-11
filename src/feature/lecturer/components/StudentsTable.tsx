@@ -63,6 +63,9 @@ interface Student {
   sessionsAttended: number;
   totalSessions: number;
   courseAttendanceListId: string;
+  imageUrl?: string | null;
+  courseSpecificImageUrl?: string | null;
+  profileImageUrl?: string | null;
 }
 
 interface StudentsTableProps {
@@ -120,16 +123,44 @@ export const StudentsTable = ({ students }: StudentsTableProps) => {
           const student = row.original;
           return (
             <div className="flex items-center gap-3">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="" alt={student.name} />
-                <AvatarFallback className="text-xs">
-                  {student.name
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar className="h-8 w-8 cursor-pointer">
+                      <AvatarImage
+                        src={student.imageUrl || ''}
+                        alt={student.name}
+                      />
+                      <AvatarFallback className="text-xs">
+                        {student.name
+                          .split(' ')
+                          .map((n) => n[0])
+                          .join('')
+                          .toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-xs">
+                    <div className="space-y-2">
+                      <p className="text-xs font-medium">Student Photo</p>
+                      {student.courseSpecificImageUrl ? (
+                        <p className="text-xs text-muted-foreground">
+                          Course-specific image uploaded during join request
+                        </p>
+                      ) : student.profileImageUrl ? (
+                        <p className="text-xs text-muted-foreground">
+                          Using profile image (no course-specific image
+                          available)
+                        </p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">
+                          No image available
+                        </p>
+                      )}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <div className="min-w-0">
                 <p className="font-medium truncate">{student.name}</p>
                 <p className="text-sm text-muted-foreground truncate">

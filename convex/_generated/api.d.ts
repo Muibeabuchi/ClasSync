@@ -16,6 +16,7 @@ import type * as classLists from "../classLists.js";
 import type * as constants_attendance from "../constants/attendance.js";
 import type * as courses from "../courses.js";
 import type * as faceVerification from "../faceVerification.js";
+import type * as fileUpload from "../fileUpload.js";
 import type * as http from "../http.js";
 import type * as imageUpload from "../imageUpload.js";
 import type * as joinRequests from "../joinRequests.js";
@@ -75,6 +76,7 @@ declare const fullApi: ApiFromModules<{
   "constants/attendance": typeof constants_attendance;
   courses: typeof courses;
   faceVerification: typeof faceVerification;
+  fileUpload: typeof fileUpload;
   http: typeof http;
   imageUpload: typeof imageUpload;
   joinRequests: typeof joinRequests;

@@ -12,20 +12,24 @@ export class FaceApiService {
     return FaceApiService.instance;
   }
 
-  async loadModels(): Promise<void> {
-    if (this.modelsLoaded) return;
+  async loadModels(): Promise<boolean> {
+    if (this.modelsLoaded) return true;
 
     try {
       console.log('Loading face-api.js models from /models...');
 
-      // Load models with proper error handling
-      const modelPromises = [
-        faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
-        faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models'),
-        faceapi.nets.faceRecognitionNet.loadFromUri('/models'),
-      ];
+      // Load models sequentially to ensure proper initialization
+      console.log('Loading TinyFaceDetector...');
+      await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
 
-      await Promise.all(modelPromises);
+      console.log('Loading FaceLandmark68TinyNet...');
+      await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models');
+
+      console.log('Loading FaceRecognitionNet...');
+      await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+
+      // Add a small delay to ensure models are fully initialized
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Verify models are loaded
       if (!faceapi.nets.tinyFaceDetector.isLoaded) {
@@ -40,9 +44,18 @@ export class FaceApiService {
 
       this.modelsLoaded = true;
       console.log('Face-api.js models loaded successfully');
+      return true;
     } catch (error) {
       console.error('Failed to load face-api.js models:', error);
       this.modelsLoaded = false;
+
+      // More specific error messages
+      if (error instanceof Error && error.message.includes('timeout')) {
+        throw new Error(
+          'Model loading timed out. Please check your internet connection and try again.',
+        );
+      }
+
       throw new Error(
         `Failed to load face recognition models. Please ensure model files are available at /models/. Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -162,34 +175,52 @@ export class FaceApiService {
     return new Float32Array(array);
   }
 
-  // Detect multiple faces in an image (for validation)
+  // Detect multiple faces in an image (for validation) - simplified version
   async detectAllFaces(
     input: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
-  ): Promise<
-    faceapi.WithFaceDescriptor<
-      faceapi.WithFaceLandmarks<{ detection: faceapi.FaceDetection }>
-    >[]
-  > {
+  ): Promise<faceapi.FaceDetection[]> {
     if (!this.modelsLoaded) {
       throw new Error('Models not loaded. Call loadModels() first.');
     }
 
     try {
-      const detections = await faceapi
-        .detectAllFaces(
-          input,
-          new faceapi.TinyFaceDetectorOptions({
-            inputSize: 416,
-            scoreThreshold: 0.4,
-          }),
-        )
-        .withFaceLandmarks()
-        .withFaceDescriptors();
+      // Use only face detection without landmarks or descriptors for validation
+      const detections = await faceapi.detectAllFaces(
+        input,
+        new faceapi.TinyFaceDetectorOptions({
+          inputSize: 416,
+          scoreThreshold: 0.4,
+        }),
+      );
 
+      console.log(`Detected ${detections.length} faces in image`);
       return detections;
     } catch (error) {
       console.error('Multiple face detection failed:', error);
       return [];
+    }
+  }
+
+  // Simplified face validation for join course (only checks face count)
+  async validateFaceCount(
+    input: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
+  ): Promise<{ faceCount: number; detections: faceapi.FaceDetection[] }> {
+    if (!this.modelsLoaded) {
+      throw new Error('Models not loaded. Call loadModels() first.');
+    }
+
+    try {
+      const detections = await this.detectAllFaces(input);
+      return {
+        faceCount: detections.length,
+        detections,
+      };
+    } catch (error) {
+      console.error('Face validation failed:', error);
+      return {
+        faceCount: 0,
+        detections: [],
+      };
     }
   }
 

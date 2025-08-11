@@ -10,12 +10,11 @@ import { lecturerCourseStatusSchema } from './schema';
 import * as CoursesModel from './models/coursesModel';
 import { AuthenticatedUserQuery } from './middlewares/authenticatedMiddleware';
 import {
-  StudentMutationMiddleware,
+  // StudentMutationMiddleware,
   StudentQueryMiddleware,
 } from './middlewares/studentMiddleware';
-import * as ClassListModel from './models/classListModel';
-import * as ClassListStudentModel from './models/classListStudentModel';
-import * as joinRequestModel from './models/joinRequestModel';
+// import * as ClassListModel from './models/classListModel';
+// import * as ClassListStudentModel from './models/classListStudentModel';
 
 export const createCourse = lecturerMutation({
   args: {
@@ -81,11 +80,11 @@ export const createCourse = lecturerMutation({
     //   }),
     // );
 
-    await CoursesModel.updateLecturerConsumption({
-      ctx,
-      lecturerId,
-      method: 'insert',
-    });
+    // await CoursesModel.updateLecturerConsumption({
+    //   ctx,
+    //   lecturerId,
+    //   method: 'insert',
+    // });
 
     return courseId;
   },
@@ -168,24 +167,6 @@ export const searchCourse = AuthenticatedUserQuery({
       },
       isMember: !!isMember,
     };
-  },
-});
-
-// Mutation For Students to Cancel a JoinRequest
-export const cancelJoinRequest = StudentMutationMiddleware({
-  args: { joinRequestId: v.id('joinRequests') },
-  async handler(ctx, args) {
-    // Ensure the joinRequest is valid
-    const joinRequest = await joinRequestModel.ensureValidJoinRequestOrThrow({
-      ctx,
-      joinRequestId: args.joinRequestId,
-    });
-
-    if (joinRequest.status === 'pending') {
-      await ctx.db.delete(joinRequest._id);
-    } else {
-      throw new ConvexError('Only Pending JoinRequest can be cancelled');
-    }
   },
 });
 
@@ -444,7 +425,7 @@ export const deleteCourse = courseMutation({
       }),
     );
 
-    // 4. Delete join requests
+    // 4. Delete join requests and their course-specific images
     const joinRequests = await ctx.db
       .query('joinRequests')
       .withIndex('by_lecturerId_by_courseId', (q) =>
@@ -454,6 +435,15 @@ export const deleteCourse = courseMutation({
 
     await Promise.all(
       joinRequests.map(async (request) => {
+        // Delete course-specific image if it exists
+        if (request.courseSpecificImageId) {
+          try {
+            await ctx.storage.delete(request.courseSpecificImageId);
+          } catch (error) {
+            console.error('Failed to delete course-specific image:', error);
+            // Continue with deletion even if image deletion fails
+          }
+        }
         await ctx.db.delete(request._id);
       }),
     );
@@ -469,180 +459,6 @@ export const deleteCourse = courseMutation({
     });
 
     return { success: true, message: 'Course deleted successfully' };
-  },
-});
-
-export const requestToJoinCourse = StudentMutationMiddleware({
-  args: { courseId: v.id('courses') },
-  handler: async (ctx, args) => {
-    const studentId = ctx.user._id;
-
-    const course = await ctx.db.get(args.courseId);
-    if (!course || course.status !== 'active') {
-      throw new ConvexError('Course not available for enrollment');
-    }
-
-    // Check if request already exists
-    const existingRequest = await ctx.db
-      .query('joinRequests')
-      .withIndex('by_student_by_courseId', (q) =>
-        q.eq('studentId', studentId).eq('courseId', args.courseId),
-      )
-      .unique();
-
-    if (existingRequest) {
-      throw new Error('Join request already exists');
-    }
-
-    const requestId = await ctx.db.insert('joinRequests', {
-      studentId,
-      lecturerId: course.lecturerId,
-      courseId: args.courseId,
-      status: 'pending',
-    });
-
-    return requestId;
-  },
-});
-
-export const getCourseJoinRequests = LecturerCourseQuery({
-  args: { courseId: v.id('courses') },
-  handler: async (ctx, args) => {
-    const lecturerId = ctx.user._id;
-    const requests = await ctx.db
-      .query('joinRequests')
-      .withIndex('by_lecturerId_by_courseId', (q) =>
-        q.eq('lecturerId', lecturerId).eq('courseId', args.courseId),
-      )
-      .filter((q) => q.eq(q.field('status'), 'pending'))
-      .collect();
-
-    const requestsWithStudentInfo = [];
-    for (const request of requests) {
-      const studentProfile = await ctx.db
-        .query('userProfiles')
-        .withIndex('by_id', (q) => q.eq('_id', request.studentId))
-        .unique();
-
-      if (!studentProfile) throw new ConvexError('Student does not exist');
-
-      requestsWithStudentInfo.push({
-        ...request,
-        studentProfile,
-      });
-    }
-
-    return requestsWithStudentInfo;
-  },
-});
-
-export const rejectJoinRequest = lecturerMutation({
-  args: { joinRequestId: v.id('joinRequests') },
-  async handler(ctx, args) {
-    const lecturerId = ctx.user._id;
-    const request = await ctx.db.get(args.joinRequestId);
-    if (!request) {
-      throw new ConvexError('Request not found');
-    }
-
-    const course = await ctx.db.get(request.courseId);
-    if (!course || course.lecturerId !== lecturerId) {
-      throw new ConvexError('Unauthorized: Lecturer has no access this course');
-    }
-
-    await ctx.db.patch(args.joinRequestId, {
-      status: 'rejected',
-    });
-  },
-});
-
-export const acceptAndLinkJoinRequest = lecturerMutation({
-  args: {
-    joinRequestId: v.id('joinRequests'),
-    classListId: v.id('classLists'),
-    classListStudentId: v.id('classListStudents'),
-  },
-  handler: async (ctx, args) => {
-    const lecturerId = ctx.user._id;
-    const request = await ctx.db.get(args.joinRequestId);
-    if (!request) {
-      throw new ConvexError('Request not found');
-    }
-
-    const course = await ctx.db.get(request.courseId);
-    if (!course || course.lecturerId !== lecturerId) {
-      throw new ConvexError('Unauthorized: Lecturer has no access this course');
-    }
-
-    // ensure the classList exists and belongs to the lecturer
-    const classList = await ClassListModel.ensureClassListExists({
-      ctx,
-      classListId: args.classListId,
-      lecturerId,
-    });
-    if (!classList) throw new ConvexError('ClassList does not exist');
-
-    // ensure the classListStudent belongs to the classList
-    const classListStudent = await ClassListStudentModel.verifyClassListStudent(
-      {
-        ctx,
-        classListId: classList._id,
-        classListStudentId: args.classListStudentId,
-      },
-    );
-
-    // ????  TODO: ensure the student registration number is equal to the classListStudent registration number
-    // if(settings.ensureValidRegistrationNumber){
-    // const student = await ctx.db.get(request.studentId);
-    // if (
-    //   !student ||
-    //   student.registrationNumber !==
-    //     classListStudent.student.studentRegistrationNumber
-    // )
-    //   throw new ConvexError('Student Registration Number does not Match');
-    // }
-
-    // Check if there is an attendanceListStudent for classListStudent already has already been used
-
-    // check if  the student has already been added to the attendanceList
-    const linkedStudent = await ctx.db
-      .query('courseAttendanceList')
-      .withIndex('by_courseId_by_studentId', (q) =>
-        q.eq('courseId', course._id).eq('studentId', request.studentId),
-      )
-      .unique();
-
-    if (linkedStudent)
-      throw new ConvexError(
-        'Student is already part of the courseAttendanceList',
-      );
-
-    // insert the student into the courseAttendanceList
-    await ctx.db.insert('courseAttendanceList', {
-      lecturerId,
-      courseId: course._id,
-      classListId: classList._id,
-      studentId: request.studentId,
-      classListStudentId: classListStudent._id,
-    });
-
-    // update the  joinRequest status
-    return await ctx.db.patch(args.joinRequestId, {
-      status: 'approved',
-    });
-
-    // // Send notification to student
-    // await ctx.db.insert('notifications', {
-    //   recipientId: request.studentId,
-    //   senderId: userId,
-    //   courseId: request.courseId,
-    //   title: 'Enrollment Approved',
-    //   message: `You have been accepted into ${course.courseName} (${course.courseCode})`,
-    //   type: 'enrollment',
-    //   isRead: false,
-    //   createdAt: Date.now(),
-    //   actionUrl: `/dashboard`,
-    // });
   },
 });
 
@@ -1299,10 +1115,26 @@ export const getCourseDetails = LecturerCourseQuery({
             ? Math.round((attendedSessions.length / totalSessions.length) * 100)
             : 0;
 
-        // Get student image URL if available
-        let imageUrl = null;
+        // Get course-specific image URL from join request if available
+        let courseSpecificImageUrl = null;
+        const joinRequest = await ctx.db
+          .query('joinRequests')
+          .withIndex('by_student_by_courseId', (q) =>
+            q.eq('studentId', attendance.studentId).eq('courseId', course._id),
+          )
+          .filter((q) => q.eq(q.field('status'), 'approved'))
+          .first();
+
+        if (joinRequest?.courseSpecificImageId) {
+          courseSpecificImageUrl = await ctx.storage.getUrl(
+            joinRequest.courseSpecificImageId,
+          );
+        }
+
+        // Fallback to profile image if no course-specific image
+        let profileImageUrl = null;
         if (studentProfile.student_passport_photo_id) {
-          imageUrl = await ctx.storage.getUrl(
+          profileImageUrl = await ctx.storage.getUrl(
             studentProfile.student_passport_photo_id,
           );
         }
@@ -1315,7 +1147,9 @@ export const getCourseDetails = LecturerCourseQuery({
           regNumber:
             classListStudent?.student?.studentRegistrationNumber || 'N/A',
           department: studentProfile.department || 'Not specified',
-          imageUrl,
+          imageUrl: courseSpecificImageUrl || profileImageUrl, // Prioritize course-specific image
+          courseSpecificImageUrl,
+          profileImageUrl,
           attendanceRate,
           sessionsAttended: attendedSessions.length,
           totalSessions: totalSessions.length,

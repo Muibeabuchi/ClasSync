@@ -45,6 +45,7 @@ import {
   BookOpen,
   ArrowUpDown,
   Zap,
+  Camera,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { GetLecturerJoinRequestsReturnType } from 'convex/schema';
@@ -358,22 +359,36 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
                           {/* Student Info */}
                           <div className="flex items-start md:items-center justify-between gap-3">
                             <div className="flex items-start md:items-center space-x-3 min-w-0 flex-1">
-                              <Avatar className="h-10 w-10 md:h-12 md:w-12 ring-2 ring-muted flex-shrink-0">
-                                {request.student.profileImage ? (
-                                  <img
-                                    src={request.student.profileImage}
-                                    alt={request.student.fullName}
-                                    className="h-full w-full object-cover"
-                                  />
-                                ) : (
-                                  <AvatarFallback className="text-xs md:text-sm font-medium">
-                                    {request.student.fullName
-                                      .split(' ')
-                                      .map((n) => n[0])
-                                      .join('')}
-                                  </AvatarFallback>
+                              <div className="relative">
+                                <Avatar className="h-10 w-10 md:h-12 md:w-12 ring-2 ring-muted flex-shrink-0">
+                                  {request.courseSpecificImageUrl ? (
+                                    <img
+                                      src={request.courseSpecificImageUrl}
+                                      alt={`${request.student.fullName} - Course Photo`}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  ) : request.student.profileImage ? (
+                                    <img
+                                      src={request.student.profileImage}
+                                      alt={request.student.fullName}
+                                      className="h-full w-full object-cover opacity-60"
+                                    />
+                                  ) : (
+                                    <AvatarFallback className="text-xs md:text-sm font-medium">
+                                      {request.student.fullName
+                                        .split(' ')
+                                        .map((n) => n[0])
+                                        .join('')}
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                                {/* Course-specific image indicator */}
+                                {request.courseSpecificImageUrl && (
+                                  <div className="absolute -bottom-1 -right-1 bg-green-500 rounded-full p-1">
+                                    <Camera className="h-2 w-2 md:h-3 md:w-3 text-white" />
+                                  </div>
                                 )}
-                              </Avatar>
+                              </div>
                               <div className="space-y-1 min-w-0 flex-1">
                                 <div className="flex flex-col md:flex-row md:items-center gap-1 md:gap-2">
                                   <h3 className="font-medium text-sm md:text-base truncate">
