@@ -17,7 +17,7 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Plus } from 'lucide-react';
-import JoinCourseModal from './join-course-modal';
+import { JoinCourseStepForm } from './join-course-step-form';
 
 interface JoinCourseSheetProps {
   children?: React.ReactNode;
@@ -53,15 +53,17 @@ const JoinCourseSheet = ({ children }: JoinCourseSheetProps) => {
     return (
       <Drawer open={isOpen} onOpenChange={setIsOpen}>
         <DrawerTrigger asChild>{trigger}</DrawerTrigger>
-        <DrawerContent className="h-full">
-          <DrawerHeader>
+        <DrawerContent className="h-[100dvh] flex flex-col">
+          <DrawerHeader className="flex-shrink-0 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <DrawerTitle>Join New Course</DrawerTitle>
             <DrawerDescription>
-              Search for a course using the code provided by your lecturer
+              Follow the steps to join your course
             </DrawerDescription>
           </DrawerHeader>
-          <div className="px-4 pb-4">
-            <JoinCourseModal onSuccess={handleSuccess} />
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4 pb-8">
+              <JoinCourseStepForm onSuccess={handleSuccess} isMobile={true} />
+            </div>
           </div>
         </DrawerContent>
       </Drawer>
@@ -71,15 +73,15 @@ const JoinCourseSheet = ({ children }: JoinCourseSheetProps) => {
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>{trigger}</SheetTrigger>
-      <SheetContent side="right" className="w-full md:px-2 sm:max-w-md">
-        <SheetHeader>
+      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col">
+        <SheetHeader className="flex-shrink-0">
           <SheetTitle>Join New Course</SheetTitle>
           <SheetDescription>
-            Search for a course using the code provided by your lecturer
+            Follow the steps to join your course
           </SheetDescription>
         </SheetHeader>
-        <div className="mt-4">
-          <JoinCourseModal onSuccess={handleSuccess} />
+        <div className="flex-1 overflow-y-auto mt-6">
+          <JoinCourseStepForm onSuccess={handleSuccess} isMobile={false} />
         </div>
       </SheetContent>
     </Sheet>

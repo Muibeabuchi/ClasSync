@@ -14,6 +14,22 @@ export const useGetPendingJoinRequestsCount = () => {
   return joinRequests.filter((req: any) => req.status === 'pending').length;
 };
 
+// Check if student has a pending request for a specific course
+export const useHasPendingRequestForCourse = (courseId: string) => {
+  const { data: joinRequests = [] } = useGetMyJoinRequests();
+  return joinRequests.some(
+    (req: any) => req.courseId === courseId && req.status === 'pending',
+  );
+};
+
+// Get pending request details for a specific course
+export const useGetPendingRequestForCourse = (courseId: string) => {
+  const { data: joinRequests = [] } = useGetMyJoinRequests();
+  return joinRequests.find(
+    (req: any) => req.courseId === courseId && req.status === 'pending',
+  );
+};
+
 // Cancel a pending join request
 export const useCancelJoinRequest = () => {
   return useMutation({

@@ -219,6 +219,8 @@ const applicationTables = {
     ),
     rejectionReason: v.optional(v.string()),
     message: v.optional(v.string()),
+    // Course-specific student image for lecturer identification
+    courseSpecificImageId: v.id('_storage'),
   })
     .index('by_student_by_courseId', ['studentId', 'courseId'])
     .index('by_studentId', ['studentId'])

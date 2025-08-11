@@ -108,6 +108,14 @@ export const getAllJoinRequestsForLecturer = lecturerQuery({
           );
         }
 
+        // Get course-specific image URL
+        let courseSpecificImageUrl = null;
+        if (request.courseSpecificImageId) {
+          courseSpecificImageUrl = await ctx.storage.getUrl(
+            request.courseSpecificImageId,
+          );
+        }
+
         return {
           ...request,
           student: {
@@ -115,6 +123,7 @@ export const getAllJoinRequestsForLecturer = lecturerQuery({
             profileImage: profileImageUrl,
           },
           course,
+          courseSpecificImageUrl,
         };
       }),
     );
@@ -129,6 +138,7 @@ export const createJoinRequest = StudentMutationMiddleware({
     lecturerId: v.id('userProfiles'),
     message: v.optional(v.string()),
     uniqueCode: v.optional(v.string()),
+    courseSpecificImageId: v.id('_storage'),
   },
   handler: async (ctx, args) => {
     const studentId = ctx.user._id;
@@ -141,8 +151,23 @@ export const createJoinRequest = StudentMutationMiddleware({
       throw new Error('Course does not Exist');
     }
 
-    // Check if already requested
-    const existingRequest = await ctx.db
+    // Check if there's already a pending request
+    const existingPendingRequest = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_student_by_courseId', (q) =>
+        q.eq('studentId', studentId).eq('courseId', course._id),
+      )
+      .filter((q) => q.eq(q.field('status'), 'pending'))
+      .first();
+
+    if (existingPendingRequest) {
+      throw new ConvexError(
+        'You already have a pending request for this course',
+      );
+    }
+
+    // Check if there's already an approved request
+    const existingApprovedRequest = await ctx.db
       .query('joinRequests')
       .withIndex('by_student_by_courseId', (q) =>
         q.eq('studentId', studentId).eq('courseId', course._id),
@@ -150,9 +175,23 @@ export const createJoinRequest = StudentMutationMiddleware({
       .filter((q) => q.eq(q.field('status'), 'approved'))
       .first();
 
-    if (existingRequest) {
+    if (existingApprovedRequest) {
       throw new ConvexError('Join request already exists');
     }
+
+    // Clean up any rejected requests for this student and course
+    const rejectedRequests = await ctx.db
+      .query('joinRequests')
+      .withIndex('by_student_by_courseId', (q) =>
+        q.eq('studentId', studentId).eq('courseId', course._id),
+      )
+      .filter((q) => q.eq(q.field('status'), 'rejected'))
+      .collect();
+
+    // Delete all rejected requests to clean up
+    await Promise.all(
+      rejectedRequests.map((request) => ctx.db.delete(request._id)),
+    );
 
     // Check if already linked
     const isAlreadyLinked = await ctx.db
@@ -180,6 +219,7 @@ export const createJoinRequest = StudentMutationMiddleware({
       message: args.message,
       uniqueCode: args.uniqueCode,
       lecturerId: args.lecturerId,
+      courseSpecificImageId: args.courseSpecificImageId,
     });
 
     return { requestId, courseName: course.courseName };
@@ -456,14 +496,16 @@ export const batchAcceptJoinRequests = lecturerMutation({
       }
 
       // Try to match student by registration number
-      let matchedClassListStudent = null;
+      let matchedClassListStudent: (typeof flatClassListStudents)[0] | null =
+        null;
 
       if (student.registrationNumber) {
-        matchedClassListStudent = flatClassListStudents.find(
-          (cls) =>
-            cls.student.studentRegistrationNumber ===
-            student.registrationNumber,
-        );
+        matchedClassListStudent =
+          flatClassListStudents.find(
+            (cls) =>
+              cls.student.studentRegistrationNumber ===
+              student.registrationNumber,
+          ) || null;
       }
 
       // If no match by registration number, try by unique code
