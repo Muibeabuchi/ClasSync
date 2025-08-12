@@ -384,11 +384,17 @@ const StudentRequestCard = ({
           </div>
         </div>
         <Avatar className="h-8 w-8 md:h-10 md:w-10 ring-1 ring-primary/20 flex-shrink-0">
-          {request.student.profileImage ? (
+          {request.courseSpecificImageUrl ? (
+            <img
+              src={request.courseSpecificImageUrl}
+              alt={`${request.student.fullName} - Course`}
+              className="h-full w-full object-cover"
+            />
+          ) : request.student.profileImage ? (
             <img
               src={request.student.profileImage}
               alt={request.student.fullName}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover opacity-60"
             />
           ) : (
             <AvatarFallback className="bg-primary/10 text-primary font-medium text-xs">
