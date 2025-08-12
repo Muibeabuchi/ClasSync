@@ -157,9 +157,11 @@ function ClassSyncLanding() {
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-2 sm:space-x-3">
-              <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-3 sm:px-4 md:px-6 py-2 rounded-lg text-xs sm:text-sm min-h-[40px] touch-manipulation">
-                Get Started
-              </Button>
+              <Link to="/login">
+                <Button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-3 sm:px-4 md:px-6 py-2 rounded-lg text-xs sm:text-sm min-h-[40px] touch-manipulation">
+                  Get Started
+                </Button>
+              </Link>
 
               {/* Mobile menu button */}
               <button className="lg:hidden p-2 text-gray-400 hover:text-gray-300 transition-colors min-h-[40px] min-w-[40px] touch-manipulation">
@@ -241,13 +243,15 @@ function ClassSyncLanding() {
               </p>
 
               <div className="flex flex-col xs:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8 justify-center lg:justify-start">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 sm:px-8 py-3 rounded-lg text-sm sm:text-base w-full xs:w-auto min-h-[48px] touch-manipulation"
-                >
-                  Get Started
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
+                <Link to="/login">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold px-6 sm:px-8 py-3 rounded-lg text-sm sm:text-base w-full xs:w-auto min-h-[48px] touch-manipulation"
+                  >
+                    Get Started
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
                 <Button
                   size="lg"
                   variant="outline"
