@@ -15,7 +15,7 @@ import {
   Clock,
   Users,
   BarChart3,
-  Bell,
+  // Bell,
   Building2,
   GraduationCap,
   UserCheck,
@@ -117,24 +117,12 @@ function ClassSyncLanding() {
               >
                 Home
               </Link>
-              <div className="relative group">
-                <button className="flex items-center text-sm text-gray-300 hover:text-white font-medium transition-colors">
-                  Features
-                  <svg
-                    className="w-3 h-3 ml-1"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </button>
-              </div>
+              <Link
+                to="."
+                className="text-sm text-gray-300 hover:text-white font-medium transition-colors"
+              >
+                Features
+              </Link>
               <Link
                 to="."
                 className="text-sm text-gray-300 hover:text-white font-medium transition-colors"
@@ -332,70 +320,6 @@ function ClassSyncLanding() {
               </div>
             </motion.div>
           </div>
-
-          {/* Trusted By Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 1.2 }}
-            className="mt-12 sm:mt-16 lg:mt-20 text-center"
-          >
-            <p className="text-xs sm:text-sm text-gray-400 mb-6 sm:mb-8">
-              We are trusted by
-            </p>
-            <div className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 lg:gap-8 opacity-60">
-              <div className="flex items-center space-x-1.5 sm:space-x-2">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-600 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-xs sm:text-sm">
-                    G
-                  </span>
-                </div>
-                <span className="font-semibold text-gray-400 text-xs sm:text-sm">
-                  Google
-                </span>
-              </div>
-              <div className="flex items-center space-x-1.5 sm:space-x-2">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-purple-600 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-xs sm:text-sm">
-                    U
-                  </span>
-                </div>
-                <span className="font-semibold text-gray-400 text-xs sm:text-sm">
-                  Udemy
-                </span>
-              </div>
-              <div className="flex items-center space-x-1.5 sm:space-x-2">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-600 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-xs sm:text-sm">
-                    K
-                  </span>
-                </div>
-                <span className="font-semibold text-gray-400 text-xs sm:text-sm">
-                  Khan Academy
-                </span>
-              </div>
-              <div className="flex items-center space-x-1.5 sm:space-x-2">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-orange-600 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-xs sm:text-sm">
-                    C
-                  </span>
-                </div>
-                <span className="font-semibold text-gray-400 text-xs sm:text-sm">
-                  Codecademy
-                </span>
-              </div>
-              <div className="flex items-center space-x-1.5 sm:space-x-2">
-                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-xs sm:text-sm">
-                    A
-                  </span>
-                </div>
-                <span className="font-semibold text-gray-400 text-xs sm:text-sm">
-                  Cloud Academy
-                </span>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -435,38 +359,38 @@ function ClassSyncLanding() {
                 color: 'text-blue-400',
               },
               {
-                icon: <Clock className="w-6 h-6" />,
-                title: 'Timed Sessions',
+                icon: <Shield className="w-6 h-6" />,
+                title: 'Face Verification',
                 description:
-                  'Automated session control with customizable time windows',
+                  'Advanced facial recognition to prevent proxy attendance and ensure identity verification',
                 color: 'text-purple-400',
               },
               {
-                icon: <Upload className="w-6 h-6" />,
-                title: 'CSV Uploads',
+                icon: <Smartphone className="w-6 h-6" />,
+                title: 'Browser Fingerprinting',
                 description:
-                  'Bulk import student data and export attendance records',
+                  'Unique device identification for enhanced security and fraud prevention',
                 color: 'text-green-400',
               },
               {
-                icon: <CheckCircle className="w-6 h-6" />,
-                title: 'Join Request Management',
+                icon: <Clock className="w-6 h-6" />,
+                title: 'Course Scheduling',
                 description:
-                  'Approve or deny student attendance requests in real-time',
+                  'Smart scheduling system with automated reminders and notifications for students',
                 color: 'text-orange-400',
               },
               {
-                icon: <BarChart3 className="w-6 h-6" />,
-                title: 'Analytics Dashboard',
+                icon: <Upload className="w-6 h-6" />,
+                title: 'AI-Powered CSV Processing',
                 description:
-                  'Comprehensive insights and attendance pattern analysis',
+                  'Intelligent bulk import with automatic error correction and data validation',
                 color: 'text-cyan-400',
               },
               {
-                icon: <Bell className="w-6 h-6" />,
-                title: 'Push Notifications',
+                icon: <BarChart3 className="w-6 h-6" />,
+                title: 'Real-time Analytics',
                 description:
-                  'Real-time alerts for session updates and attendance status',
+                  'Comprehensive dashboards with attendance patterns and engagement insights',
                 color: 'text-pink-400',
               },
             ].map((feature, index) => (
@@ -494,6 +418,243 @@ function ClassSyncLanding() {
         </div>
       </section>
 
+      {/* Pricing & Subscription Section */}
+      <section className="py-12 sm:py-16 lg:py-20 px-4 bg-gray-800/30">
+        <div className="container mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-white">
+              Simple, Transparent Pricing
+            </h2>
+            <p className="text-base sm:text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto px-4">
+              Choose the perfect plan for your teaching needs. Start free and
+              upgrade as you grow.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-6xl mx-auto">
+            {/* Free Plan */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="group"
+            >
+              <Card className="h-full border-gray-700/50 bg-gray-800/50 backdrop-blur-sm hover:shadow-xl hover:scale-105 transition-all duration-300 relative">
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-xl font-bold text-white mb-2">
+                    Free Plan
+                  </CardTitle>
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold text-white">₦0</span>
+                    <span className="text-gray-400 ml-1">/ month</span>
+                  </div>
+                  <CardDescription className="text-gray-400">
+                    Perfect for trying out ClassSync and getting familiar with
+                    the platform
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-3">
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      1 active course
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Up to 30 students
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      GPS-based attendance tracking
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Secure lecturer dashboard
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Desktop and mobile access
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Community support
+                    </li>
+                  </ul>
+                  <div className="pt-4">
+                    <Link to="/login">
+                      <Button className="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                        Get Started Free
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Basic Plan */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="group"
+            >
+              <Card className="h-full border-gray-700/50 bg-gray-800/50 backdrop-blur-sm hover:shadow-xl hover:scale-105 transition-all duration-300 relative">
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-xl font-bold text-white mb-2">
+                    Basic Plan
+                  </CardTitle>
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold text-white">
+                      ₦2,999
+                    </span>
+                    <span className="text-gray-400 ml-1">/ month</span>
+                  </div>
+                  <CardDescription className="text-gray-400">
+                    Ideal for individual lecturers managing multiple
+                    small-to-medium classes
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-3">
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Up to 5 active courses
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Up to 150 students per course
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      GPS-based attendance tracking
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Optional facial verification
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Basic attendance analytics
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Export data (CSV)
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Email & chat support
+                    </li>
+                  </ul>
+                  <div className="pt-4">
+                    <Link to="/login">
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                        Get Started
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Pro Plan - Most Popular */}
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="group relative"
+            >
+              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 z-10">
+                <Badge className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-1 text-sm font-semibold">
+                  Most Popular
+                </Badge>
+              </div>
+              <Card className="h-full border-2 border-purple-500 bg-gray-800/50 backdrop-blur-sm hover:shadow-2xl hover:scale-105 transition-all duration-300 relative ring-2 ring-purple-500/40 shadow-lg shadow-purple-500/20">
+                <CardHeader className="text-center pb-4">
+                  <CardTitle className="text-xl font-bold text-white mb-2">
+                    Pro Plan
+                  </CardTitle>
+                  <div className="mb-4">
+                    <span className="text-3xl font-bold text-white">
+                      ₦5,999
+                    </span>
+                    <span className="text-gray-300 ml-1">/ month</span>
+                  </div>
+                  <CardDescription className="text-gray-400">
+                    Perfect for power users, large classes, and professional
+                    lecturers
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ul className="space-y-3">
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Unlimited courses
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Unlimited students
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      GPS + Facial verification included
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Advanced analytics & insights
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Export (CSV, Excel, PDF)
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Scheduled class notifications
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Manual overrides with logging
+                    </li>
+                    <li className="flex items-center text-sm text-gray-300">
+                      <CheckCircle className="w-4 h-4 text-green-400 mr-3 flex-shrink-0" />
+                      Priority support
+                    </li>
+                  </ul>
+                  <div className="pt-4">
+                    <Link to="/login">
+                      <Button className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300">
+                        Get Started
+                      </Button>
+                    </Link>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* Pricing Note */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4 }}
+            className="text-center mt-8 sm:mt-12"
+          >
+            <p className="text-xs sm:text-sm text-gray-500">
+              Prices are per lecturer account. Institutional pricing available
+              on request.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Final CTA */}
       <section className="py-12 sm:py-16 lg:py-20 px-4 bg-gray-900">
         <div className="container mx-auto text-center">
@@ -511,21 +672,16 @@ function ClassSyncLanding() {
               modernize their classrooms and eliminate attendance fraud.
             </p>
 
-            <div className="flex flex-col xs:flex-row gap-3 sm:gap-4 justify-center items-center mb-6 sm:mb-8">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-3 sm:py-4 lg:py-6 w-full xs:w-auto min-h-[48px] touch-manipulation"
-              >
-                Start for Free
-                <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-3 sm:py-4 lg:py-6 bg-transparent border-gray-600 text-white hover:bg-gray-800 w-full xs:w-auto min-h-[48px] touch-manipulation"
-              >
-                Request a Demo
-              </Button>
+            <div className="flex justify-center mb-6 sm:mb-8">
+              <Link to="/login">
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-sm sm:text-base lg:text-lg px-6 sm:px-8 py-3 sm:py-4 lg:py-6 min-h-[48px] touch-manipulation"
+                >
+                  Start for Free
+                  <ArrowRight className="ml-2 w-4 h-4 sm:w-5 sm:h-5" />
+                </Button>
+              </Link>
             </div>
 
             <p className="text-xs sm:text-sm text-gray-500 px-4">
@@ -598,92 +754,93 @@ function HowItWorks() {
       title: 'Get Started in Minutes',
       subtitle: 'Sign Up & Onboard',
       description:
-        'Create an account, select your role as a lecturer, and onboard with your details.',
+        'Create your lecturer account and set up your profile with essential details.',
       details: [
-        'Choose your faculty and department',
-        'Upload a class list using our clean CSV format',
-        'Personalize your profile with a photo',
+        'Simple email and password registration',
+        'Upload a professional profile photo',
+        'Complete your lecturer profile information',
       ],
       icon: <UserCheck className="w-8 h-8" />,
       color: 'from-blue-500 to-cyan-500',
-      note: "No paperwork. Just plug in your students and you're good to go.",
+      note: 'No institutional approval needed. Start teaching immediately.',
     },
     {
       step: '02',
-      title: 'Powerful Course Setup',
-      subtitle: 'Create a Course',
+      title: 'Smart Course Management',
+      subtitle: 'Create Courses & Upload Students',
       description:
-        'Set up courses with unique codes, link class lists, and configure attendance preferences.',
+        'Set up courses with unique codes and upload your class lists effortlessly.',
       details: [
-        'Define course code and session year',
-        'Assign pre-uploaded class lists',
-        'Customize attendance rules like GPS radius, reading time, and session duration',
+        'Create courses with custom codes and descriptions',
+        'Upload student lists via CSV with AI-powered error correction',
+        'Configure attendance settings: GPS radius, session duration, and face verification',
       ],
       icon: <Settings className="w-8 h-8" />,
       color: 'from-purple-500 to-pink-500',
-      note: "Set it once. Focus on teaching — we'll handle the logistics.",
+      note: 'AI fixes malformed CSV files automatically. Focus on teaching, not data entry.',
     },
     {
       step: '03',
-      title: 'Location-Smart Attendance',
-      subtitle: 'Start Attendance',
+      title: 'Multi-Layer Verification',
+      subtitle: 'Start Secure Attendance',
       description:
-        'Launch a session, and students within your range can check in.',
+        'Launch attendance sessions with GPS location and optional face verification for maximum security.',
       details: [
-        'Set a session timer (e.g. 5 minutes)',
-        'Define location boundaries (50m–300m)',
-        'Monitor live session activity',
+        'GPS-based location verification within your defined radius',
+        'Optional face verification to prevent proxy attendance',
+        'Real-time monitoring of student check-ins and session activity',
       ],
       icon: <MapPin className="w-8 h-8" />,
       color: 'from-green-500 to-emerald-500',
-      note: 'Built-in GPS validation means only present students get counted.',
+      note: 'Dual verification ensures only genuine, present students are marked.',
     },
   ];
 
   const studentSteps = [
     {
       step: '01',
-      title: 'Quick Onboarding for Students',
-      subtitle: 'Sign In & Onboard',
+      title: 'Quick Student Registration',
+      subtitle: 'Sign Up & Verify Identity',
       description:
-        'On first login, students fill in basic details and upload a passport photo.',
+        'Create your student account and complete identity verification with your photo.',
       details: [
-        "Registration number must start with '202…'",
-        'Select faculty, department, and year batch',
-        'Upload a clear, official-looking photo',
+        'Simple registration with email and password',
+        'Upload a clear passport-style photo for verification',
+        'Complete your student profile with registration number',
       ],
       icon: <Smartphone className="w-8 h-8" />,
       color: 'from-orange-500 to-red-500',
-      note: "Your identity matters. A simple setup ensures everyone's accountable.",
+      note: 'Your identity matters. Clear photos ensure secure attendance tracking.',
     },
     {
       step: '02',
-      title: 'Find Your Course, Get Verified',
-      subtitle: 'Join a Course',
-      description: 'Search using a course code and submit a join request.',
+      title: 'Join Courses Securely',
+      subtitle: 'Request Course Access',
+      description:
+        'Find courses using unique codes and get verified by your lecturers.',
       details: [
-        'Lecturers verify your reg number against uploaded lists',
-        'Only verified students are admitted',
-        'Get notified once approved',
+        'Search and request to join courses with course codes',
+        'Lecturers verify your registration details against class lists',
+        'Receive instant notifications when approved',
       ],
       icon: <Shield className="w-8 h-8" />,
       color: 'from-teal-500 to-blue-500',
-      note: 'No unauthorized access. Only verified students can check in.',
+      note: 'Only verified students can access courses. No unauthorized attendance.',
     },
     {
       step: '03',
-      title: 'Stay. Learn. Get Counted.',
-      subtitle: 'Read Attendance',
+      title: 'Secure Multi-Factor Check-in',
+      subtitle: 'GPS + Face Verification',
       description:
-        "When a session starts, tap 'Start Reading Attendance' and stay within range.",
+        'Check in using GPS location and optional face verification for maximum security.',
       details: [
-        'GPS-verified check-in',
-        'Must remain connected for ~70% of session',
-        'Automatically marked present when timer completes',
+        "GPS verification ensures you're physically present in class",
+        'Optional face verification prevents proxy attendance',
+        'Stay connected throughout the session to be marked present',
       ],
       icon: <Clock className="w-8 h-8" />,
       color: 'from-indigo-500 to-purple-500',
-      note: 'Attendance that rewards presence — not quick logins.',
+      note: 'Dual verification system ensures fair and accurate attendance tracking.',
     },
   ];
 
@@ -1141,68 +1298,75 @@ function HowItWorks() {
             <div className="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-4 py-2 mb-6">
               <Building2 className="w-5 h-5 text-purple-400" />
               <span className="text-purple-400 font-medium">
-                Institution Control
+                Custom Enterprise Solutions
               </span>
             </div>
 
             <h3 className="text-3xl font-bold text-white mb-4">
-              Institutional Insights, Reimagined
+              Tailored Attendance Systems for Universities
             </h3>
             <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-              Admin dashboards to track attendance trends across departments
-              with custom rules for every department.
+              We build custom attendance management systems designed
+              specifically for your institution&apos;s unique requirements and
+              workflows.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div className="text-left">
                 <h4 className="text-lg font-semibold text-white mb-3 flex items-center">
                   <TrendingUp className="w-5 h-5 text-purple-400 mr-2" />
-                  Monitor Campus-wide Attendance
+                  Enterprise-Grade Features
                 </h4>
                 <ul className="space-y-2 text-gray-400">
                   <li className="flex items-center">
                     <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                    View attendance logs for any course
+                    Campus-wide attendance analytics and reporting
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                    Track faculty activity
+                    Integration with existing student information systems
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                    Spot low-engagement patterns
+                    Multi-campus support with centralized management
                   </li>
                 </ul>
               </div>
               <div className="text-left">
                 <h4 className="text-lg font-semibold text-white mb-3 flex items-center">
                   <Globe className="w-5 h-5 text-blue-400 mr-2" />
-                  Policy & Control
+                  Custom Configuration
                 </h4>
                 <ul className="space-y-2 text-gray-400">
                   <li className="flex items-center">
                     <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                    Set default GPS radius and timeouts
+                    Institution-specific branding and white-labeling
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                    Add school branding and permissions
+                    Custom attendance policies and validation rules
                   </li>
                   <li className="flex items-center">
                     <CheckCircle className="w-4 h-4 text-green-400 mr-2" />
-                    Enable biometric add-ons (future)
+                    Advanced security features and compliance support
                   </li>
                 </ul>
               </div>
             </div>
 
-            <Button
-              size="lg"
-              className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white font-semibold px-8 py-3"
-            >
-              Learn About Institutional Access
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+            <div className="flex flex-col items-center space-y-4">
+              <Badge
+                variant="secondary"
+                className="px-4 py-2 text-sm font-medium bg-orange-500/10 border border-orange-500/20 text-orange-400"
+              >
+                🚧 Coming Soon
+              </Badge>
+              <p className="text-gray-400 text-sm max-w-md">
+                We&apos;re currently developing enterprise solutions for
+                universities and institutions. Contact us to discuss your custom
+                requirements and get early access.
+              </p>
+            </div>
           </div>
         </motion.div>
       </div>

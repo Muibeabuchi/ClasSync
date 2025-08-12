@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Checkbox } from '@/components/ui/checkbox';
+// import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -364,7 +364,7 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
                                   {request.courseSpecificImageUrl ? (
                                     <img
                                       src={request.courseSpecificImageUrl}
-                                      alt={`${request.student.fullName} - Course Photo`}
+                                      alt={`${request.student.fullName} - Course`}
                                       className="h-full w-full object-cover"
                                     />
                                   ) : request.student.profileImage ? (
