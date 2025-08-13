@@ -244,11 +244,13 @@ export const JoinCourseStepForm = ({
 
   // Handle form submission
   const handleSubmitRequest = async () => {
-    if (!searchResult || !canSubmitRequest) return;
+    if (!searchResult || !canSubmitRequest || isJoining) return;
+
+    let uploadingToast: string | number | undefined;
 
     try {
       // Show uploading toast
-      const uploadingToast = toast.loading('Uploading your photo...');
+      uploadingToast = toast.loading('Uploading your photo...');
 
       // Upload image
       const uploadUrl = await generateUploadUrl();
@@ -301,6 +303,13 @@ export const JoinCourseStepForm = ({
       onSuccess?.();
     } catch (error) {
       console.error('Join request error:', error);
+
+      // Ensure loading toast is dismissed on error
+      if (uploadingToast) {
+        toast.dismiss(uploadingToast);
+      }
+
+      // Show error toast
       toast.error('Failed to send join request. Please try again.');
     }
   };
@@ -434,6 +443,14 @@ export const JoinCourseStepForm = ({
                       <CheckCircle className="h-4 w-4" />
                       <AlertDescription>
                         You are already a member of this course.
+                      </AlertDescription>
+                    </Alert>
+                  ) : searchResult.hasPendingRequest ? (
+                    <Alert variant="default">
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        You have a pending request to join this course. Please
+                        wait for the lecturer to review your request.
                       </AlertDescription>
                     </Alert>
                   ) : (
@@ -573,8 +590,8 @@ export const JoinCourseStepForm = ({
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription className="text-sm">
-                  Upload a clear photo of yourself. You'll be able to crop and
-                  adjust it before submitting.
+                  Upload a clear photo of yourself. You&apos;ll be able to crop
+                  and adjust it before submitting.
                 </AlertDescription>
               </Alert>
 
@@ -796,25 +813,9 @@ export const JoinCourseStepForm = ({
                 {/* Photo Preview */}
                 {courseImage && imagePreviewUrl && (
                   <div className="p-4 bg-muted/50 rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-medium text-sm text-muted-foreground">
-                        Your Photo
-                      </h4>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          // Set up for re-cropping
-                          setTempImageUrl(imagePreviewUrl);
-                          setShowCropper(true);
-                        }}
-                        disabled={isJoining}
-                      >
-                        <Camera className="h-4 w-4 mr-2" />
-                        Crop & Adjust
-                      </Button>
-                    </div>
+                    <h4 className="font-medium text-sm text-muted-foreground mb-3">
+                      Your Photo
+                    </h4>
                     <div className="space-y-3">
                       <div className="relative">
                         <img

@@ -33,7 +33,7 @@ function RootComponent() {
           <Toaster />
         </div>
       </div>
-      <ReactQueryDevtools buttonPosition="bottom-right" />
+      <ReactQueryDevtools buttonPosition="top-right" />
       <TanStackRouterDevtools position="bottom-right" />
     </ThemeProvider>
   );
