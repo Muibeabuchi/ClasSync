@@ -43,14 +43,15 @@ export const getUserOnboardedStatus = query({
   handler: async (ctx) => {
     const user = await getCurrentUser({ ctx });
     if (!user) return null;
+    const userImage = user.userImage;
 
-    let userImage: string = '';
-    if (user.isOnboarded) {
-      userImage =
-        user.role === 'student'
-          ? ((await ctx.storage.getUrl(user.student_passport_photo_id!)) ?? '')
-          : ((await ctx.storage.getUrl(user.lecturerPassportImage!)) ?? '');
-    }
+    // let userImage: string = '';
+    // if (user.isOnboarded) {
+    //   userImage =
+    //     user.role === 'student'
+    //       ? ((await ctx.storage.getUrl(user.student_passport_photo_id!)) ?? '')
+    //       : ((await ctx.storage.getUrl(user.lecturerPassportImage!)) ?? '');
+    // }
 
     return {
       isOnboarded: user.isOnboarded,

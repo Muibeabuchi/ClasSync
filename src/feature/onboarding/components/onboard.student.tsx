@@ -52,7 +52,8 @@ const studentFormSchema = z.object({
     })
     .refine((file) => file.size <= 5 * 1024 * 1024, {
       message: 'Image must be smaller than 5MB',
-    }),
+    })
+    .optional(),
 });
 
 type StudentFormData = z.infer<typeof studentFormSchema>;
