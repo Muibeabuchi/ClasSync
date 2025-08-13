@@ -7,7 +7,7 @@ import { z } from 'zod';
 export const overrideJustificationSchema = z.object({
   justificationNote: z
     .string()
-    .min(15, 'Justification must be at least 15 characters long')
+    .min(5, 'Justification must be at least 5 characters long')
     .max(100, 'Justification cannot exceed 100 characters')
     .trim()
     .refine(

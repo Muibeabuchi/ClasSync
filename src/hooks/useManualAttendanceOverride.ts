@@ -40,7 +40,6 @@ interface ManualOverrideParams {
  * Requirements: 1.4, 3.4, 4.4 - Comprehensive error handling with logging and contextual information
  */
 export const useManualAttendanceOverride = () => {
-  const queryClient = useQueryClient();
   const createOverrideMutation = useConvexMutation(
     api.attendance.createManualAttendanceOverride,
   );
@@ -53,44 +52,10 @@ export const useManualAttendanceOverride = () => {
         justificationNote: params.justificationNote.trim(),
       });
     },
-    onSuccess: (data, variables) => {
-      // Show success toast
-      toast.success('Student marked as present', {
-        description: `Successfully marked student as present via manual override.`,
-      });
-
-      // Invalidate relevant queries for cache invalidation
-      queryClient.invalidateQueries({
-        queryKey: ['convex', 'attendance.getAttendanceRecordsWithOverrides'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['convex', 'attendance.getAttendanceStatistics'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['convex', 'attendance.getAttendanceSessionWithOverrideInfo'],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ['convex', 'attendance.getAttendanceSessionRecords'],
-      });
-    },
-    onError: (error, variables) => {
-      console.error('Override failed:', error);
-
-      // Parse and show user-friendly error
-      const overrideError = parseConvexError(error, {
-        sessionId: variables.attendanceSessionId,
-        studentId: variables.studentId,
-        justificationLength: variables.justificationNote?.length || 0,
-      });
-
-      toast.error('Failed to mark student as present', {
-        description: overrideError.userMessage,
-      });
-    },
   });
 
   return {
-    createOverride: overrideMutation,
+    createOverride: overrideMutation.mutateAsync,
     isLoading: overrideMutation.isPending,
     error: overrideMutation.error,
     isSuccess: overrideMutation.isSuccess,
