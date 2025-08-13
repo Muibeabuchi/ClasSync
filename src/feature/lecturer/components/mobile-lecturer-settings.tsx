@@ -20,7 +20,7 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import {
-  ArrowLeft,
+  // ArrowLeft,
   MapPin,
   // Clock,
   Bell,
@@ -93,16 +93,16 @@ const MobileLecturerSettings = () => {
   if (activeSection === 'attendance') {
     return (
       <div className="min-h-screen bg-background">
-        <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center gap-3">
-          <Button
+        {/* <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center gap-3"> */}
+        {/* <Button
             variant="ghost"
             size="icon"
             onClick={() => setActiveSection(null)}
           >
             <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold">Attendance Settings</h1>
-        </div>
+          </Button> */}
+        {/* <h1 className="text-lg font-semibold">Attendance Settings</h1> */}
+        {/* </div> */}
 
         <div className="p-4 space-y-6">
           <div className="space-y-2">
@@ -169,16 +169,16 @@ const MobileLecturerSettings = () => {
   if (activeSection === 'notifications') {
     return (
       <div className="min-h-screen bg-background">
-        <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center gap-3">
-          <Button
+        {/* <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center gap-3"> */}
+        {/* <Button
             variant="ghost"
             size="icon"
             onClick={() => setActiveSection(null)}
           >
             <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-lg font-semibold">Notifications</h1>
-        </div>
+          </Button> */}
+        {/* <h1 className="text-lg font-semibold">Notifications</h1> */}
+        {/* </div> */}
 
         <div className="p-4 space-y-6">
           <div className="flex items-center justify-between">
@@ -287,7 +287,7 @@ const MobileLecturerSettings = () => {
   if (activeSection === 'security') {
     return (
       <div className="min-h-screen bg-background">
-        <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center gap-3">
+        {/* <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -296,7 +296,7 @@ const MobileLecturerSettings = () => {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-lg font-semibold">Security & Privacy</h1>
-        </div>
+        </div> */}
 
         <div className="p-4 space-y-6">
           <div className="flex items-center justify-between">
