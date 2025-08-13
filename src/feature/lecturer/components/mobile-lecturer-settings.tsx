@@ -35,11 +35,11 @@ import { toast } from 'sonner';
 // import { api } from 'convex/_generated/api';
 import { FaceVerificationSettings } from '@/components/face-verification/FaceVerificationSettings';
 import { useLecturerOverrideSettings } from '@/hooks/useManualAttendanceOverride';
-import { useMobileLecturerNavigation } from '@/feature/lecturer/hooks/use-mobile-lecturer-navigation';
+// import { useMobileLecturerNavigation } from '@/feature/lecturer/hooks/use-mobile-lecturer-navigation';
 
 const MobileLecturerSettings = () => {
   // Navigation
-  const { getBackRoute } = useMobileLecturerNavigation();
+  // const { getBackRoute } = useMobileLecturerNavigation();
 
   // State for various settings
   const [gpsRadius, setGpsRadius] = useState('100');
@@ -359,12 +359,12 @@ const MobileLecturerSettings = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center gap-3">
+      {/* <div className="sticky top-0 bg-background border-b px-4 py-3 flex items-center gap-3">
         <Button variant="ghost" size="icon" onClick={getBackRoute}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
         <h1 className="text-lg font-semibold">Settings</h1>
-      </div>
+      </div> */}
 
       <div className="p-4 space-y-4">
         {/* Settings Menu Items */}
