@@ -32,7 +32,7 @@ export class FaceDetectionValidator {
         };
       }
 
-      // Use the simplified face validation method
+      // Use the simplified face validation method with high accuracy
       const result = await this.faceApiService.validateFaceCount(imageElement);
       const { faceCount, detections } = result;
 
@@ -40,7 +40,7 @@ export class FaceDetectionValidator {
         return {
           isValid: false,
           error:
-            'No face detected in the image. Please upload a clear, well-lit photo showing your face without sunglasses or face coverings.',
+            'No face detected in the image. Please upload a clear, well-lit photo showing your face without sunglasses, masks, or face coverings. Ensure your face is clearly visible and well-centered.',
           faceCount: 0,
         };
       }
@@ -48,34 +48,42 @@ export class FaceDetectionValidator {
       if (faceCount > 1) {
         return {
           isValid: false,
-          error: `Multiple faces detected (${faceCount}). Please upload an image with only your face visible.`,
+          error: `Multiple faces detected (${faceCount}). Please upload an image with only your face visible. Make sure no other people are in the background.`,
           faceCount,
         };
       }
 
-      // Exactly one face detected - validate quality
+      // Exactly one face detected - validate quality with improved thresholds
       const singleFace = detections[0];
       const box = singleFace.box;
 
-      // Check if face is too small (minimum 80x80 pixels)
-      if (box.width < 80 || box.height < 80) {
+      // Check if face is too small (minimum 100x100 pixels for better accuracy)
+      if (box.width < 100 || box.height < 100) {
         return {
           isValid: false,
           error:
-            'Your face appears too small in the image. Please take a closer photo or crop the image to focus on your face.',
+            'Your face appears too small in the image. Please take a closer photo or crop the image to focus on your face. The face should be at least 100x100 pixels.',
           faceCount: 1,
         };
       }
 
-      // Check detection confidence (score should be reasonable)
+      // Check detection confidence with improved thresholds
       const confidence = singleFace.score;
-      if (confidence < 0.5) {
+      const minConfidence = 0.6; // Higher threshold for SSDMobileNet
+
+      if (confidence < minConfidence) {
         return {
           isValid: false,
-          error:
-            'Face detection confidence is low. Please ensure good lighting and that your face is clearly visible.',
+          error: `Face detection confidence is low (${Math.round(confidence * 100)}%). Please ensure good lighting, remove sunglasses or hats, and make sure your face is clearly visible and well-centered in the image.`,
           faceCount: 1,
         };
+      }
+
+      // Additional quality checks for very high confidence
+      if (confidence > 0.9) {
+        console.log(
+          `High confidence face detection: ${Math.round(confidence * 100)}%`,
+        );
       }
 
       return {
@@ -91,21 +99,34 @@ export class FaceDetectionValidator {
           return {
             isValid: false,
             error:
-              'Face detection timed out. Please try again with a smaller image.',
+              'Face detection timed out. Please try again with a smaller image (under 2MB).',
           };
         }
-        if (error.message.includes('load')) {
+        if (error.message.includes('load') || error.message.includes('model')) {
           return {
             isValid: false,
             error:
-              'Failed to load face detection models. Please check your internet connection.',
+              'Failed to load face detection models. Please check your internet connection and refresh the page.',
           };
         }
-        if (error.message.includes('FaceLandmark68Net')) {
+        if (
+          error.message.includes('SSDMobileNet') ||
+          error.message.includes('TinyFaceDetector')
+        ) {
           return {
             isValid: false,
             error:
               'Face detection models are not properly loaded. Please refresh the page and try again.',
+          };
+        }
+        if (
+          error.message.includes('canvas') ||
+          error.message.includes('image')
+        ) {
+          return {
+            isValid: false,
+            error:
+              'Failed to process the image. Please try a different image format (JPG or PNG).',
           };
         }
       }
@@ -113,7 +134,7 @@ export class FaceDetectionValidator {
       return {
         isValid: false,
         error:
-          'Face detection failed. Please try again with a different image or check your internet connection.',
+          'Face detection failed due to an unexpected error. Please try again with a different image or refresh the page.',
       };
     }
   }

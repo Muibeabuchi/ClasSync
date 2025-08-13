@@ -100,7 +100,7 @@ export const FaceAttendanceVerification: React.FC<
     };
   }, [loadModels, startCamera, stopCamera]);
 
-  // Auto-detect and verify face - optimized for lightweight models
+  // Enhanced auto-detect and verify face with SSDMobileNet and landmarks
   useEffect(() => {
     if (verificationStep === 'detecting' && cameraActive && modelsLoaded) {
       let isDetecting = false;
@@ -114,10 +114,19 @@ export const FaceAttendanceVerification: React.FC<
         isDetecting = true;
 
         try {
-          // Use lightweight detection for better performance
-          const result = await detectFaceFromVideo(videoElement, false);
+          // Use high accuracy detection with SSDMobileNet and landmarks
+          const result = await detectFaceFromVideo(videoElement, true);
 
           if (result.success && result.descriptor) {
+            // Log enhanced detection results
+            console.log('Enhanced face detection result:', {
+              model: result.quality ? 'SSDMobileNet' : 'TinyFaceDetector',
+              confidence: result.confidence?.toFixed(3),
+              quality: result.quality,
+              landmarksDetected: !!result.landmarks,
+              feedback: result.feedback,
+            });
+
             setVerificationStep('verifying');
             clearInterval(detectInterval);
 
@@ -133,6 +142,12 @@ export const FaceAttendanceVerification: React.FC<
 
               if (verifyResult.success) {
                 setVerificationStep('success');
+                // Show enhanced success feedback
+                if (result.quality?.isGoodQuality) {
+                  toast.success('High Quality Face Verified!', {
+                    description: `Excellent detection with ${Math.round((result.confidence || 0) * 100)}% confidence`,
+                  });
+                }
                 setTimeout(() => {
                   onSuccess(verifyResult);
                 }, 2000);
@@ -140,27 +155,37 @@ export const FaceAttendanceVerification: React.FC<
                 setVerificationStep('failed');
               }
             } catch (error) {
-              console.error('Verification error:', error);
+              console.error('Enhanced verification error:', error);
               setVerificationStep('failed');
             }
           } else {
             setDetectionAttempts((prev) => prev + 1);
 
-            // Show guidance less frequently to avoid spam
-            if (detectionAttempts > 20) {
+            // Show enhanced guidance based on feedback
+            if (
+              detectionAttempts > 15 &&
+              result.feedback &&
+              result.feedback.length > 0
+            ) {
+              const primaryFeedback = result.feedback[0];
+              toast.warning('Face Detection Tips', {
+                description: primaryFeedback,
+              });
+              setDetectionAttempts(0);
+            } else if (detectionAttempts > 25) {
               toast.warning('Face Detection Tips', {
                 description:
-                  'Ensure good lighting and look directly at the camera.',
+                  'Ensure good lighting, face the camera directly, and move closer if needed.',
               });
               setDetectionAttempts(0);
             }
           }
         } catch (error) {
-          console.error('Face detection error:', error);
+          console.error('Enhanced face detection error:', error);
         } finally {
           isDetecting = false;
         }
-      }, 250); // Faster detection interval for better UX
+      }, 200); // Slightly faster for SSDMobileNet
 
       return () => clearInterval(detectInterval);
     }
@@ -239,10 +264,19 @@ export const FaceAttendanceVerification: React.FC<
 
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-48 h-48 border-4 border-blue-500 rounded-full animate-pulse opacity-50" />
+          {/* Landmark detection indicators */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-32 h-32 border-2 border-green-400 rounded-lg opacity-30 animate-pulse" />
+          </div>
         </div>
 
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-          Detecting face...
+          Detecting with SSDMobileNet...
+        </div>
+
+        {/* Model info overlay */}
+        <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+          🎯 High Accuracy Mode
         </div>
       </div>
 

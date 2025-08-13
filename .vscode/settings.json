@@ -9,5 +9,6 @@
     "**/routeTree.gen.ts": true
   },
   "typescript.autoClosingTags": false,
-  "cSpell.words": ["Classynk"]
+  "cSpell.words": ["Classynk"],
+  "html.autoClosingTags": false
 }
