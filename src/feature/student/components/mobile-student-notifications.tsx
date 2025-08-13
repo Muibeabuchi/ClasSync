@@ -11,8 +11,8 @@ import {
   MessageSquare,
   Filter,
   Check,
-  X,
-  MoreHorizontal,
+  // X,
+  // MoreHorizontal,
   Trash2,
   Mail,
   MailOpen,
@@ -311,7 +311,7 @@ const MobileStudentNotifications = () => {
 
   return (
     <MobilePageContainer
-      showHeader={true}
+      // showHeader={true}
       headerTitle="Notifications"
       headerActions={
         <div className="flex items-center gap-2">
