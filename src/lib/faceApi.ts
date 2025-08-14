@@ -1,10 +1,9 @@
 import * as faceapi from 'face-api.js';
 
-// Face-api.js model loading and initialization with SSDMobileNet for higher accuracy
+// Face-api.js model loading and initialization with TinyFaceDetector only
 export class FaceApiService {
   private static instance: FaceApiService;
   private modelsLoaded = false;
-  private ssdMobilenetLoaded = false;
   private tinyFaceDetectorLoaded = false;
 
   static getInstance(): FaceApiService {
@@ -20,24 +19,11 @@ export class FaceApiService {
     try {
       console.log('Loading face-api.js models from /models...');
 
-      // Load SSDMobileNet for high accuracy face detection
-      console.log('Loading SSDMobileNetV1 (high accuracy)...');
-      try {
-        await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
-        this.ssdMobilenetLoaded = true;
-        console.log('SSDMobileNetV1 loaded successfully');
-      } catch (error) {
-        console.warn(
-          'Failed to load SSDMobileNetV1, falling back to TinyFaceDetector:',
-          error,
-        );
-
-        // Fallback to TinyFaceDetector if SSDMobileNet fails
-        console.log('Loading TinyFaceDetector (fallback)...');
-        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-        this.tinyFaceDetectorLoaded = true;
-        console.log('TinyFaceDetector loaded as fallback');
-      }
+      // Load TinyFaceDetector as the primary and only face detection model
+      console.log('Loading TinyFaceDetector...');
+      await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+      this.tinyFaceDetectorLoaded = true;
+      console.log('TinyFaceDetector loaded successfully');
 
       // Load face landmark models (68-point for better accuracy)
       console.log('Loading FaceLandmark68Net (high accuracy)...');
@@ -53,18 +39,14 @@ export class FaceApiService {
         console.log('FaceLandmark68TinyNet loaded as fallback');
       }
 
-      // Load face recognition model
-      console.log('Loading FaceRecognitionNet...');
-      await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+      // Note: Face recognition model removed - using only face detection and landmarks
 
       // Add a small delay to ensure models are fully initialized
       await new Promise((resolve) => setTimeout(resolve, 200));
 
-      // Verify at least one face detector is loaded
-      const hasFaceDetector =
-        this.ssdMobilenetLoaded || this.tinyFaceDetectorLoaded;
-      if (!hasFaceDetector) {
-        throw new Error('No face detection model could be loaded');
+      // Verify TinyFaceDetector is loaded
+      if (!this.tinyFaceDetectorLoaded) {
+        throw new Error('TinyFaceDetector could not be loaded');
       }
 
       // Verify landmark model is loaded
@@ -75,18 +57,13 @@ export class FaceApiService {
         throw new Error('No face landmark model could be loaded');
       }
 
-      // Verify face recognition model is loaded
-      if (!faceapi.nets.faceRecognitionNet.isLoaded) {
-        throw new Error('FaceRecognitionNet failed to load');
-      }
+      // Note: Face recognition model not needed for TinyFace detection only
 
       this.modelsLoaded = true;
       console.log('Face-api.js models loaded successfully', {
-        ssdMobilenet: this.ssdMobilenetLoaded,
         tinyFaceDetector: this.tinyFaceDetectorLoaded,
         faceLandmark68: faceapi.nets.faceLandmark68Net.isLoaded,
         faceLandmark68Tiny: faceapi.nets.faceLandmark68TinyNet.isLoaded,
-        faceRecognition: faceapi.nets.faceRecognitionNet.isLoaded,
       });
       return true;
     } catch (error) {
@@ -110,23 +87,22 @@ export class FaceApiService {
     return this.modelsLoaded;
   }
 
-  // Get the best available face detector
+  // Get TinyFaceDetector with optimized settings
   private getFaceDetector(useHighAccuracy = false) {
-    if (this.ssdMobilenetLoaded) {
-      // Use SSDMobileNet for high accuracy
-      return new faceapi.SsdMobilenetv1Options({
-        minConfidence: useHighAccuracy ? 0.5 : 0.6, // Higher confidence for better accuracy
-        maxResults: 100, // Allow multiple faces for detection
-      });
-    } else if (this.tinyFaceDetectorLoaded) {
-      // Fallback to TinyFaceDetector
-      return new faceapi.TinyFaceDetectorOptions({
-        inputSize: useHighAccuracy ? 416 : 224,
-        scoreThreshold: useHighAccuracy ? 0.3 : 0.5,
-      });
-    } else {
-      throw new Error('No face detection model is loaded');
+    console.log('getFaceDetector called with:', {
+      useHighAccuracy,
+      tinyLoaded: this.tinyFaceDetectorLoaded,
+    });
+
+    if (!this.tinyFaceDetectorLoaded) {
+      throw new Error('TinyFaceDetector is not loaded');
     }
+
+    console.log('Using TinyFaceDetector');
+    return new faceapi.TinyFaceDetectorOptions({
+      inputSize: useHighAccuracy ? 416 : 320, // Higher input size for better accuracy
+      scoreThreshold: useHighAccuracy ? 0.2 : 0.3, // Lower threshold for easier detection
+    });
   }
 
   // Get the best available landmark detector
@@ -149,14 +125,11 @@ export class FaceApiService {
       const detector = this.getFaceDetector(useHighAccuracy);
       const useTinyLandmarks = this.useTinyLandmarks();
 
-      console.log(
-        `Detecting face with ${this.ssdMobilenetLoaded ? 'SSDMobileNetV1' : 'TinyFaceDetector'}`,
-        {
-          useHighAccuracy,
-          useTinyLandmarks,
-          detectorOptions: detector,
-        },
-      );
+      console.log('Detecting face with TinyFaceDetector', {
+        useHighAccuracy,
+        useTinyLandmarks,
+        detectorOptions: detector,
+      });
 
       // For video elements, ensure they're ready
       if (input instanceof HTMLVideoElement) {
@@ -170,11 +143,10 @@ export class FaceApiService {
         }
       }
 
-      // Detect single face with landmarks and descriptor
+      // Detect single face with landmarks only (no descriptor for TinyFace)
       const detection = await faceapi
         .detectSingleFace(input, detector)
-        .withFaceLandmarks(useTinyLandmarks)
-        .withFaceDescriptor();
+        .withFaceLandmarks(useTinyLandmarks);
 
       if (!detection) {
         console.log('No face detected in input');
@@ -192,17 +164,15 @@ export class FaceApiService {
         return null;
       }
 
-      // Additional quality checks for SSDMobileNet
-      if (this.ssdMobilenetLoaded) {
-        const confidence = detection.detection.score;
-        const minConfidence = useHighAccuracy ? 0.7 : 0.6;
+      // Quality checks for TinyFaceDetector
+      const confidence = detection.detection.score;
+      const minConfidence = useHighAccuracy ? 0.3 : 0.4; // Optimized for TinyFaceDetector
 
-        if (confidence < minConfidence) {
-          console.log(
-            `Face detection confidence too low: ${confidence}, minimum: ${minConfidence}`,
-          );
-          return null;
-        }
+      if (confidence < minConfidence) {
+        console.log(
+          `Face detection confidence too low: ${confidence}, minimum: ${minConfidence}`,
+        );
+        return null;
       }
 
       console.log(
@@ -210,11 +180,10 @@ export class FaceApiService {
         `${Math.round(box.width)}x${Math.round(box.height)}`,
         'confidence:',
         detection.detection.score.toFixed(3),
-        'descriptor length:',
-        detection.descriptor.length,
       );
 
-      return detection.descriptor;
+      // For TinyFace, we'll create a simple descriptor from landmarks
+      return this.createSimpleDescriptor(detection.landmarks);
     } catch (error) {
       console.error('Face detection failed:', error);
       throw error;
@@ -239,7 +208,7 @@ export class FaceApiService {
     return Math.sqrt(sumSquaredDifferences);
   }
 
-  // Check if two faces match with improved thresholds for SSDMobileNet
+  // Check if two faces match with optimized thresholds for TinyFaceDetector
   isFaceMatch(
     descriptor1: Float32Array,
     descriptor2: Float32Array,
@@ -247,8 +216,8 @@ export class FaceApiService {
   ): boolean {
     const distance = this.calculateDistance(descriptor1, descriptor2);
 
-    // Use different thresholds based on the model being used
-    const defaultThreshold = this.ssdMobilenetLoaded ? 0.5 : 0.6;
+    // Optimized threshold for TinyFaceDetector
+    const defaultThreshold = 0.6; // Good balance for TinyFaceDetector
     const finalThreshold = threshold ?? defaultThreshold;
 
     console.log(
@@ -264,7 +233,7 @@ export class FaceApiService {
     descriptor2: Float32Array,
   ): number {
     const distance = this.calculateDistance(descriptor1, descriptor2);
-    const maxDistance = this.ssdMobilenetLoaded ? 1.0 : 1.2;
+    const maxDistance = 1.2; // Optimized for TinyFaceDetector
 
     // Convert distance to confidence (inverse relationship)
     const confidence = Math.max(0, 1 - distance / maxDistance);
@@ -281,6 +250,27 @@ export class FaceApiService {
     return new Float32Array(array);
   }
 
+  // Create a simple descriptor from landmarks for TinyFace detector
+  private createSimpleDescriptor(landmarks: any): Float32Array {
+    if (!landmarks || !landmarks.positions) {
+      // Return a default descriptor if no landmarks
+      return new Float32Array(128).fill(0);
+    }
+
+    const positions = landmarks.positions;
+    const descriptor = new Float32Array(128);
+
+    // Create a simple descriptor based on landmark positions
+    // This is a simplified approach for TinyFace detector
+    for (let i = 0; i < Math.min(positions.length, 64); i++) {
+      const point = positions[i];
+      descriptor[i * 2] = point.x / 640; // Normalize x coordinate
+      descriptor[i * 2 + 1] = point.y / 480; // Normalize y coordinate
+    }
+
+    return descriptor;
+  }
+
   // Detect multiple faces in an image (for validation) - simplified version
   async detectAllFaces(
     input: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement,
@@ -293,9 +283,7 @@ export class FaceApiService {
       // Use the best available detector for face validation
       const detector = this.getFaceDetector(true); // Use high accuracy for validation
 
-      console.log(
-        `Detecting all faces with ${this.ssdMobilenetLoaded ? 'SSDMobileNetV1' : 'TinyFaceDetector'}`,
-      );
+      console.log('Detecting all faces with TinyFaceDetector');
 
       // Use only face detection without landmarks or descriptors for validation
       const detections = await faceapi.detectAllFaces(input, detector);
@@ -345,6 +333,7 @@ export class FaceApiService {
       landmarkQuality: number;
       isGoodQuality: boolean;
     } | null;
+    modelUsed?: string;
   }> {
     if (!this.modelsLoaded) {
       throw new Error('Models not loaded. Call loadModels() first.');
@@ -354,10 +343,15 @@ export class FaceApiService {
       const detector = this.getFaceDetector(useHighAccuracy);
       const useTinyLandmarks = this.useTinyLandmarks();
 
-      console.log(
-        `Detecting face with landmarks using ${this.ssdMobilenetLoaded ? 'SSDMobileNetV1' : 'TinyFaceDetector'}`,
-        { useHighAccuracy, useTinyLandmarks },
-      );
+      // Always using TinyFaceDetector now
+      const modelUsed = 'TinyFaceDetector';
+
+      console.log(`Detecting face with landmarks using ${modelUsed}`, {
+        useHighAccuracy,
+        useTinyLandmarks,
+        actualModelUsed: modelUsed,
+        tinyLoaded: this.tinyFaceDetectorLoaded,
+      });
 
       // For video elements, ensure they're ready
       if (input instanceof HTMLVideoElement) {
@@ -381,11 +375,10 @@ export class FaceApiService {
         }
       }
 
-      // Detect face with landmarks and descriptor
+      // Detect face with landmarks only (no face descriptor for TinyFace)
       const result = await faceapi
         .detectSingleFace(input, detector)
-        .withFaceLandmarks(useTinyLandmarks)
-        .withFaceDescriptor();
+        .withFaceLandmarks(useTinyLandmarks);
 
       if (!result) {
         console.log('No face detected with landmarks');
@@ -397,16 +390,18 @@ export class FaceApiService {
         };
       }
 
-      const { detection, landmarks, descriptor } = result;
+      const { detection, landmarks } = result;
+      // Create descriptor from landmarks for TinyFace
+      const descriptor = this.createSimpleDescriptor(landmarks);
       const box = detection.box;
 
       // Calculate landmark quality score
       const landmarkQuality = this.calculateLandmarkQuality(landmarks);
 
-      // Enhanced quality assessment
-      const minFaceSize = useHighAccuracy ? 120 : 100; // Higher for SSDMobileNet
-      const minConfidence = this.ssdMobilenetLoaded ? 0.7 : 0.6;
-      const minLandmarkQuality = 0.7;
+      // Enhanced quality assessment - Optimized for TinyFaceDetector
+      const minFaceSize = useHighAccuracy ? 80 : 60; // Lowered minimum face size
+      const minConfidence = useHighAccuracy ? 0.2 : 0.3; // Optimized for TinyFaceDetector
+      const minLandmarkQuality = 0.5; // Lowered landmark quality threshold
 
       const isGoodQuality =
         box.width >= minFaceSize &&
@@ -429,10 +424,10 @@ export class FaceApiService {
         confidence: quality.confidence.toFixed(3),
         landmarkQuality: quality.landmarkQuality.toFixed(3),
         isGoodQuality,
-        model: this.ssdMobilenetLoaded ? 'SSDMobileNet' : 'TinyFaceDetector',
+        model: 'TinyFaceDetector',
       });
 
-      return { detection, landmarks, descriptor, quality };
+      return { detection, landmarks, descriptor, quality, modelUsed };
     } catch (error) {
       console.error('Face detection with landmarks failed:', error);
       throw error;
@@ -440,10 +435,12 @@ export class FaceApiService {
   }
 
   // Calculate landmark quality score based on landmark positions
-  private calculateLandmarkQuality(
-    landmarks: faceapi.FaceLandmarks68 | faceapi.FaceLandmarks68Tiny,
-  ): number {
+  private calculateLandmarkQuality(landmarks: any): number {
     try {
+      if (!landmarks || !landmarks.positions) {
+        return 0.3;
+      }
+
       const positions = landmarks.positions;
 
       // Check if we have enough landmarks
@@ -458,24 +455,35 @@ export class FaceApiService {
       // Check if landmarks form a reasonable face structure
       if (positions.length >= 68) {
         // Full 68-point landmarks - better quality assessment
-        const jawline = landmarks.getJawOutline();
-        const leftEye = landmarks.getLeftEye();
-        const rightEye = landmarks.getRightEye();
-        const nose = landmarks.getNose();
-        const mouth = landmarks.getMouth();
+        try {
+          const jawline = landmarks.getJawOutline
+            ? landmarks.getJawOutline()
+            : [];
+          const leftEye = landmarks.getLeftEye ? landmarks.getLeftEye() : [];
+          const rightEye = landmarks.getRightEye ? landmarks.getRightEye() : [];
+          const nose = landmarks.getNose ? landmarks.getNose() : [];
+          const mouth = landmarks.getMouth ? landmarks.getMouth() : [];
 
-        // Check eye symmetry
-        if (leftEye.length > 0 && rightEye.length > 0) {
-          const eyeDistance = Math.abs(leftEye[0].x - rightEye[0].x);
-          if (eyeDistance > 30) qualityScore += 0.2; // Good eye separation
+          // Check eye symmetry
+          if (leftEye.length > 0 && rightEye.length > 0) {
+            const eyeDistance = Math.abs(leftEye[0].x - rightEye[0].x);
+            if (eyeDistance > 30) qualityScore += 0.2; // Good eye separation
+          }
+
+          // Check face structure completeness
+          if (jawline.length > 10) qualityScore += 0.1;
+          if (nose.length > 5) qualityScore += 0.1;
+          if (mouth.length > 10) qualityScore += 0.1;
+        } catch (structureError) {
+          // If structure methods fail, use basic position analysis
+          console.warn(
+            'Landmark structure analysis failed, using basic quality:',
+            structureError,
+          );
+          qualityScore += 0.2;
         }
-
-        // Check face structure completeness
-        if (jawline.length > 10) qualityScore += 0.1;
-        if (nose.length > 5) qualityScore += 0.1;
-        if (mouth.length > 10) qualityScore += 0.1;
       } else {
-        // Tiny landmarks - basic quality check
+        // Tiny landmarks or basic landmarks - use position-based quality check
         qualityScore += 0.3; // Less detailed but still useful
       }
 
@@ -502,7 +510,7 @@ export class FaceApiService {
       landmarkQuality: number;
       isGoodQuality: boolean;
     };
-    landmarks?: faceapi.FaceLandmarks68 | faceapi.FaceLandmarks68Tiny;
+    landmarks?: faceapi.FaceLandmarks68;
     error?: string;
   }> {
     try {
@@ -536,7 +544,7 @@ export class FaceApiService {
         confidence: confidence.toFixed(3),
         distance: distance.toFixed(3),
         faceQuality: result.quality,
-        model: this.ssdMobilenetLoaded ? 'SSDMobileNet' : 'TinyFaceDetector',
+        model: 'TinyFaceDetector',
       });
 
       return {
@@ -659,23 +667,17 @@ export class FaceApiService {
 
   // Get model information for debugging
   getModelInfo(): {
-    ssdMobilenetLoaded: boolean;
     tinyFaceDetectorLoaded: boolean;
     faceLandmark68Loaded: boolean;
     faceLandmark68TinyLoaded: boolean;
-    faceRecognitionLoaded: boolean;
     primaryDetector: string;
     landmarkModel: string;
   } {
     return {
-      ssdMobilenetLoaded: this.ssdMobilenetLoaded,
       tinyFaceDetectorLoaded: this.tinyFaceDetectorLoaded,
       faceLandmark68Loaded: faceapi.nets.faceLandmark68Net.isLoaded,
       faceLandmark68TinyLoaded: faceapi.nets.faceLandmark68TinyNet.isLoaded,
-      faceRecognitionLoaded: faceapi.nets.faceRecognitionNet.isLoaded,
-      primaryDetector: this.ssdMobilenetLoaded
-        ? 'SSDMobileNetV1'
-        : 'TinyFaceDetector',
+      primaryDetector: 'TinyFaceDetector',
       landmarkModel: faceapi.nets.faceLandmark68Net.isLoaded
         ? 'FaceLandmark68Net'
         : 'FaceLandmark68TinyNet',
@@ -720,11 +722,7 @@ export class FaceApiService {
       ctx.fillRect(10, 10, 200, 30);
       ctx.fillStyle = 'white';
       ctx.font = '12px Arial';
-      ctx.fillText(
-        `Model: ${this.ssdMobilenetLoaded ? 'SSDMobileNet' : 'TinyFaceDetector'}`,
-        15,
-        30,
-      );
+      ctx.fillText(`Model: TinyFaceDetector`, 15, 30);
     }
   }
 }

@@ -18,7 +18,7 @@ import {
   AlertCircle,
   RotateCcw,
   Eye,
-  RefreshCw,
+  Target,
 } from 'lucide-react';
 import { useFaceVerification } from '@/hooks/useFaceVerification';
 import { toast } from 'sonner';
@@ -35,15 +35,17 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
     null,
   );
   const [captureStep, setCaptureStep] = useState<
-    'setup' | 'detecting' | 'captured' | 'processing'
+    'setup' | 'ready' | 'captured' | 'processing'
   >('setup');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [detectionAttempts, setDetectionAttempts] = useState(0);
+  const [faceDetected, setFaceDetected] = useState(false);
+  const [faceQuality, setFaceQuality] = useState<any>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
   const [selectedDeviceId, setSelectedDeviceId] = useState<string>('');
 
   const webcamRef = useRef<Webcam>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -74,6 +76,63 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
     }
   }, [selectedDeviceId]);
 
+  // Draw landmarks on canvas overlay - Define this BEFORE the useEffect that uses it
+  const drawLandmarks = useCallback(
+    (video: HTMLVideoElement, landmarks: any, quality: any) => {
+      if (!canvasRef.current) return;
+
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw face bounding box
+      if (quality && quality.isGoodQuality) {
+        ctx.strokeStyle = '#10B981'; // Green for good quality
+        ctx.lineWidth = 3;
+      } else {
+        ctx.strokeStyle = '#F59E0B'; // Orange for poor quality
+        ctx.lineWidth = 2;
+      }
+
+      // Draw landmarks if available
+      if (landmarks && landmarks.positions) {
+        ctx.fillStyle = quality?.isGoodQuality ? '#10B981' : '#F59E0B';
+
+        landmarks.positions.forEach((point: any) => {
+          ctx.beginPath();
+          ctx.arc(point.x, point.y, 2, 0, 2 * Math.PI);
+          ctx.fill();
+        });
+
+        // Draw face outline if we have enough landmarks
+        if (landmarks.positions.length >= 17) {
+          ctx.strokeStyle = quality?.isGoodQuality ? '#10B981' : '#F59E0B';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+
+          // Draw jaw line (points 0-16)
+          for (let i = 0; i <= 16; i++) {
+            const point = landmarks.positions[i];
+            if (i === 0) {
+              ctx.moveTo(point.x, point.y);
+            } else {
+              ctx.lineTo(point.x, point.y);
+            }
+          }
+          ctx.stroke();
+        }
+      }
+    },
+    [],
+  );
+
   // Load models and get devices on mount
   useEffect(() => {
     const initialize = async () => {
@@ -90,69 +149,96 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
     initialize();
   }, [loadModels, getDevices]);
 
-  // Auto-detect face when camera is active
+  // Continuous face detection for real-time feedback (no auto-capture)
   useEffect(() => {
     if (
       captureMode === 'camera' &&
-      captureStep === 'detecting' &&
+      captureStep === 'ready' &&
       modelsLoaded &&
       webcamRef.current
     ) {
-      let isDetecting = false;
+      // Add a small delay to ensure models are fully loaded
+      const startDelay = setTimeout(() => {
+        let isDetecting = false;
 
-      const detectInterval = setInterval(async () => {
-        if (isDetecting || !webcamRef.current) return;
+        const detectInterval = setInterval(async () => {
+          if (isDetecting || !webcamRef.current) return;
 
-        const video = webcamRef.current.video;
-        if (!video || video.readyState !== 4) return;
+          const video = webcamRef.current.video;
+          if (!video || video.readyState !== 4) return;
 
-        isDetecting = true;
+          // Check video dimensions to prevent canvas drawing errors
+          if (video.videoWidth === 0 || video.videoHeight === 0) return;
 
-        try {
-          // Use lightweight detection for real-time processing
-          const result = await detectFaceFromVideo(video, false);
+          isDetecting = true;
 
-          if (result.success && result.descriptor) {
-            // Face detected! Capture the photo
-            const imageSrc = webcamRef.current.getScreenshot();
-            if (imageSrc) {
-              setCapturedImage(imageSrc);
-              setCaptureStep('captured');
-              clearInterval(detectInterval);
-
-              // Process the face descriptor immediately
-              setCaptureStep('processing');
-              const saved = await saveFaceDescriptor(
-                result.descriptor!,
-                'live_camera',
+          try {
+            // Double-check models are loaded before detection
+            if (!modelsLoaded) {
+              console.warn(
+                'Detection attempted but models not loaded in component state',
               );
-              if (saved) {
-                onComplete();
-              } else {
-                handleRetry();
+              return;
+            }
+
+            // Use high accuracy detection with TinyFaceDetector for onboarding
+            const result = await detectFaceFromVideo(video, true);
+
+            if (result.success && result.quality) {
+              setFaceDetected(true);
+              setFaceQuality(result.quality);
+
+              // Draw landmarks on canvas if available
+              if (result.landmarks && canvasRef.current) {
+                drawLandmarks(video, result.landmarks, result.quality);
+              }
+            } else {
+              setFaceDetected(false);
+              setFaceQuality(null);
+
+              // Clear canvas
+              if (canvasRef.current) {
+                const ctx = canvasRef.current.getContext('2d');
+                if (ctx) {
+                  ctx.clearRect(
+                    0,
+                    0,
+                    canvasRef.current.width,
+                    canvasRef.current.height,
+                  );
+                }
               }
             }
-          } else {
-            setDetectionAttempts((prev) => prev + 1);
+          } catch (error) {
+            console.error('Face detection error:', error);
 
-            // Show guidance less frequently to avoid spam
-            if (detectionAttempts > 30) {
-              toast.warning('Face Detection Tips', {
-                description:
-                  'Ensure good lighting and look directly at the camera.',
-              });
-              setDetectionAttempts(0);
+            // If it's a models not loaded error, try to reload
+            if (
+              error instanceof Error &&
+              error.message.includes('Models not loaded')
+            ) {
+              console.log(
+                'Models not loaded error detected, attempting to reload...',
+              );
+              try {
+                await loadModels();
+              } catch (reloadError) {
+                console.error('Failed to reload models:', reloadError);
+              }
             }
-          }
-        } catch (error) {
-          console.error('Face detection error:', error);
-        } finally {
-          isDetecting = false;
-        }
-      }, 500); // Detection interval
 
-      detectionIntervalRef.current = detectInterval;
+            setFaceDetected(false);
+            setFaceQuality(null);
+          } finally {
+            isDetecting = false;
+          }
+        }, 200); // Faster detection for real-time feedback
+
+        detectionIntervalRef.current = detectInterval;
+      }, 1000); // Wait 1 second before starting detection
+
       return () => {
+        clearTimeout(startDelay);
         if (detectionIntervalRef.current) {
           clearInterval(detectionIntervalRef.current);
         }
@@ -163,15 +249,158 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
     captureStep,
     modelsLoaded,
     detectFaceFromVideo,
-    saveFaceDescriptor,
-    onComplete,
-    detectionAttempts,
+    drawLandmarks,
+    loadModels,
   ]);
 
   const handleStartCamera = () => {
     setCaptureMode('camera');
-    setCaptureStep('detecting');
-    setDetectionAttempts(0);
+    setCaptureStep('ready');
+    setFaceDetected(false);
+    setFaceQuality(null);
+  };
+
+  // Manual capture when user clicks the button
+  const handleCaptureFace = async () => {
+    if (!webcamRef.current || !faceDetected || !faceQuality?.isGoodQuality) {
+      toast.warning('Face Not Ready', {
+        description:
+          'Please ensure your face is clearly visible and well-lit before capturing.',
+      });
+      return;
+    }
+
+    setCaptureStep('processing');
+
+    // Add timeout to prevent hanging
+    const timeoutId = setTimeout(() => {
+      console.error('Face capture timeout - operation took too long');
+      toast.error('Operation Timeout', {
+        description: 'Face capture is taking too long. Please try again.',
+      });
+      setCaptureStep('ready');
+    }, 30000); // 30 second timeout
+
+    try {
+      // Capture the screenshot
+      const imageSrc = webcamRef.current.getScreenshot();
+      if (!imageSrc) {
+        throw new Error('Failed to capture image');
+      }
+
+      setCapturedImage(imageSrc);
+
+      // Create image element for face detection (same as image upload)
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          // Use the same detection method as image upload
+          const result = await detectFaceFromImage(img);
+
+          if (result.success && result.descriptor) {
+            console.log('Camera face capture successful:', {
+              model: 'TinyFaceDetector',
+              confidence: result.confidence,
+              success: result.success,
+            });
+
+            console.log('Attempting to save face descriptor from camera...');
+
+            try {
+              const saved = await saveFaceDescriptor(
+                result.descriptor,
+                'live_camera',
+              );
+
+              console.log('Camera face descriptor save result:', saved);
+
+              if (saved) {
+                console.log(
+                  'Face descriptor saved from camera, completing onboarding...',
+                );
+                clearTimeout(timeoutId);
+
+                // Show success message
+                toast.success('Face Verification Complete!', {
+                  description: `High quality face captured with ${Math.round((result.confidence || 0) * 100)}% confidence`,
+                });
+
+                // Set captured state briefly to show success
+                setCaptureStep('captured');
+
+                // Complete onboarding after a very short delay to show success state
+                setTimeout(() => {
+                  console.log(
+                    'Calling onComplete to finish onboarding from camera...',
+                  );
+                  onComplete();
+                }, 1000);
+              } else {
+                throw new Error(
+                  'Failed to save face descriptor - function returned false',
+                );
+              }
+            } catch (saveError) {
+              console.error(
+                'Error saving face descriptor from camera:',
+                saveError,
+              );
+
+              let errorMessage = 'Failed to save face data. Please try again.';
+              if (saveError instanceof Error) {
+                if (saveError.message.includes('timed out')) {
+                  errorMessage =
+                    'Save operation timed out. Please check your connection and try again.';
+                } else if (
+                  saveError.message.includes('Authentication required')
+                ) {
+                  errorMessage = 'Please refresh the page and log in again.';
+                } else if (
+                  saveError.message.includes('User profile not found')
+                ) {
+                  errorMessage = 'Please complete your profile setup first.';
+                } else {
+                  errorMessage = saveError.message;
+                }
+              }
+
+              toast.error('Save Failed', {
+                description: errorMessage,
+              });
+              setCaptureStep('ready');
+            }
+          } else {
+            toast.error('Face Detection Failed', {
+              description:
+                result.error ||
+                'No clear face detected in the captured image. Please try again with better lighting and face positioning.',
+            });
+            setCaptureStep('ready');
+          }
+        } catch (error) {
+          console.error('Camera face processing error:', error);
+          toast.error('Processing Error', {
+            description:
+              'Failed to process the captured image. Please try again.',
+          });
+          setCaptureStep('ready');
+        }
+      };
+
+      // Set the image source to trigger the onload event
+      img.src = imageSrc;
+    } catch (error) {
+      console.error('Face capture error:', error);
+      toast.error('Capture Failed', {
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Failed to capture face. Please try again.',
+      });
+      setCaptureStep('ready');
+    } finally {
+      clearTimeout(timeoutId);
+    }
   };
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,27 +428,96 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
           const result = await detectFaceFromImage(img);
 
           if (result.success && result.descriptor) {
-            const saved = await saveFaceDescriptor(
-              result.descriptor,
-              'image_upload',
+            console.log('Enhanced image upload face detection:', {
+              model: 'TinyFaceDetector',
+              confidence: result.confidence,
+              success: result.success,
+            });
+
+            console.log(
+              'Attempting to save face descriptor from image upload...',
             );
-            if (saved) {
-              onComplete();
-            } else {
+
+            try {
+              const saved = await saveFaceDescriptor(
+                result.descriptor,
+                'image_upload',
+              );
+
+              console.log('Image upload face descriptor save result:', saved);
+
+              if (saved) {
+                console.log(
+                  'Face descriptor saved from image upload, completing onboarding...',
+                );
+
+                // Show success message
+                toast.success('Face Verification Complete!', {
+                  description: `Face detected from uploaded image with ${Math.round((result.confidence || 0) * 100)}% confidence`,
+                });
+
+                // Set captured state briefly to show success
+                setCaptureStep('captured');
+
+                // Complete onboarding after a very short delay to show success state
+                setTimeout(() => {
+                  console.log(
+                    'Calling onComplete to finish onboarding from image upload...',
+                  );
+                  onComplete();
+                }, 1000);
+              } else {
+                throw new Error(
+                  'Failed to save face descriptor - function returned false',
+                );
+              }
+            } catch (saveError) {
+              console.error(
+                'Error saving face descriptor from image upload:',
+                saveError,
+              );
+
+              let errorMessage = 'Failed to save face data. Please try again.';
+              if (saveError instanceof Error) {
+                if (saveError.message.includes('timed out')) {
+                  errorMessage =
+                    'Save operation timed out. Please check your connection and try again.';
+                } else if (
+                  saveError.message.includes('Authentication required')
+                ) {
+                  errorMessage = 'Please refresh the page and log in again.';
+                } else if (
+                  saveError.message.includes('User profile not found')
+                ) {
+                  errorMessage = 'Please complete your profile setup first.';
+                } else {
+                  errorMessage = saveError.message;
+                }
+              }
+
+              toast.error('Save Failed', {
+                description: errorMessage,
+              });
               setCaptureStep('setup');
               setCaptureMode(null);
               setCapturedImage(null);
             }
           } else {
             toast.error('Face Detection Failed', {
-              description: result.error || 'No face detected in the image.',
+              description:
+                result.error ||
+                'No clear face detected in the uploaded image. Please try a different photo with better lighting and face visibility.',
             });
             setCaptureStep('setup');
             setCaptureMode(null);
             setCapturedImage(null);
           }
         } catch (error) {
-          console.error('Image processing error:', error);
+          console.error('Enhanced image processing error:', error);
+          toast.error('Processing Error', {
+            description:
+              'Failed to process the uploaded image. Please try again with a different photo.',
+          });
           setCaptureStep('setup');
           setCaptureMode(null);
           setCapturedImage(null);
@@ -234,7 +532,8 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
     setCaptureStep('setup');
     setCaptureMode(null);
     setCapturedImage(null);
-    setDetectionAttempts(0);
+    setFaceDetected(false);
+    setFaceQuality(null);
     if (detectionIntervalRef.current) {
       clearInterval(detectionIntervalRef.current);
     }
@@ -303,35 +602,135 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
   const renderCameraStep = () => (
     <div className="space-y-4">
       <div className="relative">
-        <Webcam
-          ref={webcamRef}
-          audio={false}
-          width={640}
-          height={480}
-          screenshotFormat="image/jpeg"
-          videoConstraints={{
-            width: 640,
-            height: 480,
-            facingMode: facingMode,
-            deviceId: selectedDeviceId
-              ? { exact: selectedDeviceId }
-              : undefined,
-          }}
-          className="w-full max-w-md mx-auto rounded-lg bg-black"
-        />
+        <div className="relative w-full max-w-md mx-auto">
+          <Webcam
+            ref={webcamRef}
+            audio={false}
+            width={640}
+            height={480}
+            screenshotFormat="image/jpeg"
+            videoConstraints={{
+              width: 640,
+              height: 480,
+              facingMode: facingMode,
+              deviceId: selectedDeviceId
+                ? { exact: selectedDeviceId }
+                : undefined,
+            }}
+            className="w-full rounded-lg bg-black"
+          />
 
-        {captureStep === 'detecting' && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/20 rounded-lg">
-            <div className="text-center text-white">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
-              <p className="text-sm">Detecting face...</p>
-              <p className="text-xs opacity-75">Look directly at the camera</p>
-              <p className="text-xs opacity-75 mt-1">
-                Attempts: {detectionAttempts}
-              </p>
+          {/* Canvas overlay for landmarks */}
+          <canvas
+            ref={canvasRef}
+            className="absolute top-0 left-0 w-full h-full rounded-lg pointer-events-none"
+            style={{
+              width: '100%',
+              height: 'auto',
+              aspectRatio: '4/3',
+            }}
+          />
+
+          {/* Face detection status overlay */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
+            {faceDetected ? (
+              faceQuality?.isGoodQuality ? (
+                <span className="text-green-400">✓ Face Ready</span>
+              ) : (
+                <span className="text-yellow-400">⚠ Improve Position</span>
+              )
+            ) : (
+              <span className="text-red-400">⚪ No Face Detected</span>
+            )}
+          </div>
+
+          {/* Model info overlay */}
+          <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+            ⚡ TinyFaceDetector
+          </div>
+
+          {/* Quality indicators */}
+          {faceQuality && (
+            <div className="absolute top-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+              Quality: {Math.round(faceQuality.confidence * 100)}%
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Face quality feedback */}
+      {faceDetected && faceQuality && (
+        <div className="text-center space-y-2">
+          <div className="flex justify-center space-x-4 text-xs">
+            <div
+              className={`flex items-center space-x-1 ${
+                faceQuality.faceSize.width >= 120
+                  ? 'text-green-600'
+                  : 'text-orange-600'
+              }`}
+            >
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  faceQuality.faceSize.width >= 120
+                    ? 'bg-green-600'
+                    : 'bg-orange-600'
+                }`}
+              />
+              <span>Size: {faceQuality.faceSize.width}px</span>
+            </div>
+            <div
+              className={`flex items-center space-x-1 ${
+                faceQuality.confidence >= 0.7
+                  ? 'text-green-600'
+                  : 'text-orange-600'
+              }`}
+            >
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  faceQuality.confidence >= 0.7
+                    ? 'bg-green-600'
+                    : 'bg-orange-600'
+                }`}
+              />
+              <span>
+                Confidence: {Math.round(faceQuality.confidence * 100)}%
+              </span>
+            </div>
+            <div
+              className={`flex items-center space-x-1 ${
+                faceQuality.landmarkQuality >= 0.7
+                  ? 'text-green-600'
+                  : 'text-orange-600'
+              }`}
+            >
+              <div
+                className={`w-2 h-2 rounded-full ${
+                  faceQuality.landmarkQuality >= 0.7
+                    ? 'bg-green-600'
+                    : 'bg-orange-600'
+                }`}
+              />
+              <span>
+                Landmarks: {Math.round(faceQuality.landmarkQuality * 100)}%
+              </span>
             </div>
           </div>
-        )}
+        </div>
+      )}
+
+      {/* Capture button */}
+      <div className="flex justify-center">
+        <Button
+          onClick={handleCaptureFace}
+          disabled={!faceDetected || !faceQuality?.isGoodQuality}
+          className="px-8 py-3"
+          size="lg"
+        >
+          <Target className="h-5 w-5 mr-2" />
+          {faceDetected && faceQuality?.isGoodQuality
+            ? 'Capture Face'
+            : 'Position Your Face'}
+        </Button>
       </div>
 
       <div className="flex justify-center space-x-2">
@@ -340,7 +739,7 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
             onClick={switchCamera}
             variant="outline"
             size="sm"
-            disabled={captureStep !== 'detecting'}
+            disabled={captureStep !== 'ready'}
           >
             <RotateCcw className="h-4 w-4 mr-1" />
             Switch Camera
@@ -385,6 +784,25 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
       <p className="text-sm text-muted-foreground">
         Securely storing your face verification data...
       </p>
+      {process.env.NODE_ENV === 'development' && (
+        <div className="text-xs text-muted-foreground space-y-1">
+          <div>
+            Debug: Face loading state -{' '}
+            {faceLoading ? 'Loading' : 'Not loading'}
+          </div>
+          <div>Capture mode: {captureMode}</div>
+          <div>Capture step: {captureStep}</div>
+          <div>Models loaded: {modelsLoaded ? 'Yes' : 'No'}</div>
+        </div>
+      )}
+      <Button
+        onClick={handleRetry}
+        variant="outline"
+        size="sm"
+        className="mt-4"
+      >
+        Cancel & Retry
+      </Button>
     </div>
   );
 
@@ -420,7 +838,7 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
         {modelsLoaded && !faceError && (
           <>
             {captureStep === 'setup' && renderSetupStep()}
-            {captureStep === 'detecting' &&
+            {captureStep === 'ready' &&
               captureMode === 'camera' &&
               renderCameraStep()}
             {captureStep === 'captured' && renderCapturedStep()}
@@ -434,7 +852,8 @@ export const FaceOnboardingCapture: React.FC<FaceOnboardingCaptureProps> = ({
             <div>Models Loaded: {modelsLoaded ? '✅' : '❌'}</div>
             <div>Capture Mode: {captureMode || 'none'}</div>
             <div>Capture Step: {captureStep}</div>
-            <div>Detection Attempts: {detectionAttempts}</div>
+            <div>Face Detected: {faceDetected ? '✅' : '❌'}</div>
+            <div>Face Quality: {faceQuality?.isGoodQuality ? '✅' : '❌'}</div>
             <div>Devices: {devices.length}</div>
             <div>Facing Mode: {facingMode}</div>
           </div>

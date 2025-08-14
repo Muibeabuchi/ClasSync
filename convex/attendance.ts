@@ -451,7 +451,7 @@ export const checkInToAttendance = StudentMutationMiddleware({
       faceMatchScore = euclideanDistance;
 
       // Face match threshold (≤ 0.4 = match) - Stricter threshold for better security
-      const FACE_MATCH_THRESHOLD = 0.5;
+      const FACE_MATCH_THRESHOLD = 0.2;
       const isMatch = euclideanDistance <= FACE_MATCH_THRESHOLD;
 
       // Log verification attempt

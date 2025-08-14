@@ -97,18 +97,56 @@ export default function StudentOnboardingSection({
   };
 
   const handleFaceVerificationComplete = async () => {
-    if (!basicFormData) return;
+    if (!basicFormData) {
+      console.error(
+        'handleFaceVerificationComplete: No basic form data available',
+      );
+      toast.error('Missing form data', {
+        description: 'Please go back and fill in your basic information.',
+      });
+      return;
+    }
+
+    console.log(
+      'handleFaceVerificationComplete: Starting onboarding completion with data:',
+      {
+        fullName: basicFormData.fullName,
+        gender: basicFormData.gender,
+        hasProfileImage: !!basicFormData.profileImage,
+      },
+    );
 
     try {
       // Upload image if provided
       if (basicFormData.profileImage) {
+        console.log(
+          'handleFaceVerificationComplete: Uploading profile image...',
+        );
         await uploadImage(basicFormData.profileImage);
+        console.log(
+          'handleFaceVerificationComplete: Profile image uploaded successfully',
+        );
       }
+
       // Complete onboarding with face verification
+      console.log(
+        'handleFaceVerificationComplete: Calling handleCompleteOnboarding...',
+      );
       await handleCompleteOnboarding(basicFormData);
+      console.log(
+        'handleFaceVerificationComplete: Onboarding completed successfully',
+      );
     } catch (error) {
-      toast.error('Error completing onboarding');
-      console.error('Error completing onboarding:', error);
+      console.error(
+        'handleFaceVerificationComplete: Error completing onboarding:',
+        error,
+      );
+      toast.error('Error completing onboarding', {
+        description:
+          error instanceof Error
+            ? error.message
+            : 'An unexpected error occurred. Please try again.',
+      });
     }
   };
 

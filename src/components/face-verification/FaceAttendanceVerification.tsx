@@ -100,7 +100,7 @@ export const FaceAttendanceVerification: React.FC<
     };
   }, [loadModels, startCamera, stopCamera]);
 
-  // Enhanced auto-detect and verify face with SSDMobileNet and landmarks
+  // Enhanced auto-detect and verify face with TinyFaceDetector and landmarks
   useEffect(() => {
     if (verificationStep === 'detecting' && cameraActive && modelsLoaded) {
       let isDetecting = false;
@@ -114,13 +114,13 @@ export const FaceAttendanceVerification: React.FC<
         isDetecting = true;
 
         try {
-          // Use high accuracy detection with SSDMobileNet and landmarks
+          // Use high accuracy detection with TinyFaceDetector and landmarks
           const result = await detectFaceFromVideo(videoElement, true);
 
           if (result.success && result.descriptor) {
             // Log enhanced detection results
             console.log('Enhanced face detection result:', {
-              model: result.quality ? 'SSDMobileNet' : 'TinyFaceDetector',
+              model: 'TinyFaceDetector',
               confidence: result.confidence?.toFixed(3),
               quality: result.quality,
               landmarksDetected: !!result.landmarks,
@@ -185,7 +185,7 @@ export const FaceAttendanceVerification: React.FC<
         } finally {
           isDetecting = false;
         }
-      }, 200); // Slightly faster for SSDMobileNet
+      }, 200); // Fast detection for TinyFaceDetector
 
       return () => clearInterval(detectInterval);
     }
@@ -271,7 +271,7 @@ export const FaceAttendanceVerification: React.FC<
         </div>
 
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full text-sm">
-          Detecting with SSDMobileNet...
+          Detecting with TinyFaceDetector...
         </div>
 
         {/* Model info overlay */}

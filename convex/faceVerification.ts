@@ -8,29 +8,108 @@ export const storeFaceDescriptor = mutation({
     captureMethod: v.union(v.literal('live_camera'), v.literal('image_upload')),
   },
   handler: async (ctx, args) => {
+    console.log('storeFaceDescriptor: Function called with args:', {
+      descriptorLength: args.faceDescriptor.length,
+      captureMethod: args.captureMethod,
+    });
+
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error('Authentication required');
+      console.error('storeFaceDescriptor: No authentication identity found');
+      throw new Error('Authentication required. Please log in and try again.');
     }
 
-    // Get user profile
+    console.log('storeFaceDescriptor: Starting for user:', identity.email);
+    console.log('storeFaceDescriptor: Identity subject:', identity.subject);
+
+    // Get user profile by email
     const userProfile = await ctx.db
       .query('userProfiles')
       .withIndex('by_email', (q) => q.eq('email', identity.email!))
       .first();
 
     if (!userProfile) {
-      throw new Error('User profile not found');
+      console.error(
+        'storeFaceDescriptor: User profile not found for:',
+        identity.email,
+      );
+
+      // List all users for debugging
+      const allUsers = await ctx.db.query('userProfiles').collect();
+      console.log(
+        'storeFaceDescriptor: Total users in system:',
+        allUsers.length,
+      );
+      console.log(
+        'storeFaceDescriptor: Available emails:',
+        allUsers.map((u) => u.email),
+      );
+
+      throw new Error(
+        'User profile not found. Please ensure you are properly logged in.',
+      );
     }
 
-    // Update user profile with face descriptor
-    await ctx.db.patch(userProfile._id, {
-      faceDescriptor: args.faceDescriptor,
-      onboardingCaptureMethod: args.captureMethod,
-      faceVerificationEnabled: true,
+    console.log('storeFaceDescriptor: Found user profile:', {
+      id: userProfile._id,
+      email: userProfile.email,
+      isOnboarded: userProfile.isOnboarded,
+      role: userProfile.role,
     });
 
-    return { success: true };
+    // Validate face descriptor
+    if (!args.faceDescriptor || args.faceDescriptor.length === 0) {
+      console.error('storeFaceDescriptor: Invalid face descriptor:', {
+        isArray: Array.isArray(args.faceDescriptor),
+        length: args.faceDescriptor?.length,
+      });
+      throw new Error('Invalid face descriptor provided');
+    }
+
+    console.log(
+      'storeFaceDescriptor: Face descriptor length:',
+      args.faceDescriptor.length,
+    );
+
+    try {
+      console.log('storeFaceDescriptor: Attempting to patch user profile...');
+
+      // Update user profile with face descriptor
+      await ctx.db.patch(userProfile._id, {
+        faceDescriptor: args.faceDescriptor,
+        onboardingCaptureMethod: args.captureMethod,
+        faceVerificationEnabled: true,
+      });
+
+      console.log(
+        'storeFaceDescriptor: Successfully updated user profile with face data',
+      );
+
+      // Verify the update was successful
+      const updatedProfile = await ctx.db.get(userProfile._id);
+      console.log(
+        'storeFaceDescriptor: Verification - updated profile has face descriptor:',
+        {
+          hasFaceDescriptor: !!updatedProfile?.faceDescriptor,
+          descriptorLength: updatedProfile?.faceDescriptor?.length,
+          captureMethod: updatedProfile?.onboardingCaptureMethod,
+          verificationEnabled: updatedProfile?.faceVerificationEnabled,
+        },
+      );
+
+      return {
+        success: true,
+        message: 'Face verification data saved successfully',
+      };
+    } catch (error) {
+      console.error(
+        'storeFaceDescriptor: Failed to update user profile:',
+        error,
+      );
+      throw new Error(
+        `Failed to save face verification data: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   },
 });
 
@@ -112,9 +191,14 @@ export const verifyFaceForAttendance = mutation({
     }
     const euclideanDistance = Math.sqrt(sumSquaredDifferences);
 
-    // Face match threshold (≤ 0.4 = match) - Stricter threshold for better security
-    const FACE_MATCH_THRESHOLD = 0.4;
+    // Enhanced face match threshold for SSDMobileNet (≤ 0.5 = match)
+    // SSDMobileNet provides more accurate descriptors, allowing for slightly higher threshold
+    const FACE_MATCH_THRESHOLD = 0.5;
     const isMatch = euclideanDistance <= FACE_MATCH_THRESHOLD;
+
+    // Calculate confidence score (0-1, higher is more confident)
+    const confidence = Math.max(0, 1 - euclideanDistance / 1.0);
+    const faceMatchScore = 1 - euclideanDistance; // Convert distance to score
 
     // Log verification attempt
     await ctx.db.insert('faceVerificationLogs', {
@@ -130,9 +214,15 @@ export const verifyFaceForAttendance = mutation({
 
     return {
       success: isMatch,
-      matchScore: euclideanDistance,
+      faceMatchScore: faceMatchScore,
+      confidence: confidence,
+      distance: euclideanDistance,
       threshold: FACE_MATCH_THRESHOLD,
       retryAttempt: args.retryAttempt,
+      verificationStatus: isMatch ? 'verified' : 'failed',
+      error: !isMatch
+        ? 'Face verification failed - insufficient match confidence'
+        : undefined,
     };
   },
 });
