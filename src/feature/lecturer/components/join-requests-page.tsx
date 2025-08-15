@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/drawer';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import {
   Select,
   SelectContent,
@@ -77,8 +78,18 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
     courseName: string;
   } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [selectedRejectReason, setSelectedRejectReason] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const isMobile = useIsMobile();
+
+  // Common rejection reasons for join requests
+  const COMMON_REJECTION_REASONS = [
+    'Student not enrolled in this course',
+    'Course capacity has been reached',
+    'Registration period has ended',
+    'Student does not meet prerequisites',
+    'Duplicate request - already enrolled',
+  ];
 
   const {
     data: classListWithStudents,
@@ -178,6 +189,15 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
     setIsRejectModalOpen(true);
   };
 
+  const handleRejectReasonChange = (value: string) => {
+    setSelectedRejectReason(value);
+    if (value === 'custom') {
+      setRejectReason('');
+    } else {
+      setRejectReason(value);
+    }
+  };
+
   const handleConfirmReject = async () => {
     if (!selectedRequest) return;
 
@@ -190,6 +210,7 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
       setIsRejectModalOpen(false);
       setSelectedRequest(null);
       setRejectReason('');
+      setSelectedRejectReason('');
     } catch (error) {
       toast.error('Failed to reject request', {
         description: error instanceof Error ? error.message : 'Unknown error',
@@ -521,17 +542,52 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
               </DrawerDescription>
             </DrawerHeader>
             <div className="px-4 pb-4">
-              <div className="space-y-2">
-                <Label htmlFor="reject-reason">
-                  Reason for rejection (optional)
-                </Label>
-                <Textarea
-                  id="reject-reason"
-                  placeholder="Provide a reason for rejecting this request..."
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  rows={3}
-                />
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <Label>Select a reason for rejection</Label>
+                  <RadioGroup
+                    value={selectedRejectReason}
+                    onValueChange={handleRejectReasonChange}
+                    className="space-y-2"
+                  >
+                    {COMMON_REJECTION_REASONS.map((reason, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <RadioGroupItem value={reason} id={`reason-${index}`} />
+                        <Label
+                          htmlFor={`reason-${index}`}
+                          className="text-sm font-normal cursor-pointer flex-1"
+                        >
+                          {reason}
+                        </Label>
+                      </div>
+                    ))}
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="custom" id="reason-custom" />
+                      <Label
+                        htmlFor="reason-custom"
+                        className="text-sm font-normal cursor-pointer"
+                      >
+                        Custom reason
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+
+                {selectedRejectReason === 'custom' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="custom-reject-reason">
+                      Custom rejection reason
+                    </Label>
+                    <Textarea
+                      id="custom-reject-reason"
+                      placeholder="Provide a custom reason for rejecting this request..."
+                      value={rejectReason}
+                      onChange={(e) => setRejectReason(e.target.value)}
+                      rows={3}
+                    />
+                  </div>
+                )}
+
                 <p className="text-xs text-muted-foreground">
                   This reason will be shown to the student
                 </p>
@@ -550,6 +606,7 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
                 onClick={() => {
                   setIsRejectModalOpen(false);
                   setRejectReason('');
+                  setSelectedRejectReason('');
                 }}
                 disabled={isRejecting}
               >
@@ -575,21 +632,57 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="reject-reason">
-                  Reason for rejection (optional)
-                </Label>
-                <Textarea
-                  id="reject-reason"
-                  placeholder="Provide a reason for rejecting this request..."
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  rows={3}
-                />
-                <p className="text-xs text-muted-foreground">
-                  This reason will be shown to the student
-                </p>
+              <div className="space-y-3">
+                <Label>Select a reason for rejection</Label>
+                <RadioGroup
+                  value={selectedRejectReason}
+                  onValueChange={handleRejectReasonChange}
+                  className="space-y-2"
+                >
+                  {COMMON_REJECTION_REASONS.map((reason, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <RadioGroupItem
+                        value={reason}
+                        id={`desktop-reason-${index}`}
+                      />
+                      <Label
+                        htmlFor={`desktop-reason-${index}`}
+                        className="text-sm font-normal cursor-pointer flex-1"
+                      >
+                        {reason}
+                      </Label>
+                    </div>
+                  ))}
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="custom" id="desktop-reason-custom" />
+                    <Label
+                      htmlFor="desktop-reason-custom"
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      Custom reason
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
+
+              {selectedRejectReason === 'custom' && (
+                <div className="space-y-2">
+                  <Label htmlFor="desktop-custom-reject-reason">
+                    Custom rejection reason
+                  </Label>
+                  <Textarea
+                    id="desktop-custom-reject-reason"
+                    placeholder="Provide a custom reason for rejecting this request..."
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    rows={3}
+                  />
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                This reason will be shown to the student
+              </p>
             </div>
             <DialogFooter>
               <Button
@@ -597,6 +690,7 @@ const JoinRequestsPage = ({ lecturerJoinRequests }: JoinRequestsPageProps) => {
                 onClick={() => {
                   setIsRejectModalOpen(false);
                   setRejectReason('');
+                  setSelectedRejectReason('');
                 }}
                 disabled={isRejecting}
               >

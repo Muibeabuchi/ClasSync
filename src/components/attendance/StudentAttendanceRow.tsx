@@ -34,6 +34,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Textarea } from '@/components/ui/textarea';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { UserPlus, AlertCircle, Edit3 } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useManualAttendanceOverride } from '@/hooks/useManualAttendanceOverride';
@@ -48,12 +49,13 @@ import {
   ARIA_LABELS,
   // ARIA_DESCRIPTIONS,
   KEYBOARD_NAVIGATION,
-  FocusManager,
+  // FocusManager,
   // ScreenReaderUtils,
   // accessibilityTesting,
 } from '@/lib/accessibility/overrideAccessibility';
 import type { Id } from 'convex/_generated/dataModel';
 import { cn } from '@/lib/utils';
+import { Label } from '../ui/label';
 
 // Legacy format from original hook
 interface LegacyStudentRecord {
@@ -212,6 +214,16 @@ const OverrideActionButton = ({
 }: OverrideActionButtonProps) => {
   const [isOverrideDialogOpen, setIsOverrideDialogOpen] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [selectedOverrideReason, setSelectedOverrideReason] = useState('');
+
+  // Common override reasons for manual attendance verification
+  const COMMON_OVERRIDE_REASONS = [
+    'Student was present but had technical issues with check-in',
+    'Student arrived late but was physically present',
+    'Student forgot to check in but participated in class',
+    'GPS/location services were not working properly',
+    'Student had valid excuse and was marked present by instructor',
+  ];
 
   // Mobile-first responsive breakpoints
   const isMobile = useMediaQuery('(max-width: 640px)'); // sm breakpoint
@@ -226,6 +238,16 @@ const OverrideActionButton = ({
       justificationNote: '',
     },
   });
+
+  // Handle override reason selection
+  const handleOverrideReasonChange = (value: string) => {
+    setSelectedOverrideReason(value);
+    if (value === 'custom') {
+      form.setValue('justificationNote', '');
+    } else {
+      form.setValue('justificationNote', value);
+    }
+  };
 
   // Determine if button should be disabled
   const getDisabledState = () => {
@@ -267,6 +289,7 @@ const OverrideActionButton = ({
   const handleCancel = () => {
     setIsOverrideDialogOpen(false);
     setShowConfirmation(false);
+    setSelectedOverrideReason('');
     form.reset();
   };
 
@@ -297,52 +320,124 @@ const OverrideActionButton = ({
           </div>
         </div>
 
-        {/* Justification Field */}
-        <FormField
-          control={form.control}
-          name="justificationNote"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>
-                Justification for Manual Override *
-                <span className="text-muted-foreground text-xs ml-1">
-                  (minimum 3 words)
-                </span>
-              </FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Please provide a detailed reason for marking this student as present..."
+        {/* Suggested Reasons */}
+        <div className="space-y-3">
+          <FormLabel>Select a reason for manual override</FormLabel>
+          <RadioGroup
+            value={selectedOverrideReason}
+            onValueChange={handleOverrideReasonChange}
+            className="space-y-2"
+          >
+            {COMMON_OVERRIDE_REASONS.map((reason, index) => (
+              <div key={index} className="flex items-start space-x-2">
+                <RadioGroupItem
+                  value={reason}
+                  id={`override-reason-${index}`}
+                  className="mt-0.5 flex-shrink-0"
+                />
+                <Label
+                  htmlFor={`override-reason-${index}`}
                   className={cn(
-                    // Mobile-first responsive sizing
-                    'min-h-[120px] sm:min-h-[100px] resize-none',
-                    // Touch-friendly sizing for mobile
-                    isTouchDevice && 'min-h-[140px] text-base',
-                    // Mobile-specific padding
-                    'px-3 py-2 sm:px-4 sm:py-3',
+                    'text-sm font-normal cursor-pointer flex-1 leading-relaxed',
+                    // Mobile-first responsive text
+                    'text-xs sm:text-sm',
+                  )}
+                >
+                  {reason}
+                </Label>
+              </div>
+            ))}
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="custom" id="override-reason-custom" />
+              <Label
+                htmlFor="override-reason-custom"
+                className={cn(
+                  'text-sm font-normal cursor-pointer',
+                  // Mobile-first responsive text
+                  'text-xs sm:text-sm',
+                )}
+              >
+                Custom reason
+              </Label>
+            </div>
+          </RadioGroup>
+        </div>
+
+        {/* Custom Justification Field - Only show when custom is selected */}
+        {selectedOverrideReason === 'custom' && (
+          <FormField
+            control={form.control}
+            name="justificationNote"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>
+                  Custom Justification *
+                  <span className="text-muted-foreground text-xs ml-1">
+                    (minimum 3 words)
+                  </span>
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Please provide a detailed reason for marking this student as present..."
+                    className={cn(
+                      // Mobile-first responsive sizing
+                      'min-h-[120px] sm:min-h-[100px] resize-none',
+                      // Touch-friendly sizing for mobile
+                      isTouchDevice && 'min-h-[140px] text-base',
+                      // Mobile-specific padding
+                      'px-3 py-2 sm:px-4 sm:py-3',
+                      'text-sm sm:text-base',
+                    )}
+                    disabled={isLoading}
+                    maxLength={500}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>
+                    {field.value
+                      ? `${
+                          field.value
+                            .trim()
+                            .split(/\s+/)
+                            .filter((word) => word.length > 0).length
+                        } words`
+                      : '0 words'}
+                  </span>
+                  <span>{field.value?.length || 0}/500 characters</span>
+                </div>
+              </FormItem>
+            )}
+          />
+        )}
+
+        {/* Show selected reason preview when not custom */}
+        {selectedOverrideReason && selectedOverrideReason !== 'custom' && (
+          <div
+            className={cn(
+              'p-3 bg-blue-50 border border-blue-200 rounded-md',
+              'sm:p-4',
+            )}
+          >
+            <div className="flex items-start gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0" />
+              <div>
+                <p
+                  className={cn(
+                    'font-medium text-blue-800',
                     'text-sm sm:text-base',
                   )}
-                  disabled={isLoading}
-                  maxLength={500}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>
-                  {field.value
-                    ? `${
-                        field.value
-                          .trim()
-                          .split(/\s+/)
-                          .filter((word) => word.length > 0).length
-                      } words`
-                    : '0 words'}
-                </span>
-                <span>{field.value?.length || 0}/500 characters</span>
+                >
+                  Selected Reason:
+                </p>
+                <p className={cn('text-blue-700 mt-1', 'text-xs sm:text-sm')}>
+                  {selectedOverrideReason}
+                </p>
               </div>
-            </FormItem>
-          )}
-        />
+            </div>
+          </div>
+        )}
 
         {/* Confirmation Alert */}
         {showConfirmation && (
