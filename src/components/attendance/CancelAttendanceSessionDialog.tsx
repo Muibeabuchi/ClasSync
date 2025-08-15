@@ -121,8 +121,8 @@ export const CancelAttendanceSessionDialog = ({
       <AlertDialogContent className="sm:max-w-md">
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-full bg-red-100">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
+            <div className="p-2 rounded-full bg-destructive/10">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
             <div className="flex-1">
               <AlertDialogTitle className="text-left">
@@ -145,9 +145,9 @@ export const CancelAttendanceSessionDialog = ({
             </div>
 
             {canCancel && timeRemaining > 0 && (
-              <div className="flex items-center gap-2 p-2 bg-yellow-50 rounded-lg border border-yellow-200">
-                <Clock className="h-4 w-4 text-yellow-600" />
-                <span className="text-sm text-yellow-800">
+              <div className="flex items-center gap-2 p-2 bg-warning/10 rounded-lg border border-warning/20">
+                <Clock className="h-4 w-4 text-warning" />
+                <span className="text-sm text-warning-foreground">
                   Time remaining to cancel: {formatTimeRemaining(timeRemaining)}
                 </span>
               </div>
@@ -164,14 +164,14 @@ export const CancelAttendanceSessionDialog = ({
             </div>
 
             {!canCancel && (
-              <div className="p-3 bg-red-50 rounded-lg border border-red-200">
+              <div className="p-3 bg-destructive/10 rounded-lg border border-destructive/20">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                  <span className="text-sm font-medium text-red-800">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
+                  <span className="text-sm font-medium text-destructive-foreground">
                     Cannot Cancel
                   </span>
                 </div>
-                <p className="text-sm text-red-700 mt-1">
+                <p className="text-sm text-destructive-foreground mt-1">
                   {reason || 'The session cannot be cancelled at this time.'}
                 </p>
               </div>
@@ -186,7 +186,7 @@ export const CancelAttendanceSessionDialog = ({
           <AlertDialogAction
             onClick={handleCancel}
             disabled={!canCancel || isLoading}
-            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            className="w-full sm:w-auto bg-destructive hover:bg-destructive/90 focus:ring-destructive"
           >
             {isLoading ? (
               <>

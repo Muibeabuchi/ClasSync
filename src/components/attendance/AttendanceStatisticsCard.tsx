@@ -92,9 +92,9 @@ export const AttendanceStatisticsCard = ({
   };
 
   const getAttendanceColor = () => {
-    if (attendancePercentage >= 90) return 'text-emerald-600';
-    if (attendancePercentage >= 75) return 'text-amber-600';
-    return 'text-red-600';
+    if (attendancePercentage >= 90) return 'text-success';
+    if (attendancePercentage >= 75) return 'text-warning';
+    return 'text-destructive';
   };
 
   // const getProgressColor = () => {
@@ -146,7 +146,7 @@ export const AttendanceStatisticsCard = ({
 
         <CardContent className="px-4 sm:px-6 pb-6">
           {/* Hero attendance metric */}
-          <div className="text-center mb-6 p-6 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/10">
+          <div className="text-center mb-6 p-6 rounded-2xl bg-gradient-to-br from-card to-muted/20 border shadow-sm">
             <div className="flex items-center justify-center gap-2 mb-2">
               <TrendingUp className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium text-muted-foreground">
@@ -179,61 +179,61 @@ export const AttendanceStatisticsCard = ({
           {/* Statistics cards grid - mobile optimized */}
           <div className="grid grid-cols-2 gap-3 sm:gap-4">
             {/* Automatic Check-ins */}
-            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30">
+            <div className="p-4 rounded-xl bg-success/5 border border-success/20 hover:bg-success/10 transition-colors">
               <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                  <UserCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                <div className="p-1.5 rounded-lg bg-success/10">
+                  <UserCheck className="h-3.5 w-3.5 text-success" />
                 </div>
-                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                <span className="text-xs font-medium text-success-foreground">
                   Auto Check-ins
                 </span>
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+              <div className="text-xl sm:text-2xl font-bold text-success">
                 {automaticCheckIns}
               </div>
             </div>
 
             {/* Manual Overrides */}
-            <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30">
+            <div className="p-4 rounded-xl bg-warning/5 border border-warning/20 hover:bg-warning/10 transition-colors">
               <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                  <UserCheck className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                <div className="p-1.5 rounded-lg bg-warning/10">
+                  <UserCheck className="h-3.5 w-3.5 text-warning" />
                 </div>
-                <span className="text-xs font-medium text-amber-700 dark:text-amber-300">
+                <span className="text-xs font-medium text-warning-foreground">
                   Manual Overrides
                 </span>
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400">
+              <div className="text-xl sm:text-2xl font-bold text-warning">
                 {manualOverrides}
               </div>
             </div>
 
             {/* Total Enrolled */}
-            <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/30">
+            <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 hover:bg-primary/10 transition-colors">
               <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30">
-                  <Users className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <div className="p-1.5 rounded-lg bg-primary/10">
+                  <Users className="h-3.5 w-3.5 text-primary" />
                 </div>
-                <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                <span className="text-xs font-medium text-primary-foreground">
                   Total Enrolled
                 </span>
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400">
+              <div className="text-xl sm:text-2xl font-bold text-primary">
                 {totalEnrolledStudents}
               </div>
             </div>
 
             {/* Absent Students */}
-            <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/30">
+            <div className="p-4 rounded-xl bg-destructive/5 border border-destructive/20 hover:bg-destructive/10 transition-colors">
               <div className="flex items-center gap-2 mb-2">
-                <div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30">
-                  <UserX className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+                <div className="p-1.5 rounded-lg bg-destructive/10">
+                  <UserX className="h-3.5 w-3.5 text-destructive" />
                 </div>
-                <span className="text-xs font-medium text-red-700 dark:text-red-300">
+                <span className="text-xs font-medium text-destructive-foreground">
                   Absent
                 </span>
               </div>
-              <div className="text-xl sm:text-2xl font-bold text-red-600 dark:text-red-400">
+              <div className="text-xl sm:text-2xl font-bold text-destructive">
                 {absentStudents}
               </div>
             </div>

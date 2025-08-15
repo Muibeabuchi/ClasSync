@@ -202,18 +202,18 @@ const MobileStudentCourseDetailPage = () => {
         showHeader={true}
         headerTitle={courseData.courseName}
         headerSubtitle={courseData.courseCode}
-        headerActions={
-          <Button
-            variant="ghost"
-            size="icon"
-            asChild
-            className="touch-target-min"
-          >
-            <Link to="/dashboard/student/courses">
-              <ArrowLeft className="h-4 w-4" />
-            </Link>
-          </Button>
-        }
+        // headerActions={
+        //   <Button
+        //     variant="ghost"
+        //     size="icon"
+        //     asChild
+        //     className="touch-target-min"
+        //   >
+        //     <Link to="/dashboard/student/courses">
+        //       <ArrowLeft className="h-4 w-4" />
+        //     </Link>
+        //   </Button>
+        // }
         className="bg-background"
       >
         <div className="flex flex-col h-full space-y-4 px-4 pb-4">
@@ -666,8 +666,12 @@ const MobileStudentCourseDetailPage = () => {
           }
           courseName={courseData.courseName}
           onSuccess={() => {
-            // Refresh the page data or update state to show checked in status
-            window.location.reload();
+            // Close the drawer and let the real-time data update the UI
+            setIsFaceVerificationDrawerOpen(false);
+            toast.success('Attendance marked successfully!', {
+              description:
+                'Your face has been verified and attendance recorded.',
+            });
           }}
         />
       )}

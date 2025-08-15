@@ -273,7 +273,7 @@ const LiveAttendancePage = ({
           'lg:flex-row lg:items-center lg:justify-between',
           // Mobile: sticky header with native app feel
           isMobile && [
-            'sticky top-0 z-50 bg-background/95 backdrop-blur-md',
+            ' z-50 bg-background/95 backdrop-blur-md',
             '-mx-4 px-4 py-3 border-b',
             'shadow-sm',
           ],
@@ -296,8 +296,10 @@ const LiveAttendancePage = ({
             )}
             aria-label="Go back to course dashboard"
           >
-            <ArrowLeft className={cn('h-4 w-4', isMobile && 'h-5 w-5')} />
-            {!isMobile && <span className="ml-2">Back</span>}
+            <ArrowLeft
+              className={cn('h-4 w-4 font-bold', isMobile && 'hidden')}
+            />
+            {/* {!isMobile && <span className="ml-2">Back</span>} */}
           </Button>
 
           <div className="flex-1 min-w-0">
@@ -356,7 +358,7 @@ const LiveAttendancePage = ({
           )}
 
           {/* Override Status Badge */}
-          {sessionState === 'complete' && overrideEligibility && (
+          {/* {sessionState === 'complete' && overrideEligibility && (
             <Badge
               variant={
                 overrideEligibility.canOverride ? 'default' : 'secondary'
@@ -390,7 +392,7 @@ const LiveAttendancePage = ({
                 </>
               )}
             </Badge>
-          )}
+          )} */}
         </div>
       </div>
 
@@ -412,13 +414,16 @@ const LiveAttendancePage = ({
       <Card
         className={cn(
           'transition-all duration-500 mb-6',
-          // Status-based border colors using theme variables
-          // sessionState === 'pending' && 'border-warning bg-warning/5',
-          sessionState === 'active' && 'border-success bg-success/5',
-          sessionState === 'complete' && 'border-muted bg-muted/20',
-          sessionState === 'cancelled' && 'border-destructive bg-destructive/5',
-          // Enhanced mobile styling
-          isMobile && 'shadow-sm',
+          // Modern card styling with subtle borders
+          'border shadow-sm bg-card',
+          // Status-based left border accent using theme variables
+          sessionState === 'active' && 'border-l-4 border-l-success',
+          sessionState === 'complete' && 'border-l-4 border-l-muted-foreground',
+          sessionState === 'cancelled' && 'border-l-4 border-l-destructive',
+          // Enhanced mobile styling with native app feel
+          isMobile && 'shadow-md rounded-2xl',
+          // Interactive states
+          'hover:shadow-lg transition-shadow',
         )}
       >
         <CardContent
@@ -443,10 +448,12 @@ const LiveAttendancePage = ({
                   // Mobile: larger icon container
                   isMobile && 'p-4',
                   // Status-based styling using theme variables
-                  // sessionState === 'pending' && 'bg-warning/20',
-                  sessionState === 'active' && 'bg-success/20',
-                  sessionState === 'complete' && 'bg-muted',
-                  sessionState === 'cancelled' && 'bg-destructive/20',
+                  sessionState === 'active' &&
+                    'bg-success/10 ring-1 ring-success/20',
+                  sessionState === 'complete' &&
+                    'bg-muted/50 ring-1 ring-border',
+                  sessionState === 'cancelled' &&
+                    'bg-destructive/10 ring-1 ring-destructive/20',
                 )}
               >
                 <Clock
@@ -456,11 +463,9 @@ const LiveAttendancePage = ({
                     'h-5 w-5 sm:h-6 w-6',
                     isMobile && 'h-6 w-6',
                     // Status-based colors using theme variables
-                    // sessionState === 'pending' && 'text-warning-foreground',
-                    sessionState === 'active' && 'text-success-foreground',
+                    sessionState === 'active' && 'text-success',
                     sessionState === 'complete' && 'text-muted-foreground',
-                    sessionState === 'cancelled' &&
-                      'text-destructive-foreground',
+                    sessionState === 'cancelled' && 'text-destructive',
                   )}
                 />
               </div>
@@ -698,45 +703,49 @@ const LiveAttendancePage = ({
       </Card>
 
       {/* Simple Override Status Indicator - Non-obtrusive */}
-      {sessionState === 'complete' && overrideEligibility && (
+      {/* {sessionState === 'complete' && overrideEligibility && (
         <div className={cn('mb-6', isMobile && 'mb-4')}>
           <div
             className={cn(
-              'flex items-center gap-3 p-3 rounded-lg border',
+              'flex items-center gap-3 p-4 rounded-xl border shadow-sm',
               // Mobile-first responsive padding
-              'sm:p-4',
+              'sm:p-5',
               // Status-based styling using theme variables
               overrideEligibility.canOverride
-                ? 'bg-warning/10 border-warning text-warning-foreground'
-                : 'bg-muted border-muted-foreground/20 text-muted-foreground',
-              // Subtle, non-obtrusive appearance
-              'text-sm',
+                ? 'bg-warning/5 border-warning/20 text-warning-foreground'
+                : 'bg-muted/50 border-border text-muted-foreground',
+              // Modern card appearance
+              'backdrop-blur-sm',
+              // Interactive states
+              'hover:shadow-md transition-all duration-200',
             )}
           >
             <Timer
               className={cn(
-                'h-4 w-4 flex-shrink-0',
+                'h-5 w-5 flex-shrink-0',
                 overrideEligibility.canOverride
-                  ? 'text-warning-foreground'
+                  ? 'text-warning'
                   : 'text-muted-foreground',
               )}
             />
             <div className="flex-1 min-w-0">
               {overrideEligibility.canOverride ? (
-                <span>
+                <span className="text-sm sm:text-base">
                   Manual overrides available for{' '}
-                  <span className="font-medium">
+                  <span className="font-semibold">
                     {getSimpleOverrideTimeRemaining()}
                   </span>{' '}
                   remaining
                 </span>
               ) : (
-                <span>Manual override window has expired</span>
+                <span className="text-sm sm:text-base">
+                  Manual override window has expired
+                </span>
               )}
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Mobile-First Statistics Card with Collapsible Option */}
       <div className="mb-6">
@@ -920,7 +929,7 @@ const LiveAttendancePage = ({
                   <Badge
                     variant="outline"
                     className={cn(
-                      'text-destructive border-destructive/20 bg-destructive/10',
+                      'text-destructive border-destructive/20 bg-destructive/5',
                       // Mobile: larger badges
                       isMobile && 'px-3 py-1 text-sm',
                       isTouchDevice && 'px-4 py-2 text-base',
