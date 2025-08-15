@@ -490,34 +490,17 @@ export const batchAcceptJoinRequests = courseMutation({
         continue;
       }
 
-      // Try to match student by registration number
+      // Auto match ONLY by unique code from join request
+      // Match the uniqueCode from the request against registration numbers in class lists
       let matchedClassListStudent: (typeof flatClassListStudents)[0] | null =
         null;
 
-      if (student.registrationNumber) {
+      if (request.uniqueCode) {
         matchedClassListStudent =
           flatClassListStudents.find(
             (cls) =>
-              cls.student.studentRegistrationNumber ===
-              student.registrationNumber,
+              cls.student.studentRegistrationNumber === request.uniqueCode,
           ) || null;
-      }
-
-      // If no match by registration number, try by unique code
-      if (!matchedClassListStudent && request.uniqueCode) {
-        // For unique code matching, we'll match against any available student
-        // This is a fallback when registration numbers don't match
-        const availableStudents = flatClassListStudents.filter((cls) => {
-          const isAlreadyInCourse = existingAttendees.some(
-            (attendee) => attendee.classListStudentId === cls._id,
-          );
-          return !isAlreadyInCourse;
-        });
-
-        if (availableStudents.length > 0) {
-          // Take the first available student (lecturer will need to verify this is correct)
-          matchedClassListStudent = availableStudents[0];
-        }
       }
 
       if (matchedClassListStudent) {
