@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -45,6 +45,7 @@ import {
   Zap,
   X,
   Clock,
+  CheckCircle,
   // Check,
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -458,24 +459,33 @@ export const CreateClassListSheet = ({
   };
 
   const content = (
-    <div className="space-y-6">
-      {/* Class List Selection/Display Section */}
-
-      {/* Create Form - Only show when showCreateForm is true */}
-
+    <div className="space-y-8">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          {/* Basic Information */}
-          <div className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+          {/* Header Section */}
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h2 className="text-2xl font-semibold tracking-tight">
+                Create Class List
+              </h2>
+              <p className="text-muted-foreground">
+                Add students to your class list by uploading a CSV file or
+                entering them manually.
+              </p>
+            </div>
+
             <FormField
               control={form.control}
               name="classListName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Class List Name *</FormLabel>
+                  <FormLabel className="text-base font-medium">
+                    Class List Name
+                  </FormLabel>
                   <FormControl>
                     <Input
                       placeholder="e.g., Computer Science 2024 Batch"
+                      className="h-11"
                       {...field}
                     />
                   </FormControl>
@@ -485,374 +495,446 @@ export const CreateClassListSheet = ({
             />
           </div>
 
-          {/* Student Entry Method */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium">Add Students</h3>
-
+          {/* Student Entry Section */}
+          <div className="space-y-6">
+            <div className="space-y-2">
+              <h3 className="text-lg font-medium">Add Students</h3>
+              <p className="text-sm text-muted-foreground">
+                Choose your preferred method to add students to the class list.
+              </p>
+            </div>
             <Tabs
               value={uploadMethod}
               onValueChange={(value) => {
                 setUploadMethod(value as 'csv' | 'manual');
-                // Don't clear data when switching - preserve user's work
               }}
+              className="w-full"
             >
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-2 h-12">
                 <TabsTrigger
                   value="csv"
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 h-10"
                 >
                   <FileSpreadsheet className="h-4 w-4" />
                   <span>Upload CSV</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="manual"
-                  className="flex items-center space-x-2"
+                  className="flex items-center space-x-2 h-10"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add Manually</span>
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="csv" className="space-y-4">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      {parsedStudents.length === 0 && (
-                        <>
+              <TabsContent value="csv" className="space-y-6 mt-6">
+                <Card className="border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors">
+                  <CardContent className="p-8">
+                    {parsedStudents.length === 0 ? (
+                      <div className="space-y-6">
+                        <div className="text-center space-y-4">
+                          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                            <Upload className="h-8 w-8 text-primary" />
+                          </div>
+                          <div className="space-y-2">
+                            <h4 className="text-lg font-medium">
+                              Upload CSV File
+                            </h4>
+                            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                              Your CSV file must contain headers:{' '}
+                              <strong>Name</strong>,{' '}
+                              <strong>Registration Number</strong>, and{' '}
+                              <strong>Gender</strong>
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex justify-center">
+                          <Label
+                            htmlFor="csv-upload"
+                            className="cursor-pointer"
+                          >
+                            <Button
+                              variant="outline"
+                              size="lg"
+                              asChild
+                              className="h-12 px-8"
+                            >
+                              <span>Choose CSV File</span>
+                            </Button>
+                            <Input
+                              id="csv-upload"
+                              type="file"
+                              accept=".csv"
+                              onChange={handleFileUpload}
+                              className="hidden"
+                            />
+                          </Label>
+                        </div>
+
+                        {csvFile && (
                           <div className="text-center">
-                            <Upload className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                            <div className="space-y-2">
-                              <h4 className="font-medium">Upload CSV File</h4>
-                              <p className="text-sm text-muted-foreground">
-                                CSV must contain headers: Name, Registration
-                                Number, Gender
+                            <div className="inline-flex items-center gap-2 px-3 py-2 bg-muted rounded-lg">
+                              <FileSpreadsheet className="h-4 w-4" />
+                              <span className="text-sm font-medium">
+                                {csvFile.name}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {isProcessing && (
+                          <div className="flex items-center justify-center gap-2 text-primary">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span className="text-sm font-medium">
+                              Processing CSV file...
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-green-900">
+                                Successfully imported {parsedStudents.length}{' '}
+                                students
+                              </h4>
+                              <p className="text-sm text-green-700">
+                                Review the student list below before creating
+                                the class list
                               </p>
                             </div>
                           </div>
+                          <Button
+                            onClick={handleClearCsv}
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-destructive hover:text-destructive-foreground"
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Clear
+                          </Button>
+                        </div>
 
-                          <div className="flex items-center justify-center">
-                            <Label
-                              htmlFor="csv-upload"
-                              className="cursor-pointer"
-                            >
-                              <Button variant="outline" asChild>
-                                <span>Choose CSV File</span>
-                              </Button>
-                              <Input
-                                id="csv-upload"
-                                type="file"
-                                accept=".csv"
-                                onChange={handleFileUpload}
-                                className="hidden"
-                              />
-                            </Label>
+                        {/* Enhanced Student Table */}
+                        <div className="border rounded-lg overflow-hidden bg-background">
+                          <div className="max-h-96 overflow-y-auto">
+                            <table className="w-full">
+                              <thead className="bg-muted/50 sticky top-0 z-10">
+                                <tr>
+                                  <th className="text-left p-4 font-medium text-sm">
+                                    #
+                                  </th>
+                                  <th className="text-left p-4 font-medium text-sm">
+                                    Full Name
+                                  </th>
+                                  <th className="text-left p-4 font-medium text-sm">
+                                    Registration Number
+                                  </th>
+                                  <th className="text-left p-4 font-medium text-sm">
+                                    Gender
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {parsedStudents.map((student, index) => (
+                                  <tr
+                                    key={index}
+                                    className="border-b hover:bg-muted/30 transition-colors"
+                                  >
+                                    <td className="p-4 text-sm text-muted-foreground font-medium">
+                                      {index + 1}
+                                    </td>
+                                    <td className="p-4 text-sm font-medium">
+                                      {student.name}
+                                    </td>
+                                    <td className="p-4 text-sm font-mono">
+                                      {student.registrationNumber}
+                                    </td>
+                                    <td className="p-4">
+                                      <span
+                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                          student.gender === 'female'
+                                            ? 'bg-pink-100 text-pink-800'
+                                            : 'bg-blue-100 text-blue-800'
+                                        }`}
+                                      >
+                                        {student.gender === 'female'
+                                          ? 'Female'
+                                          : 'Male'}
+                                      </span>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
                           </div>
+                        </div>
+                      </div>
+                    )}
 
-                          {csvFile && (
-                            <p className="text-sm text-center text-muted-foreground">
-                              Selected: {csvFile.name}
-                            </p>
-                          )}
+                    {csvErrors.length > 0 && (
+                      <div className="space-y-4 mt-6">
+                        <div className="flex items-center gap-2 text-destructive">
+                          <AlertCircle className="h-5 w-5" />
+                          <span className="font-semibold">
+                            CSV Parsing Issues Found
+                          </span>
+                        </div>
 
-                          {isProcessing && (
-                            <p className="text-sm text-center text-blue-600">
-                              Processing CSV file...
-                            </p>
-                          )}
-                        </>
-                      )}
-
-                      {csvErrors.length > 0 && (
-                        <div className="space-y-4">
-                          <div className="flex items-center gap-2 text-destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <span className="font-medium">
-                              CSV Parsing Failed
-                            </span>
-                          </div>
-                          <div className="max-h-32 overflow-y-auto border rounded p-2 bg-destructive/5">
+                        <div className="bg-destructive/5 border border-destructive/20 rounded-lg p-4">
+                          <div className="max-h-32 overflow-y-auto space-y-1">
                             {csvErrors.map((error, index) => (
                               <p
                                 key={index}
                                 className="text-sm text-destructive"
                               >
-                                {error}
+                                • {error}
                               </p>
                             ))}
                           </div>
+                        </div>
 
-                          {/* AI Fix and Clear Buttons */}
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            {rawCsvContent && (
-                              <Button
-                                onClick={handleAiFixCsv}
-                                disabled={isAiFixing || rateLimitInfo?.exceeded}
-                                size="sm"
-                                className={`${
-                                  rateLimitInfo?.exceeded
-                                    ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed'
-                                    : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
-                                } text-white border-0 transition-all duration-200 flex-1`}
-                              >
-                                {isAiFixing ? (
-                                  <>
-                                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                    AI is fixing your CSV...
-                                  </>
-                                ) : rateLimitInfo?.exceeded ? (
-                                  <>
-                                    <Clock className="h-4 w-4 mr-2" />
-                                    Rate Limited
-                                  </>
-                                ) : (
-                                  <>
-                                    <Zap className="h-4 w-4 mr-2" />
-                                    AI Fix CSV
-                                  </>
-                                )}
-                              </Button>
-                            )}
-
+                        <div className="flex flex-col sm:flex-row gap-3">
+                          {rawCsvContent && (
                             <Button
-                              onClick={handleClearCsv}
-                              variant="outline"
+                              onClick={handleAiFixCsv}
+                              disabled={isAiFixing || rateLimitInfo?.exceeded}
                               size="sm"
-                              className="hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                              className={`${
+                                rateLimitInfo?.exceeded
+                                  ? 'bg-gray-400 hover:bg-gray-400 cursor-not-allowed'
+                                  : 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                              } text-white border-0 transition-all duration-200 flex-1`}
                             >
-                              <X className="h-4 w-4 mr-2" />
-                              Clear CSV
-                            </Button>
-                          </div>
-
-                          <p className="text-xs text-muted-foreground">
-                            Our AI can automatically fix common CSV issues like
-                            incorrect headers, formatting problems, and missing
-                            data.
-                          </p>
-
-                          {/* Rate Limit Info */}
-                          {rateLimitInfo?.exceeded && (
-                            <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                              <div className="flex items-center gap-2 text-orange-800 mb-2">
-                                <Clock className="h-4 w-4" />
-                                <span className="font-medium">
-                                  Rate limit reached
-                                </span>
-                              </div>
-                              <p className="text-sm text-orange-700">
-                                {rateLimitInfo.message}
-                              </p>
-                              {rateLimitInfo.retryAfter && (
-                                <p className="text-xs text-orange-600 mt-1">
-                                  Try again in{' '}
-                                  {Math.ceil(rateLimitInfo.retryAfter / 60)}{' '}
-                                  minutes
-                                </p>
+                              {isAiFixing ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                  AI is fixing your CSV...
+                                </>
+                              ) : rateLimitInfo?.exceeded ? (
+                                <>
+                                  <Clock className="h-4 w-4 mr-2" />
+                                  Rate Limited
+                                </>
+                              ) : (
+                                <>
+                                  <Zap className="h-4 w-4 mr-2" />
+                                  AI Fix CSV
+                                </>
                               )}
-                            </div>
+                            </Button>
                           )}
-                        </div>
-                      )}
 
-                      {parsedStudents.length > 0 && (
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-green-600">
-                            Successfully parsed {parsedStudents.length} students
-                          </h4>
-                          <div className="max-h-32 overflow-y-auto border rounded">
-                            <table className="w-full text-sm">
-                              <thead>
-                                <tr className="border-b bg-muted/50">
-                                  <th className="text-left p-2">Name</th>
-                                  <th className="text-left p-2">Reg Number</th>
-                                  <th className="text-left p-2">Gender</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {parsedStudents
-                                  .slice(0, 5)
-                                  .map((student, index) => (
-                                    <tr key={index} className="border-b">
-                                      <td className="p-2">{student.name}</td>
-                                      <td className="p-2">
-                                        {student.registrationNumber}
-                                      </td>
-                                      <td className="p-2 capitalize">
-                                        {student.gender}
-                                      </td>
-                                    </tr>
-                                  ))}
-                              </tbody>
-                            </table>
-                            {parsedStudents.length > 5 && (
-                              <p className="text-xs text-muted-foreground p-2">
-                                And {parsedStudents.length - 5} more students...
+                          <Button
+                            onClick={handleClearCsv}
+                            variant="outline"
+                            size="sm"
+                            className="hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                          >
+                            <X className="h-4 w-4 mr-2" />
+                            Clear CSV
+                          </Button>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground">
+                          Our AI can automatically fix common CSV issues like
+                          incorrect headers, formatting problems, and missing
+                          data.
+                        </p>
+
+                        {rateLimitInfo?.exceeded && (
+                          <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                            <div className="flex items-center gap-2 text-orange-800 mb-2">
+                              <Clock className="h-4 w-4" />
+                              <span className="font-medium">
+                                Rate limit reached
+                              </span>
+                            </div>
+                            <p className="text-sm text-orange-700">
+                              {rateLimitInfo.message}
+                            </p>
+                            {rateLimitInfo.retryAfter && (
+                              <p className="text-xs text-orange-600 mt-1">
+                                Try again in{' '}
+                                {Math.ceil(rateLimitInfo.retryAfter / 60)}{' '}
+                                minutes
                               </p>
                             )}
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
 
-              <TabsContent value="manual" className="space-y-4">
+              <TabsContent value="manual" className="space-y-6 mt-6">
                 <Card>
-                  <CardContent className="p-6">
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h4 className="font-medium">Add Students Manually</h4>
-                        <Button
-                          type="button"
-                          onClick={addManualStudent}
-                          size="sm"
-                          variant="outline"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Add Student
-                        </Button>
+                  <CardHeader className="pb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">Manual Entry</CardTitle>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Add students one by one using the form below
+                        </p>
                       </div>
+                      <Button
+                        type="button"
+                        onClick={addManualStudent}
+                        size="sm"
+                        variant="outline"
+                        className="h-10"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Student
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="space-y-6 max-h-80 overflow-y-auto pr-2">
+                      {manualStudents.map((student, index) => {
+                        const isComplete =
+                          student.name.trim() &&
+                          student.registrationNumber.trim();
+                        const isEmpty =
+                          !student.name.trim() &&
+                          !student.registrationNumber.trim();
 
-                      <div className="space-y-4 max-h-64 overflow-y-auto">
-                        {manualStudents.map((student, index) => {
-                          const isComplete =
-                            student.name.trim() &&
-                            student.registrationNumber.trim();
-                          const isEmpty =
-                            !student.name.trim() &&
-                            !student.registrationNumber.trim();
-
-                          return (
-                            <div
-                              key={index}
-                              className={`relative p-4 border rounded-lg transition-all duration-200 ${
-                                isComplete
-                                  ? 'border-green-200 bg-green-50/50'
-                                  : isEmpty
-                                    ? 'border-border bg-background'
-                                    : 'border-orange-200 bg-orange-50/50'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                  <div
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
-                                      isComplete
-                                        ? 'bg-green-100 text-green-700'
-                                        : 'bg-muted text-muted-foreground'
-                                    }`}
-                                  >
-                                    {index + 1}
-                                  </div>
-                                  <span className="text-sm font-medium text-muted-foreground">
+                        return (
+                          <div
+                            key={index}
+                            className={`relative p-6 border-2 rounded-xl transition-all duration-200 ${
+                              isComplete
+                                ? 'border-green-200 bg-green-50/50'
+                                : isEmpty
+                                  ? 'border-border bg-background'
+                                  : 'border-orange-200 bg-orange-50/50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
+                                    isComplete
+                                      ? 'bg-green-100 text-green-700'
+                                      : 'bg-muted text-muted-foreground'
+                                  }`}
+                                >
+                                  {index + 1}
+                                </div>
+                                <div>
+                                  <span className="font-medium">
                                     Student {index + 1}
                                   </span>
-                                </div>
-                                {manualStudents.length > 1 && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => removeManualStudent(index)}
-                                    className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
-
-                              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div className="space-y-1">
-                                  <Label className="text-sm font-medium">
-                                    Full Name *
-                                  </Label>
-                                  <Input
-                                    placeholder="Enter student's full name"
-                                    value={student.name}
-                                    onChange={(e) =>
-                                      updateManualStudent(
-                                        index,
-                                        'name',
-                                        e.target.value,
-                                      )
-                                    }
-                                    className={`transition-colors ${
-                                      student.name.trim()
-                                        ? 'border-green-300 focus:border-green-500'
-                                        : ''
-                                    }`}
-                                  />
-                                </div>
-
-                                <div className="space-y-1">
-                                  <Label className="text-sm font-medium">
-                                    Registration Number *
-                                  </Label>
-                                  <Input
-                                    placeholder="e.g., 12345678901"
-                                    value={student.registrationNumber}
-                                    onChange={(e) =>
-                                      updateManualStudent(
-                                        index,
-                                        'registrationNumber',
-                                        e.target.value,
-                                      )
-                                    }
-                                    className={`transition-colors ${
-                                      student.registrationNumber.trim()
-                                        ? 'border-green-300 focus:border-green-500'
-                                        : ''
-                                    }`}
-                                  />
-                                </div>
-
-                                <div className="space-y-1">
-                                  <Label className="text-sm font-medium">
-                                    Gender *
-                                  </Label>
-                                  <Select
-                                    value={student.gender}
-                                    onValueChange={(value) =>
-                                      updateManualStudent(
-                                        index,
-                                        'gender',
-                                        value,
-                                      )
-                                    }
-                                  >
-                                    <SelectTrigger className="transition-colors">
-                                      <SelectValue placeholder="Select gender" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="male">Male</SelectItem>
-                                      <SelectItem value="female">
-                                        Female
-                                      </SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                  {isComplete && (
+                                    <div className="flex items-center gap-1 text-xs text-green-600 mt-0.5">
+                                      <CheckCircle className="h-3 w-3" />
+                                      <span>Complete</span>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-
-                              {isComplete && (
-                                <div className="mt-2 flex items-center gap-1 text-xs text-green-600">
-                                  <div className="w-1 h-1 bg-green-500 rounded-full"></div>
-                                  <span>Complete</span>
-                                </div>
+                              {manualStudents.length > 1 && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeManualStudent(index)}
+                                  className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               )}
                             </div>
-                          );
-                        })}
-                      </div>
 
-                      {getAllStudents().length > 0 && (
-                        <div className="pt-2 border-t">
-                          <p className="text-sm font-medium text-green-600">
-                            {getAllStudents().length} students ready to be added
-                          </p>
-                        </div>
-                      )}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium">
+                                  Full Name *
+                                </Label>
+                                <Input
+                                  placeholder="Enter student's full name"
+                                  value={student.name}
+                                  onChange={(e) =>
+                                    updateManualStudent(
+                                      index,
+                                      'name',
+                                      e.target.value,
+                                    )
+                                  }
+                                  className={`h-11 transition-colors ${
+                                    student.name.trim()
+                                      ? 'border-green-300 focus:border-green-500'
+                                      : ''
+                                  }`}
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium">
+                                  Registration Number *
+                                </Label>
+                                <Input
+                                  placeholder="e.g., 12345678901"
+                                  value={student.registrationNumber}
+                                  onChange={(e) =>
+                                    updateManualStudent(
+                                      index,
+                                      'registrationNumber',
+                                      e.target.value,
+                                    )
+                                  }
+                                  className={`h-11 font-mono transition-colors ${
+                                    student.registrationNumber.trim()
+                                      ? 'border-green-300 focus:border-green-500'
+                                      : ''
+                                  }`}
+                                />
+                              </div>
+
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium">
+                                  Gender *
+                                </Label>
+                                <Select
+                                  value={student.gender}
+                                  onValueChange={(value) =>
+                                    updateManualStudent(index, 'gender', value)
+                                  }
+                                >
+                                  <SelectTrigger className="h-11 transition-colors">
+                                    <SelectValue placeholder="Select gender" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="male">Male</SelectItem>
+                                    <SelectItem value="female">
+                                      Female
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
+
+                    {getAllStudents().length > 0 && (
+                      <div className="pt-4 border-t bg-muted/30 -mx-6 px-6 -mb-6 pb-6 rounded-b-lg">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <span className="font-medium text-green-900">
+                            {getAllStudents().length} students ready to be added
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>
@@ -860,25 +942,19 @@ export const CreateClassListSheet = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-6 border-t bg-muted/30 -mx-6 px-6 -mb-6 pb-6">
             <Button
               type="button"
               variant="outline"
+              size="lg"
               onClick={() => {
-                // Clear manual students
                 setManualStudents([
                   { name: '', registrationNumber: '', gender: 'male' },
                 ]);
-
-                // Clear CSV data
                 setParsedStudents([]);
                 setCsvFile(null);
                 setCsvErrors([]);
-
-                // Reset form
                 form.reset();
-
-                // Close the sheet/drawer
                 onOpenChange(false);
               }}
             >
@@ -886,11 +962,13 @@ export const CreateClassListSheet = ({
             </Button>
             <Button
               type="submit"
+              size="lg"
               disabled={
                 getAllStudents().length === 0 ||
                 !form.watch('classListName') ||
                 isSubmitting
               }
+              className="min-w-[140px]"
             >
               {isSubmitting ? (
                 <>
@@ -911,7 +989,7 @@ export const CreateClassListSheet = ({
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className="max-h-[95vh]">
-          <DrawerHeader>
+          <DrawerHeader className="pb-4">
             <DrawerTitle className="flex items-center space-x-2">
               <Users className="h-5 w-5" />
               <span>Create New Class List</span>
@@ -927,15 +1005,15 @@ export const CreateClassListSheet = ({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="w-full sm:max-w-4xl px-4 overflow-y-auto py-2"
+        className="w-full sm:max-w-[50vw] px-6 overflow-y-auto py-4"
       >
-        <SheetHeader>
-          <SheetTitle className="flex items-center space-x-2">
-            <Users className="h-5 w-5" />
+        <SheetHeader className="pb-6">
+          <SheetTitle className="flex items-center space-x-2 text-xl">
+            <Users className="h-6 w-6" />
             <span>Create New Class List</span>
           </SheetTitle>
         </SheetHeader>
-        <div className="mt-6">{content}</div>
+        {content}
       </SheetContent>
     </Sheet>
   );
