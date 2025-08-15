@@ -1,77 +1,14 @@
-feat: Comprehensive ClassSync landing page redesign and feature updates
+fix(face-verification): resolve stale descriptor issue in attendance verification
 
-## Major Changes
+- Fix face verification failing when face stays in camera view
+- Implement fresh descriptor capture at verification moment instead of using continuously updated descriptor
+- Add smart descriptor management to prevent quality degradation from frequent updates
+- Improve verification reliability by capturing face data when user clicks "Verify My Face"
+- Enhance error handling and user feedback for failed captures
+- Add comprehensive logging for debugging verification issues
 
-### 🎨 UI/UX Improvements
-- Remove broken dropdown navigation menu for better mobile experience
-- Fix contrast issues in "Most Popular" pricing card for better readability
-- Remove "Trusted By" section with affiliated schools/companies
-- Streamline navigation with direct links only
+The issue was caused by the continuous face detection loop constantly updating the face descriptor every 300ms, leading to potential use of poor-quality descriptors during verification. Moving the face away worked because it froze the last good descriptor. 
 
-### 💰 New Pricing Section
-- Add comprehensive pricing tiers (Free, Basic ₦2,999, Pro ₦5,999)
-- Implement responsive pricing cards with hover effects and animations
-- Highlight Pro plan as "Most Popular" with special styling
-- Include detailed feature lists for each pricing tier
-- Add pricing note about per-lecturer pricing and institutional options
+Now the system captures a fresh, high-quality descriptor at the exact moment of verification, ensuring consistent and reliable face verification regardless of face movement patterns.
 
-### 🚀 Updated Features Section
-- Replace outdated features with current ClassSync capabilities:
-  - Face Verification: Advanced facial recognition for proxy prevention
-  - Browser Fingerprinting: Unique device identification for security
-  - Course Scheduling: Smart scheduling with automated reminders
-  - AI-Powered CSV Processing: Intelligent bulk import with error correction
-  - Real-time Analytics: Comprehensive dashboards with insights
-  - GPS-Based Validation: Location verification (retained)
-
-### 👨‍🏫 Lecturer Experience Updates
-- Remove university-centric signup requirements
-- Emphasize independent lecturer onboarding
-- Add AI-powered CSV error correction messaging
-- Include face verification in multi-layer security approach
-- Update messaging to reflect no institutional approval needed
-
-### 👨‍🎓 Student Experience Updates
-- Enhance security messaging around face verification
-- Update dual verification system (GPS + Face)
-- Improve identity verification process description
-- Clarify secure course joining process
-
-### 🏢 Institutional Section Redesign
-- Replace "Learn About Institutional Access" button with "🚧 Coming Soon" badge
-- Reposition as custom enterprise solutions for universities
-- Highlight capability to build tailored attendance systems
-- Add enterprise-grade features and custom configuration details
-- Set realistic expectations about development timeline
-
-### 🔧 Technical Fixes
-- Fix syntax errors in JSX elements
-- Remove "Request a Demo" references throughout
-- Improve mobile responsiveness across all sections
-- Add proper semantic HTML and accessibility features
-- Optimize animations and transitions for better performance
-
-### 📱 Mobile Optimization
-- Ensure all pricing cards stack properly on mobile
-- Improve touch targets and spacing
-- Optimize typography scaling across device sizes
-- Enhance mobile navigation experience
-
-## Impact
-- More accurate representation of ClassSync's current capabilities
-- Better user experience with improved navigation and pricing clarity
-- Enhanced mobile responsiveness and accessibility
-- Clearer value proposition for different user segments
-- Realistic positioning of enterprise features as coming soon
-
-## Files Modified
-- src/routes/index.tsx (major redesign and feature updates)
-
-## Breaking Changes
-None - all changes are additive or improve existing functionality
-
-## Testing
-- Verified responsive design across mobile, tablet, and desktop
-- Confirmed all links and buttons function correctly
-- Validated pricing card contrast and readability
-- Tested animations and hover effects
+Resolves counterintuitive behavior where keeping face steady failed but moving it worked.

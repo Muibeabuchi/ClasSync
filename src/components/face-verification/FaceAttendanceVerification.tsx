@@ -136,8 +136,17 @@ export const FaceAttendanceVerification: React.FC<
             };
 
             setFaceDetectionStats(stats);
-            // Always update the descriptor to prevent stale values
-            setCurrentFaceDescriptor(result.descriptor);
+
+            // Only update descriptor if quality is significantly better than current
+            // This prevents constant descriptor updates that can cause verification issues
+            if (
+              !currentFaceDescriptor ||
+              (result.quality.isGoodQuality &&
+                result.confidence &&
+                result.confidence > 0.8)
+            ) {
+              setCurrentFaceDescriptor(result.descriptor);
+            }
 
             // Check if quality is good enough for capture (70%+ confidence for better success rate)
             const qualityScore = (result.confidence || 0) * 100;
@@ -145,9 +154,10 @@ export const FaceAttendanceVerification: React.FC<
               setVerificationStep('ready_to_capture');
             }
           } else {
-            // Clear stats if no face detected
+            // Clear stats if no face detected, but keep the last good descriptor
             setFaceDetectionStats(null);
-            setCurrentFaceDescriptor(null);
+            // Don't clear descriptor immediately - keep it for a few seconds
+            // This prevents losing good descriptors due to temporary detection failures
           }
         } catch (error) {
           console.error('Face detection error:', error);
@@ -164,17 +174,11 @@ export const FaceAttendanceVerification: React.FC<
     modelsLoaded,
     detectFaceFromVideo,
     getVideoElement,
+    currentFaceDescriptor, // Add this dependency
   ]);
 
   // Manual verification function - called when user clicks verify button
   const handleManualVerification = async () => {
-    if (!currentFaceDescriptor) {
-      toast.error('No face detected', {
-        description: 'Please ensure your face is clearly visible',
-      });
-      return;
-    }
-
     if (!faceDetectionStats || faceDetectionStats.confidence < 0.7) {
       toast.error('Face quality too low', {
         description: 'Please improve lighting and face positioning',
@@ -185,13 +189,40 @@ export const FaceAttendanceVerification: React.FC<
     setVerificationStep('verifying');
 
     try {
-      console.log(
-        'Starting server-side face verification and attendance marking...',
-      );
+      console.log('Capturing fresh face descriptor for verification...');
+
+      // Get current video element
+      const videoElement = getVideoElement();
+      if (!videoElement || videoElement.readyState !== 4) {
+        throw new Error('Video not ready for capture');
+      }
+
+      // Capture a fresh face descriptor at the moment of verification
+      // This prevents using stale descriptors from continuous detection
+      const captureResult = await detectFaceFromVideo(videoElement, true);
+
+      if (!captureResult.success || !captureResult.descriptor) {
+        toast.error('Face capture failed', {
+          description:
+            'Could not capture face at verification time. Please try again.',
+        });
+        setVerificationStep('ready_to_capture');
+        return;
+      }
+
+      console.log('Fresh face descriptor captured:', {
+        confidence: captureResult.confidence,
+        quality: captureResult.quality?.isGoodQuality,
+        descriptorLength: captureResult.descriptor.length,
+      });
 
       // Convert face descriptor to array for server transmission
       const faceDescriptorArray = faceApiService.descriptorToArray(
-        currentFaceDescriptor,
+        captureResult.descriptor,
+      );
+
+      console.log(
+        'Starting server-side face verification and attendance marking...',
       );
 
       // Send to server for verification and attendance marking
