@@ -11,6 +11,12 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
   MapPin,
   Clock,
   Users,
@@ -30,6 +36,7 @@ import {
   Shield,
   TrendingUp,
   Globe,
+  HelpCircle,
 } from 'lucide-react';
 // import { Playfair_Display } from 'next/font/google';
 // import Image from 'next/image';
@@ -655,7 +662,402 @@ function ClassSyncLanding() {
         </div>
       </section>
 
-      {/* Final CTA */}
+      {/* FAQ Section */}
+      <section className="py-12 sm:py-16 lg:py-20 px-4 bg-gray-800/30">
+        <div className="container mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12 sm:mb-16"
+          >
+            <div className="inline-flex items-center space-x-2 bg-blue-500/10 border border-blue-500/20 rounded-full px-4 py-2 mb-6">
+              <HelpCircle className="w-5 h-5 text-blue-400" />
+              <span className="text-blue-400 font-medium">Got Questions?</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-white">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-base sm:text-lg lg:text-xl text-gray-400 max-w-2xl mx-auto px-4">
+              Everything you need to know about ClassSync. Can't find the answer
+              you're looking for?
+              <Link to="." className="text-blue-400 hover:text-blue-300 ml-1">
+                Contact us
+              </Link>
+              .
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="max-w-4xl mx-auto"
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Lecturers FAQ */}
+              <div className="space-y-6">
+                <div className="text-center lg:text-left">
+                  <div className="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 rounded-full px-3 py-1.5 mb-4">
+                    <GraduationCap className="w-4 h-4 text-purple-400" />
+                    <span className="text-purple-400 font-medium text-sm">
+                      For Lecturers
+                    </span>
+                  </div>
+                </div>
+
+                <Accordion type="single" collapsible className="space-y-4">
+                  <AccordionItem
+                    value="lecturer-1"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      How do I onboard as a lecturer on Classynk?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Simply sign in using your Google account. During
+                      onboarding, you'll fill out your name, select your
+                      academic title, faculty, and department. You'll also
+                      upload a passport photograph to complete your profile.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="lecturer-2"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      How do I create a course?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      After onboarding, you can create a course by providing the
+                      course title and course code. You'll then upload a class
+                      list in CSV format with student names, registration
+                      numbers, and gender.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="lecturer-3"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      Can I use Classynk for multiple courses?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Yes. You can create and manage multiple courses, each with
+                      its own student list and attendance history.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="lecturer-4"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      How does attendance work for lecturers?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      You simply tap "Take Attendance". There's a 30-second prep
+                      countdown, followed by a 30-second attendance window.
+                      Optionally, you can generate a one-time attendance code
+                      that students must enter.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="lecturer-5"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      What if a student has GPS issues or poor connectivity?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      You can override their attendance manually. Classynk
+                      allows one-time overrides per session for verified edge
+                      cases, and logs each override for transparency.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="lecturer-6"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      Can I see attendance history and statistics?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Yes. Each course includes visual analytics of student
+                      attendance rates, session logs, and the ability to export
+                      data.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+
+              {/* Students FAQ */}
+              <div className="space-y-6">
+                <div className="text-center lg:text-left">
+                  <div className="inline-flex items-center space-x-2 bg-orange-500/10 border border-orange-500/20 rounded-full px-3 py-1.5 mb-4">
+                    <Users className="w-4 h-4 text-orange-400" />
+                    <span className="text-orange-400 font-medium text-sm">
+                      For Students
+                    </span>
+                  </div>
+                </div>
+
+                <Accordion type="single" collapsible className="space-y-4">
+                  <AccordionItem
+                    value="student-1"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      How do I sign up as a student?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Students also sign in using Google and go through
+                      onboarding, which includes filling out personal details,
+                      selecting their department, and uploading a passport
+                      photo.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="student-2"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      How do I join a course?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Lecturers can share a unique course join link. When you
+                      request to join, the system matches your registration
+                      number with the lecturer's uploaded class list.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="student-3"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      What if my registration number doesn't match?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      You won't be added until your details are verified. Ensure
+                      your reg number exactly matches what your lecturer
+                      uploaded.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="student-4"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      How does the attendance check-in work for students?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Once the lecturer activates the attendance session, you
+                      enter the attendance code and your GPS must confirm you're
+                      physically present within range. You'll get a success or
+                      failure message instantly.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="student-5"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      Can I check attendance from anywhere?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      No. You must be physically present within GPS range of the
+                      lecturer. This prevents proxy attendance.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            </div>
+
+            {/* Pricing & Plans FAQ */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+              <div className="space-y-6">
+                <div className="text-center lg:text-left">
+                  <div className="inline-flex items-center space-x-2 bg-green-500/10 border border-green-500/20 rounded-full px-3 py-1.5 mb-4">
+                    <TrendingUp className="w-4 h-4 text-green-400" />
+                    <span className="text-green-400 font-medium text-sm">
+                      Pricing & Plans
+                    </span>
+                  </div>
+                </div>
+
+                <Accordion type="single" collapsible className="space-y-4">
+                  <AccordionItem
+                    value="pricing-1"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      Is Classynk free to use?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Classynk offers a Free Plan for basic usage. However,
+                      advanced features are gated under Basic and Pro plans for
+                      lecturers.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="pricing-2"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      What are the differences between plans?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      <div className="space-y-2">
+                        <p>
+                          <strong className="text-white">Free:</strong> Up to 1
+                          course, limited features
+                        </p>
+                        <p>
+                          <strong className="text-white">
+                            Basic (₦2,999/month):
+                          </strong>{' '}
+                          Up to 3 courses, analytics, overrides
+                        </p>
+                        <p>
+                          <strong className="text-white">
+                            Pro (₦5,999/month):
+                          </strong>{' '}
+                          Unlimited courses, export tools, priority support
+                        </p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          Institutions can contact us for enterprise plans.
+                        </p>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="pricing-3"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      Can I upgrade or downgrade my plan anytime?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Yes. You can manage your plan directly from your
+                      dashboard. Changes take effect immediately or at the end
+                      of your billing cycle, depending on the action.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="pricing-4"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      Is payment secure?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      All payments are processed securely via Paystack. We do
+                      not store your card details.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+
+              {/* Technical & Misc FAQ */}
+              <div className="space-y-6">
+                <div className="text-center lg:text-left">
+                  <div className="inline-flex items-center space-x-2 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1.5 mb-4">
+                    <Settings className="w-4 h-4 text-cyan-400" />
+                    <span className="text-cyan-400 font-medium text-sm">
+                      Technical & Misc
+                    </span>
+                  </div>
+                </div>
+
+                <Accordion type="single" collapsible className="space-y-4">
+                  <AccordionItem
+                    value="technical-1"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      Does Classynk work on mobile phones?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Yes. Classynk is built as a mobile-first progressive web
+                      app (PWA). You can install it to your home screen like a
+                      native app.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="technical-2"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      Is GPS required for Classynk?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Yes. For students to check in, GPS must be enabled and
+                      accurate. This is core to our anti-proxy system.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="technical-3"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      Can students spoof their location?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      Classynk uses advanced techniques to detect spoofed or
+                      tampered location data and will flag or deny such
+                      check-ins.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="technical-4"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      What happens if a student is late or misses the window?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      They will be marked absent. The session window is fixed to
+                      1 minute (30s prep + 30s live), and students must be ready
+                      before it starts.
+                    </AccordionContent>
+                  </AccordionItem>
+
+                  <AccordionItem
+                    value="technical-5"
+                    className="border border-gray-700/50 bg-gray-800/50 backdrop-blur-sm rounded-lg px-4"
+                  >
+                    <AccordionTrigger className="text-left text-white hover:text-blue-400 transition-colors py-4">
+                      Does Classynk support offline attendance?
+                    </AccordionTrigger>
+                    <AccordionContent className="text-gray-400 pb-4">
+                      No, GPS and internet access are required. However,
+                      lecturers can perform one-time overrides in exceptional
+                      cases.
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Call to Action Section */}
       <section className="py-12 sm:py-16 lg:py-20 px-4 bg-gray-900">
         <div className="container mx-auto text-center">
           <motion.div
