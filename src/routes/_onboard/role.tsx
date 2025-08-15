@@ -6,7 +6,7 @@ import {
 import LecturerOnboardingSection, {
   LecturerOnboardingSkeleton,
 } from '@/feature/onboarding/components/lecturer-onboarding-section';
-import StudentOnboardingSection from '@/feature/onboarding/components/onboard.student';
+import StudentOnboardingSection from '@/feature/onboarding/components/student-onboarding-section';
 import { type OnboardingDataType } from '@/feature/onboarding/schema/onboarding-schema';
 import { convexQuery } from '@convex-dev/react-query';
 import { useNavigate } from '@tanstack/react-router';

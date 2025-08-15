@@ -60,7 +60,7 @@ export default function LecturerOnboardingSection({
 
   const onSubmit = async (data: LecturerPersonalInfo) => {
     try {
-      await uploadImage(data.profileImage);
+      if (data.profileImage) await uploadImage(data.profileImage);
       await handleCompleteOnboarding(data);
       setCurrentStep(2);
     } catch (error) {

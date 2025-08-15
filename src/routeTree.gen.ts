@@ -13,6 +13,7 @@ import { Route as TestFaceVerificationRouteImport } from './routes/test-face-ver
 import { Route as MobileDemoRouteImport } from './routes/mobile-demo'
 import { Route as OnboardRouteRouteImport } from './routes/_onboard/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TestFaceDetectionRouteImport } from './routes/test/face-detection'
 import { Route as OnboardRoleRouteImport } from './routes/_onboard/role'
 import { Route as OnboardOnboardRouteImport } from './routes/_onboard/onboard'
 import { Route as authLoginSuccessRouteImport } from './routes/(auth)/login-success'
@@ -52,6 +53,11 @@ const OnboardRouteRoute = OnboardRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestFaceDetectionRoute = TestFaceDetectionRouteImport.update({
+  id: '/test/face-detection',
+  path: '/test/face-detection',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OnboardRoleRoute = OnboardRoleRouteImport.update({
@@ -184,6 +190,7 @@ export interface FileRoutesByFullPath {
   '/login-success': typeof authLoginSuccessRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
+  '/test/face-detection': typeof TestFaceDetectionRoute
   '/dashboard/lecturer/classLists': typeof DashboardLecturerClassListsRoute
   '/dashboard/lecturer/courses': typeof DashboardLecturerCoursesRoute
   '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/login-success': typeof authLoginSuccessRoute
   '/onboard': typeof OnboardOnboardRoute
   '/role': typeof OnboardRoleRoute
+  '/test/face-detection': typeof TestFaceDetectionRoute
   '/dashboard/lecturer/classLists': typeof DashboardLecturerClassListsRoute
   '/dashboard/lecturer/courses': typeof DashboardLecturerCoursesRoute
   '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
@@ -236,6 +244,7 @@ export interface FileRoutesById {
   '/(auth)/login-success': typeof authLoginSuccessRoute
   '/_onboard/onboard': typeof OnboardOnboardRoute
   '/_onboard/role': typeof OnboardRoleRoute
+  '/test/face-detection': typeof TestFaceDetectionRoute
   '/dashboard/lecturer/classLists': typeof DashboardLecturerClassListsRoute
   '/dashboard/lecturer/courses': typeof DashboardLecturerCoursesRoute
   '/dashboard/lecturer/joinRequests': typeof DashboardLecturerJoinRequestsRoute
@@ -264,6 +273,7 @@ export interface FileRouteTypes {
     | '/login-success'
     | '/onboard'
     | '/role'
+    | '/test/face-detection'
     | '/dashboard/lecturer/classLists'
     | '/dashboard/lecturer/courses'
     | '/dashboard/lecturer/joinRequests'
@@ -288,6 +298,7 @@ export interface FileRouteTypes {
     | '/login-success'
     | '/onboard'
     | '/role'
+    | '/test/face-detection'
     | '/dashboard/lecturer/classLists'
     | '/dashboard/lecturer/courses'
     | '/dashboard/lecturer/joinRequests'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/(auth)/login-success'
     | '/_onboard/onboard'
     | '/_onboard/role'
+    | '/test/face-detection'
     | '/dashboard/lecturer/classLists'
     | '/dashboard/lecturer/courses'
     | '/dashboard/lecturer/joinRequests'
@@ -341,6 +353,7 @@ export interface RootRouteChildren {
   DashboardStudentRouteRoute: typeof DashboardStudentRouteRouteWithChildren
   authLoginRoute: typeof authLoginRoute
   authLoginSuccessRoute: typeof authLoginSuccessRoute
+  TestFaceDetectionRoute: typeof TestFaceDetectionRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -371,6 +384,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/test/face-detection': {
+      id: '/test/face-detection'
+      path: '/test/face-detection'
+      fullPath: '/test/face-detection'
+      preLoaderRoute: typeof TestFaceDetectionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_onboard/role': {
@@ -601,6 +621,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardStudentRouteRoute: DashboardStudentRouteRouteWithChildren,
   authLoginRoute: authLoginRoute,
   authLoginSuccessRoute: authLoginSuccessRoute,
+  TestFaceDetectionRoute: TestFaceDetectionRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

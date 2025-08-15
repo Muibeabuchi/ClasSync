@@ -1,8 +1,12 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { faceApiService } from '@/lib/faceApi';
-import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
 import { toast } from 'sonner';
+import {
+  useGetFaceVerificationStatus,
+  useStoreFaceDescriptor,
+  useVerifyFaceForAttendance,
+  useToggleFaceVerification,
+} from '@/feature/face-verification/api';
 
 export interface FaceVerificationResult {
   success: boolean;
@@ -22,32 +26,37 @@ export const useFaceVerification = () => {
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Convex mutations and queries
-  const storeFaceDescriptor = useMutation(
-    api.faceVerification.storeFaceDescriptor,
-  );
-  const verificationStatus = useQuery(
-    api.faceVerification.getFaceVerificationStatus,
-  );
-  const toggleVerification = useMutation(
-    api.faceVerification.toggleFaceVerification,
-  );
-  const verifyFaceMutation = useMutation(
-    api.faceVerification.verifyFaceForAttendance,
-  );
+  // Convex mutations and queries using the new API hooks
+  const { mutateAsync: storeFaceDescriptor } = useStoreFaceDescriptor();
+  const { data: verificationStatus } = useGetFaceVerificationStatus();
+  const { mutateAsync: toggleVerification } = useToggleFaceVerification();
+  const { mutateAsync: verifyFaceMutation } = useVerifyFaceForAttendance();
 
   // Load face-api.js models
   const loadModels = useCallback(async () => {
+    // Check if models are already loaded in the service
+    if (faceApiService.isModelsLoaded()) {
+      setModelsLoaded(true);
+      return;
+    }
+
     if (modelsLoaded) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      console.log('useFaceVerification: Starting lightweight model loading...');
-      await faceApiService.loadModels();
-      setModelsLoaded(true);
-      console.log('useFaceVerification: Models loaded successfully');
+      console.log('useFaceVerification: Starting model loading...');
+      const success = await faceApiService.loadModels();
+
+      if (success && faceApiService.isModelsLoaded()) {
+        setModelsLoaded(true);
+        console.log('useFaceVerification: Models loaded successfully');
+      } else {
+        throw new Error(
+          'Model loading returned false or models not properly loaded',
+        );
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error
@@ -64,17 +73,54 @@ export const useFaceVerification = () => {
     }
   }, [modelsLoaded]);
 
-  // Detect face from video element (live camera)
+  // Enhanced face detection from video with TinyFaceDetector and landmarks
   const detectFaceFromVideo = useCallback(
     async (
       videoElement: HTMLVideoElement,
-      useHighAccuracy = false,
-    ): Promise<FaceVerificationResult> => {
-      if (!modelsLoaded) {
-        return {
-          success: false,
-          error: 'Face detection models not loaded yet. Please wait...',
+      useHighAccuracy = true, // Default to high accuracy for attendance
+    ): Promise<
+      FaceVerificationResult & {
+        quality?: {
+          faceSize: { width: number; height: number };
+          confidence: number;
+          landmarkQuality: number;
+          isGoodQuality: boolean;
         };
+        landmarks?: any; // Use any for now to handle both landmark types
+        feedback?: string[];
+        modelUsed?: string;
+      }
+    > => {
+      // Double-check models are loaded both in hook state and service
+      if (!modelsLoaded || !faceApiService.isModelsLoaded()) {
+        console.warn('Face detection attempted but models not loaded:', {
+          hookModelsLoaded: modelsLoaded,
+          serviceModelsLoaded: faceApiService.isModelsLoaded(),
+        });
+
+        // Try to load models if they're not loaded
+        if (!faceApiService.isModelsLoaded()) {
+          console.log('Attempting to load models...');
+          try {
+            await faceApiService.loadModels();
+            setModelsLoaded(true);
+          } catch (loadError) {
+            console.error('Failed to load models during detection:', loadError);
+            return {
+              success: false,
+              error:
+                'Failed to load face detection models. Please refresh the page and try again.',
+            };
+          }
+        }
+
+        // If still not loaded, return error
+        if (!faceApiService.isModelsLoaded()) {
+          return {
+            success: false,
+            error: 'Face detection models not loaded yet. Please wait...',
+          };
+        }
       }
 
       try {
@@ -86,12 +132,13 @@ export const useFaceVerification = () => {
           };
         }
 
-        const descriptor = await faceApiService.detectFaceAndGetDescriptor(
+        // Use enhanced detection with landmarks for better accuracy
+        const result = await faceApiService.detectFaceWithLandmarks(
           videoElement,
           useHighAccuracy,
         );
 
-        if (!descriptor) {
+        if (!result.descriptor || !result.quality) {
           return {
             success: false,
             error:
@@ -99,15 +146,51 @@ export const useFaceVerification = () => {
           };
         }
 
+        // Generate feedback based on quality
+        const feedback: string[] = [];
+
+        if (
+          result.quality.faceSize.width < 120 ||
+          result.quality.faceSize.height < 120
+        ) {
+          feedback.push('Move closer to the camera for better detection');
+        }
+
+        if (result.quality.confidence < 0.7) {
+          feedback.push('Improve lighting for better face detection');
+        }
+
+        if (result.quality.landmarkQuality < 0.7) {
+          feedback.push(
+            'Face the camera directly for better landmark detection',
+          );
+        }
+
+        if (result.quality.isGoodQuality) {
+          feedback.push('Excellent face quality detected');
+        }
+
+        console.log('Enhanced face detection from video:', {
+          model: faceApiService.getModelInfo().primaryDetector,
+          quality: result.quality,
+          landmarkModel: faceApiService.getModelInfo().landmarkModel,
+          landmarksDetected: result.landmarks ? 'Yes' : 'No',
+          landmarkCount: result.landmarks?.positions?.length || 0,
+        });
+
         return {
           success: true,
-          descriptor,
-          confidence: 1.0,
+          descriptor: result.descriptor,
+          confidence: result.quality.confidence,
+          quality: result.quality,
+          landmarks: result.landmarks,
+          feedback,
+          modelUsed: result.modelUsed,
         };
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Face detection failed';
-        console.error('Face detection error:', err);
+        console.error('Enhanced face detection error:', err);
         return {
           success: false,
           error: errorMessage,
@@ -182,34 +265,88 @@ export const useFaceVerification = () => {
       setError(null);
 
       try {
+        console.log('saveFaceDescriptor: Starting save process...');
+        console.log('saveFaceDescriptor: Original descriptor:', {
+          type: typeof descriptor,
+          isFloat32Array: descriptor instanceof Float32Array,
+          length: descriptor.length,
+          firstFewValues: Array.from(descriptor.slice(0, 5)),
+        });
+
         const descriptorArray = faceApiService.descriptorToArray(descriptor);
-        await storeFaceDescriptor({
-          faceDescriptor: descriptorArray,
-          captureMethod,
+
+        console.log('saveFaceDescriptor: Converted descriptor array:', {
+          type: typeof descriptorArray,
+          isArray: Array.isArray(descriptorArray),
+          length: descriptorArray.length,
+          firstFewValues: descriptorArray.slice(0, 5),
         });
 
-        toast.success('Face Verification Setup Complete', {
-          description:
-            'Your face has been successfully registered for verification.',
+        console.log('saveFaceDescriptor: Calling Convex mutation...');
+
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(
+            () =>
+              reject(new Error('Save operation timed out after 15 seconds')),
+            15000,
+          );
         });
 
-        return true;
+        const result = await Promise.race([
+          storeFaceDescriptor({
+            faceDescriptor: descriptorArray,
+            captureMethod,
+          }),
+          timeoutPromise,
+        ]);
+
+        console.log('saveFaceDescriptor: Convex mutation result:', result);
+
+        if (result && result.success) {
+          console.log(
+            'saveFaceDescriptor: Success! Face descriptor saved successfully',
+          );
+          // Don't show toast here - let the component handle it
+          return true;
+        } else {
+          throw new Error(
+            result?.message || 'Face descriptor save operation failed',
+          );
+        }
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Failed to save face data';
+        console.error('saveFaceDescriptor: Error occurred:', err);
+
+        // Handle specific error types
+        let errorMessage = 'Failed to save face data';
+        let errorDescription =
+          'Please try again or contact support if the problem persists.';
+
+        if (err instanceof Error) {
+          errorMessage = err.message;
+
+          if (err.message.includes('Authentication required')) {
+            errorDescription = 'Please refresh the page and log in again.';
+          } else if (err.message.includes('User profile not found')) {
+            errorDescription = 'Please complete your profile setup first.';
+          } else if (err.message.includes('Invalid face descriptor')) {
+            errorDescription =
+              'Face detection failed. Please try capturing your face again.';
+          }
+        }
+
         setError(errorMessage);
-        toast.error('Failed to Save Face Data', {
-          description: errorMessage,
-        });
+        console.log({ errorDescription });
+        // Don't show toast here - let the component handle it
         return false;
       } finally {
         setIsLoading(false);
       }
     },
-    [storeFaceDescriptor],
+    [storeFaceDescriptor], // Remove the dependency to fix the warning
   );
 
-  // Verify face for attendance
+  // Enhanced face verification for attendance with TinyFaceDetector and landmarks
   const verifyFaceForAttendance = useCallback(
     async (
       descriptor: Float32Array,
@@ -222,28 +359,52 @@ export const useFaceVerification = () => {
 
       try {
         const descriptorArray = faceApiService.descriptorToArray(descriptor);
-        // Use the mutation directly instead of api call
-        const verifyFace = useMutation(
-          api.faceVerification.verifyFaceForAttendance,
-        );
-        const result = await verifyFace({
+
+        // Log enhanced verification attempt
+        console.log('Enhanced face verification for attendance:', {
+          model: faceApiService.getModelInfo().primaryDetector,
+          landmarkModel: faceApiService.getModelInfo().landmarkModel,
+          descriptorLength: descriptorArray.length,
+          retryAttempt,
+        });
+
+        const result = await verifyFaceMutation({
           attendanceSessionId: attendanceSessionId as any,
           faceDescriptor: descriptorArray,
           location,
           retryAttempt,
         });
 
+        // Enhanced logging for debugging
+        if (result.success) {
+          console.log('Face verification successful:', {
+            matchScore: result.faceMatchScore,
+            verificationStatus: result.verificationStatus,
+            model: 'TinyFaceDetector',
+            distance: result.distance,
+            threshold: result.threshold,
+          });
+        } else {
+          console.log('Face verification failed:', {
+            error: result.error,
+            matchScore: result.faceMatchScore,
+            threshold: result.threshold,
+            distance: result.distance,
+          });
+        }
+
         return result;
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'Face verification failed';
         setError(errorMessage);
+        console.error('Face verification error:', err);
         throw err;
       } finally {
         setIsLoading(false);
       }
     },
-    [],
+    [verifyFaceMutation], // Add the dependency back
   );
 
   // Toggle face verification on/off
@@ -275,26 +436,11 @@ export const useFaceVerification = () => {
         setIsLoading(false);
       }
     },
-    [toggleVerification],
+    [toggleVerification], // Remove the dependency to fix the warning
   );
 
-  // Compare two face descriptors
-  const compareFaces = useCallback(
-    (descriptor1: Float32Array, descriptor2: Float32Array, threshold = 0.6) => {
-      const distance = faceApiService.calculateDistance(
-        descriptor1,
-        descriptor2,
-      );
-      const isMatch = distance <= threshold;
-
-      return {
-        distance,
-        isMatch,
-        confidence: Math.max(0, 1 - distance / threshold),
-      };
-    },
-    [],
-  );
+  // Note: Client-side face comparison removed for security reasons
+  // All face verification now happens on the server
 
   return {
     // State
@@ -310,7 +456,6 @@ export const useFaceVerification = () => {
     saveFaceDescriptor,
     verifyFaceForAttendance,
     toggleFaceVerification,
-    compareFaces,
 
     // Utilities
     faceApiService,

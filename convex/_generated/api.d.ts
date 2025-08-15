@@ -16,6 +16,7 @@ import type * as classLists from "../classLists.js";
 import type * as cleanup from "../cleanup.js";
 import type * as constants_attendance from "../constants/attendance.js";
 import type * as courses from "../courses.js";
+import type * as debug_faceVerificationAnalysis from "../debug/faceVerificationAnalysis.js";
 import type * as faceVerification from "../faceVerification.js";
 import type * as fileUpload from "../fileUpload.js";
 import type * as http from "../http.js";
@@ -77,6 +78,7 @@ declare const fullApi: ApiFromModules<{
   cleanup: typeof cleanup;
   "constants/attendance": typeof constants_attendance;
   courses: typeof courses;
+  "debug/faceVerificationAnalysis": typeof debug_faceVerificationAnalysis;
   faceVerification: typeof faceVerification;
   fileUpload: typeof fileUpload;
   http: typeof http;

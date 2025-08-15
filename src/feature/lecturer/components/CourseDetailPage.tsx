@@ -28,6 +28,7 @@ import {
   X,
   Calendar,
   Clock,
+  Copy,
 } from 'lucide-react';
 import AttendanceSessionModal from './AttendanceSessionModal';
 import { StudentsTable } from './StudentsTable';
@@ -227,6 +228,17 @@ const CourseDetailPage = ({
     }
   };
 
+  // Copy course code handler
+  const handleCopyCourseCode = async () => {
+    try {
+      await navigator.clipboard.writeText(courseData.code);
+      toast.success('Course code copied to clipboard!');
+    } catch (error) {
+      console.error('Failed to copy course code:', error);
+      toast.error('Failed to copy course code');
+    }
+  };
+
   // Action handlers
   const handleArchive = async () => {
     try {
@@ -314,7 +326,7 @@ const CourseDetailPage = ({
         <div className="flex items-center space-x-4">
           <Button
             variant="link"
-            className="cursor-pointer hover:bg-muted-foreground sm:hidden"
+            className="cursor-pointer hover:bg-muted-foreground sm:hidden mr-4"
             onClick={handleNavigate}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -410,7 +422,26 @@ const CourseDetailPage = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm sm:text-base text-muted-foreground">
-              <span className="font-medium">{courseData.code}</span>
+              {/* Course Code with Copy Functionality */}
+              <div className="flex items-center gap-2">
+                {/* // eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
+                <button
+                  className="font-medium text-primary cursor-pointer hover:text-primary/80 transition-colors select-all"
+                  onClick={handleCopyCourseCode}
+                  title="Click to copy course code"
+                >
+                  {courseData.code}
+                </button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCopyCourseCode}
+                  className="h-6 w-6 p-0 hover:bg-primary/10"
+                  title="Copy course code"
+                >
+                  <Copy className="h-3 w-3 text-primary" />
+                </Button>
+              </div>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">
                 Status: {courseData.status}
@@ -420,6 +451,13 @@ const CourseDetailPage = ({
                 <Users className="h-3 w-3 sm:h-4 sm:w-4" />
                 {courseData.enrolledCount}
               </span>
+            </div>
+
+            {/* Course Code Sharing Info */}
+            <div className="mt-2">
+              <p className="text-xs text-muted-foreground">
+                💡 Share this course code with your students for enrollment
+              </p>
             </div>
           </div>
         </div>

@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import {
   Loader2,
-  Camera,
   CheckCircle,
   AlertCircle,
   RotateCcw,
@@ -21,19 +20,23 @@ import {
   MapPin,
   Clock,
   X,
-  Navigation,
   Target,
+  Scan,
+  Activity,
 } from 'lucide-react';
 import { useFaceVerification } from '@/hooks/useFaceVerification';
 import { useStudentTakeAttendance } from '@/feature/attendance/api';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import {
-  parseFaceVerificationError,
-  getFaceVerificationTips,
-  getFaceVerificationSuccessMessage,
-} from '@/utils/faceVerificationErrors';
+import { getFaceVerificationTips } from '@/utils/faceVerificationErrors';
 import type { Id } from 'convex/_generated/dataModel';
+
+interface FaceDetectionStats {
+  confidence: number;
+  faceSize: { width: number; height: number };
+  landmarkQuality: number;
+  isGoodQuality: boolean;
+  feedback: string[];
+}
 
 interface StudentFaceAttendanceDrawerProps {
   isOpen: boolean;
@@ -54,15 +57,22 @@ export const StudentFaceAttendanceDrawer: React.FC<
   location,
   courseName,
   onSuccess,
-  maxRetries = 2,
+  maxRetries = 10,
 }) => {
   const [verificationStep, setVerificationStep] = useState<
-    'setup' | 'detecting' | 'verifying' | 'success' | 'failed'
+    | 'setup'
+    | 'detecting'
+    | 'ready_to_capture'
+    | 'verifying'
+    | 'success'
+    | 'failed'
   >('setup');
   const [retryAttempt, setRetryAttempt] = useState(1);
-  const [detectionAttempts, setDetectionAttempts] = useState(0);
+  const [faceDetectionStats, setFaceDetectionStats] =
+    useState<FaceDetectionStats | null>(null);
+  const [currentFaceDescriptor, setCurrentFaceDescriptor] =
+    useState<Float32Array | null>(null);
   const [verificationResult, setVerificationResult] = useState<any>(null);
-  const [countdown, setCountdown] = useState(3);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
@@ -74,11 +84,11 @@ export const StudentFaceAttendanceDrawer: React.FC<
   const { mutateAsync: takeAttendance } = useStudentTakeAttendance();
 
   const {
-    isLoading: faceLoading,
     modelsLoaded,
     error: faceError,
     loadModels,
     detectFaceFromVideo,
+    faceApiService,
   } = useFaceVerification();
 
   // Get available camera devices
@@ -103,9 +113,9 @@ export const StudentFaceAttendanceDrawer: React.FC<
     if (isOpen) {
       setVerificationStep('setup');
       setRetryAttempt(1);
-      setDetectionAttempts(0);
+      setFaceDetectionStats(null);
+      setCurrentFaceDescriptor(null);
       setVerificationResult(null);
-      setCountdown(3);
       setIsSubmitting(false);
     }
   }, [isOpen]);
@@ -118,18 +128,7 @@ export const StudentFaceAttendanceDrawer: React.FC<
       try {
         await loadModels();
         await getDevices();
-
-        // Start countdown
-        const countdownInterval = setInterval(() => {
-          setCountdown((prev) => {
-            if (prev <= 1) {
-              clearInterval(countdownInterval);
-              setVerificationStep('detecting');
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
+        setVerificationStep('detecting');
       } catch (error) {
         console.error('Initialization failed:', error);
         toast.error('Camera initialization failed');
@@ -145,7 +144,7 @@ export const StudentFaceAttendanceDrawer: React.FC<
     };
   }, [isOpen, loadModels, getDevices]);
 
-  // Auto-detect and verify face
+  // Continuous face detection for stats display (no automatic verification)
   useEffect(() => {
     if (verificationStep === 'detecting' && modelsLoaded && webcamRef.current) {
       let isDetecting = false;
@@ -162,97 +161,39 @@ export const StudentFaceAttendanceDrawer: React.FC<
         isDetecting = true;
 
         try {
-          const result = await detectFaceFromVideo(videoElement, false);
+          // Use high accuracy detection with TinyFaceDetector and landmarks
+          const result = await detectFaceFromVideo(videoElement, true);
 
-          if (result.success && result.descriptor) {
-            setVerificationStep('verifying');
-            if (detectionIntervalRef.current) {
-              clearInterval(detectionIntervalRef.current);
-            }
+          if (result.success && result.descriptor && result.quality) {
+            // Update face detection stats for display
+            const stats: FaceDetectionStats = {
+              confidence: result.confidence || 0,
+              faceSize: result.quality.faceSize,
+              landmarkQuality: result.quality.landmarkQuality,
+              isGoodQuality: result.quality.isGoodQuality,
+              feedback: result.feedback || [],
+            };
 
-            try {
-              setIsSubmitting(true);
+            setFaceDetectionStats(stats);
+            // Always update the descriptor to prevent stale values
+            setCurrentFaceDescriptor(result.descriptor);
 
-              // Submit attendance with face verification
-              const attendanceResult = await takeAttendance({
-                attendanceSessionId,
-                gpsCoordinates: location,
-                faceDescriptor: Array.from(result.descriptor),
-                retryAttempt,
-              });
-
-              setVerificationResult({
-                success: true,
-                matchScore: attendanceResult.faceMatchScore || 0,
-                verificationStatus: attendanceResult.verificationStatus,
-              });
-
-              setVerificationStep('success');
-
-              const successMessage = getFaceVerificationSuccessMessage(
-                attendanceResult.faceMatchScore || 0,
-              );
-              toast.success('Face Verified!', {
-                description: `${successMessage} - Attendance marked for ${courseName}`,
-              });
-
-              setTimeout(() => {
-                onSuccess();
-                onClose();
-              }, 2000);
-            } catch (error) {
-              console.error('Verification error:', error);
-
-              const parsedError = parseFaceVerificationError(error);
-
-              if (parsedError.retryable && retryAttempt < maxRetries) {
-                setVerificationResult({
-                  success: false,
-                  error: parsedError.message,
-                  title: parsedError.title,
-                  type: parsedError.type,
-                });
-                setVerificationStep('failed');
-              } else {
-                // Non-retryable error or max retries reached
-                toast.error(parsedError.title, {
-                  description: parsedError.message,
-                });
-
-                if (parsedError.actionable) {
-                  // Allow fallback for actionable errors
-                  setVerificationResult({
-                    success: false,
-                    error: parsedError.message,
-                    title: parsedError.title,
-                    type: parsedError.type,
-                  });
-                  setVerificationStep('failed');
-                } else {
-                  onClose();
-                }
-              }
-            } finally {
-              setIsSubmitting(false);
+            // Check if quality is good enough for capture (70%+ confidence for better success rate)
+            const qualityScore = (result.confidence || 0) * 100;
+            if (qualityScore >= 70 && result.quality.isGoodQuality) {
+              setVerificationStep('ready_to_capture');
             }
           } else {
-            setDetectionAttempts((prev) => prev + 1);
-
-            // Show guidance less frequently
-            if (detectionAttempts > 20) {
-              toast.warning('Face Detection Tips', {
-                description:
-                  'Ensure good lighting and look directly at the camera.',
-              });
-              setDetectionAttempts(0);
-            }
+            // Clear stats if no face detected
+            setFaceDetectionStats(null);
+            setCurrentFaceDescriptor(null);
           }
         } catch (error) {
           console.error('Face detection error:', error);
         } finally {
           isDetecting = false;
         }
-      }, 250);
+      }, 300); // Slower detection for continuous monitoring
 
       return () => {
         if (detectionIntervalRef.current) {
@@ -260,26 +201,120 @@ export const StudentFaceAttendanceDrawer: React.FC<
         }
       };
     }
-  }, [
-    verificationStep,
-    modelsLoaded,
-    detectFaceFromVideo,
-    attendanceSessionId,
-    location,
-    retryAttempt,
-    takeAttendance,
-    courseName,
-    onSuccess,
-    onClose,
-    detectionAttempts,
-    isSubmitting,
-    maxRetries,
-  ]);
+  }, [verificationStep, modelsLoaded, detectFaceFromVideo, isSubmitting]);
+
+  // Manual verification function - called when user clicks verify button
+  const handleManualVerification = async () => {
+    if (!currentFaceDescriptor) {
+      toast.error('No face detected', {
+        description: 'Please ensure your face is clearly visible',
+      });
+      return;
+    }
+
+    if (!faceDetectionStats || faceDetectionStats.confidence < 0.7) {
+      toast.error('Face quality too low', {
+        description: 'Please improve lighting and face positioning',
+      });
+      return;
+    }
+
+    setVerificationStep('verifying');
+    setIsSubmitting(true);
+
+    try {
+      console.log(
+        'Starting server-side face verification and attendance marking...',
+      );
+
+      // Convert face descriptor to array for server transmission
+      const faceDescriptorArray = faceApiService.descriptorToArray(
+        currentFaceDescriptor,
+      );
+
+      // Send to server for verification and attendance marking
+      const attendanceResult = await takeAttendance({
+        attendanceSessionId,
+        gpsCoordinates: location,
+        faceDescriptor: faceDescriptorArray,
+        retryAttempt: retryAttempt,
+      });
+
+      console.log('Server attendance result:', attendanceResult);
+
+      // Handle server response
+      if (attendanceResult.verificationStatus === 'verified') {
+        // Face verification succeeded on server
+        setVerificationResult({
+          success: true,
+          matchScore: attendanceResult.faceMatchScore || 0.3,
+          distance: attendanceResult.faceMatchScore || 0.3,
+          threshold: 0.6,
+        });
+        setVerificationStep('success');
+
+        toast.success('Face Verified Successfully!', {
+          description: `Attendance marked for ${courseName}`,
+        });
+
+        setTimeout(() => {
+          onSuccess();
+          onClose();
+        }, 2000);
+      } else {
+        // Face verification failed on server
+        setVerificationResult({
+          success: false,
+          matchScore: attendanceResult.faceMatchScore || 0.8,
+          distance: attendanceResult.faceMatchScore || 0.8,
+          threshold: 0.6,
+        });
+        setVerificationStep('failed');
+
+        toast.error('Face verification failed', {
+          description: 'Server verification failed. Please try again.',
+        });
+      }
+    } catch (error) {
+      console.error('Server face verification error:', error);
+      setVerificationStep('failed');
+
+      // Handle specific error cases
+      if (error instanceof Error) {
+        if (error.message.includes('Face verification failed')) {
+          setVerificationResult({
+            success: false,
+            matchScore: 0.8,
+            distance: 0.8,
+            threshold: 0.6,
+          });
+
+          toast.error('Face verification failed', {
+            description: error.message,
+          });
+        } else if (error.message.includes('attempts remaining')) {
+          toast.error('Face verification failed', {
+            description: error.message,
+          });
+        } else {
+          toast.error('Verification error', {
+            description: error.message,
+          });
+        }
+      } else {
+        toast.error('Face verification failed', {
+          description: 'An unexpected error occurred during verification',
+        });
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleRetry = () => {
     if (retryAttempt >= maxRetries) {
-      toast.info('Maximum attempts reached', {
-        description: 'Please try GPS-only verification.',
+      toast.error('Maximum attempts reached', {
+        description: 'Please meet your lecturer for manual verification.',
       });
       onClose();
       return;
@@ -287,35 +322,9 @@ export const StudentFaceAttendanceDrawer: React.FC<
 
     setRetryAttempt((prev) => prev + 1);
     setVerificationStep('detecting');
-    setDetectionAttempts(0);
-    setVerificationResult(null);
-  };
-
-  const handleFallbackToGPS = async () => {
-    try {
-      setIsSubmitting(true);
-
-      // Submit attendance without face verification (GPS only)
-      await takeAttendance({
-        attendanceSessionId,
-        gpsCoordinates: location,
-        // No face descriptor - will use GPS-only fallback
-      });
-
-      toast.success('Attendance Marked', {
-        description: `GPS-only verification used for ${courseName}`,
-      });
-
-      onSuccess();
-      onClose();
-    } catch (error) {
-      toast.error('Attendance Failed', {
-        description:
-          error instanceof Error ? error.message : 'Please try again',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setFaceDetectionStats(null);
+    setCurrentFaceDescriptor(null);
+    setVerificationResult(null); // Clear previous result to prevent stale values
   };
 
   const handleSwitchCamera = () => {
@@ -334,15 +343,15 @@ export const StudentFaceAttendanceDrawer: React.FC<
           Face Verification Required
         </h3>
         <p className="mobile-text-sm text-muted-foreground">
-          Position your face in the camera frame for automatic verification
+          Position your face in the camera frame for verification
         </p>
       </div>
 
       <div className="space-y-4">
-        <div className="text-6xl font-bold text-blue-600">{countdown}</div>
-        <p className="mobile-text-sm text-muted-foreground">
-          Get ready for face verification...
-        </p>
+        <div className="flex items-center justify-center space-x-2">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <span className="mobile-text-sm">Initializing camera...</span>
+        </div>
       </div>
 
       <div className="flex justify-center">
@@ -378,21 +387,81 @@ export const StudentFaceAttendanceDrawer: React.FC<
 
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-48 h-48 border-4 border-blue-500 rounded-full animate-pulse opacity-50" />
+          {/* Face detection indicator */}
+          {faceDetectionStats && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div
+                className={`w-32 h-32 border-2 rounded-lg opacity-60 ${
+                  faceDetectionStats.isGoodQuality
+                    ? 'border-green-400'
+                    : 'border-yellow-400'
+                }`}
+              />
+            </div>
+          )}
         </div>
 
         <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/70 text-white px-3 py-1 rounded-full mobile-text-sm">
-          Detecting face...
+          {faceDetectionStats ? 'Face Detected' : 'Detecting Face...'}
         </div>
+
+        {/* Face detection stats overlay */}
+        {faceDetectionStats && (
+          <div className="absolute top-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs space-y-1">
+            <div className="flex items-center gap-1">
+              <Target className="h-3 w-3" />
+              <span>
+                Confidence: {Math.round(faceDetectionStats.confidence * 100)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Activity className="h-3 w-3" />
+              <span>
+                Quality: {faceDetectionStats.isGoodQuality ? 'Good' : 'Low'}
+              </span>
+            </div>
+            <div className="text-xs">
+              Size: {faceDetectionStats.faceSize.width}×
+              {faceDetectionStats.faceSize.height}
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Face detection feedback */}
+      {faceDetectionStats && faceDetectionStats.feedback.length > 0 && (
+        <Alert
+          className={
+            faceDetectionStats.isGoodQuality
+              ? 'border-green-200'
+              : 'border-yellow-200'
+          }
+        >
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="mobile-text-sm">
+            {faceDetectionStats.feedback[0]}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="text-center space-y-2">
-        <div className="flex items-center justify-center space-x-2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="mobile-text-sm">Looking for your face...</span>
-        </div>
-        <p className="mobile-text-xs text-muted-foreground">
-          Keep your face centered and well-lit
-        </p>
+        {!faceDetectionStats ? (
+          <div className="flex items-center justify-center space-x-2">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="mobile-text-sm">Looking for your face...</span>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center justify-center space-x-2">
+              <Eye className="h-4 w-4 text-green-600" />
+              <span className="mobile-text-sm font-medium">Face detected!</span>
+            </div>
+            <p className="mobile-text-xs text-muted-foreground">
+              Quality: {Math.round(faceDetectionStats.confidence * 100)}%
+              confidence
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col space-y-2">
@@ -408,16 +477,137 @@ export const StudentFaceAttendanceDrawer: React.FC<
               Switch Camera
             </Button>
           )}
+        </div>
 
-          <Button
-            onClick={handleFallbackToGPS}
-            variant="outline"
-            size="sm"
-            className="touch-target-min"
-            disabled={isSubmitting}
-          >
-            Use GPS Only
-          </Button>
+        <Button
+          onClick={onClose}
+          variant="outline"
+          size="sm"
+          className="touch-target-min"
+        >
+          Cancel
+        </Button>
+      </div>
+
+      <Badge variant="secondary" className="mx-auto block w-fit mobile-text-xs">
+        Attempt {retryAttempt} of {maxRetries}
+      </Badge>
+    </div>
+  );
+
+  const renderReadyToVerifyStep = () => (
+    <div className="space-y-4 px-4">
+      <div className="relative">
+        <Webcam
+          ref={webcamRef}
+          audio={false}
+          videoConstraints={{
+            deviceId: selectedDeviceId
+              ? { exact: selectedDeviceId }
+              : undefined,
+            facingMode: facingMode,
+            width: 640,
+            height: 480,
+          }}
+          className="w-full rounded-lg bg-black aspect-video"
+        />
+
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-48 h-48 border-4 border-green-500 rounded-full opacity-50" />
+          {/* Face ready indicator */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-32 h-32 border-2 border-green-400 rounded-lg opacity-60" />
+          </div>
+        </div>
+
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-green-600/80 text-white px-3 py-1 rounded-full mobile-text-sm font-medium">
+          Ready to Verify!
+        </div>
+
+        {/* Face detection stats overlay */}
+        {faceDetectionStats && (
+          <div className="absolute top-2 left-2 bg-green-600/80 text-white px-2 py-1 rounded text-xs space-y-1">
+            <div className="flex items-center gap-1">
+              <Target className="h-3 w-3" />
+              <span>
+                Confidence: {Math.round(faceDetectionStats.confidence * 100)}%
+              </span>
+            </div>
+            <div className="flex items-center gap-1">
+              <Activity className="h-3 w-3" />
+              <span>Quality: Excellent</span>
+            </div>
+            <div className="text-xs">
+              Size: {faceDetectionStats.faceSize.width}×
+              {faceDetectionStats.faceSize.height}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Success feedback */}
+      <Alert className="border-green-200 bg-green-50">
+        <CheckCircle className="h-4 w-4 text-green-600" />
+        <AlertDescription className="mobile-text-sm text-green-800">
+          Face detected with high quality! You can now verify your attendance.
+        </AlertDescription>
+      </Alert>
+
+      <div className="text-center space-y-4">
+        <div className="space-y-2">
+          <div className="flex items-center justify-center space-x-2">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <span className="mobile-text-sm font-medium text-green-800">
+              High quality face detected!
+            </span>
+          </div>
+          {faceDetectionStats && (
+            <div className="grid grid-cols-2 gap-4 mobile-text-xs text-muted-foreground">
+              <div className="text-center">
+                <div className="font-medium">Confidence</div>
+                <div className="text-green-600 font-bold">
+                  {Math.round(faceDetectionStats.confidence * 100)}%
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="font-medium">Quality</div>
+                <div className="text-green-600 font-bold">
+                  {faceDetectionStats.isGoodQuality ? 'Excellent' : 'Good'}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Manual verification button */}
+        <Button
+          onClick={handleManualVerification}
+          className="w-full bg-green-600 hover:bg-green-700 touch-target-min"
+          size="lg"
+          disabled={
+            !faceDetectionStats ||
+            faceDetectionStats.confidence < 0.7 ||
+            isSubmitting
+          }
+        >
+          <Scan className="h-5 w-5 mr-2" />
+          Verify My Face
+        </Button>
+      </div>
+
+      <div className="flex flex-col space-y-2">
+        <div className="flex justify-center space-x-2">
+          {devices.length > 1 && (
+            <Button
+              onClick={handleSwitchCamera}
+              variant="outline"
+              size="sm"
+              className="touch-target-min"
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Switch Camera
+            </Button>
+          )}
         </div>
 
         <Button
@@ -494,7 +684,7 @@ export const StudentFaceAttendanceDrawer: React.FC<
         </h3>
         <p className="mobile-text-sm text-muted-foreground">
           {retryAttempt >= maxRetries
-            ? 'Maximum attempts reached. You can use GPS-only verification.'
+            ? 'Maximum attempts reached. Please meet your lecturer for manual verification.'
             : verificationResult?.error ||
               'Face verification failed. Please try again.'}
         </p>
@@ -502,8 +692,8 @@ export const StudentFaceAttendanceDrawer: React.FC<
 
       {verificationResult?.matchScore && (
         <div className="mobile-text-xs text-muted-foreground">
-          Match Score: {((1 - verificationResult.matchScore) * 100).toFixed(1)}%
-          (Required: 60% minimum)
+          Match Score: {(verificationResult.matchScore * 100).toFixed(1)}%
+          (Required: ≤60% distance)
         </div>
       )}
 
@@ -526,13 +716,8 @@ export const StudentFaceAttendanceDrawer: React.FC<
             Try Again ({maxRetries - retryAttempt} left)
           </Button>
         ) : (
-          <Button
-            onClick={handleFallbackToGPS}
-            size="sm"
-            className="touch-target-min"
-            disabled={isSubmitting}
-          >
-            Use GPS Only
+          <Button onClick={onClose} size="sm" className="touch-target-min">
+            Contact Lecturer
           </Button>
         )}
 
@@ -577,14 +762,6 @@ export const StudentFaceAttendanceDrawer: React.FC<
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="mobile-text-sm">
                   {faceError}
-                  <Button
-                    onClick={handleFallbackToGPS}
-                    variant="link"
-                    className="ml-2 p-0 h-auto mobile-text-sm"
-                    disabled={isSubmitting}
-                  >
-                    Use GPS Only
-                  </Button>
                 </AlertDescription>
               </Alert>
             )}
@@ -593,6 +770,8 @@ export const StudentFaceAttendanceDrawer: React.FC<
               <>
                 {verificationStep === 'setup' && renderSetupStep()}
                 {verificationStep === 'detecting' && renderDetectingStep()}
+                {verificationStep === 'ready_to_capture' &&
+                  renderReadyToVerifyStep()}
                 {verificationStep === 'verifying' && renderVerifyingStep()}
                 {verificationStep === 'success' && renderSuccessStep()}
                 {verificationStep === 'failed' && renderFailedStep()}

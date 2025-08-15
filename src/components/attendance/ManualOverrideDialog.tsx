@@ -26,7 +26,7 @@ import {
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { useManualAttendanceOverride } from '@/hooks/useManualAttendanceOverride';
 import {
-  validateAndCleanJustification,
+  // validateAndCleanJustification,
   OVERRIDE_VALIDATION_CONSTANTS,
   overrideJustificationSchema,
 } from '../../../convex/schemas/overrideValidation';
@@ -44,8 +44,8 @@ interface ManualOverrideDialogProps {
   onClose: () => void;
   student: StudentInfo;
   sessionId: Id<'attendanceSessions'>;
-  onSuccess?: () => void;
-  onError?: (error: Error) => void;
+  // onSuccess?: () => void;
+  // onError?: (error: Error) => void;
 }
 
 /**
@@ -57,8 +57,8 @@ export const ManualOverrideDialog = ({
   onClose,
   student,
   sessionId,
-  onSuccess,
-  onError,
+  // onSuccess,
+  // onError,
 }: ManualOverrideDialogProps) => {
   const [justification, setJustification] = useState('');
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -66,22 +66,13 @@ export const ManualOverrideDialog = ({
   const [isValidating, setIsValidating] = useState(false);
   // Mobile-first responsive breakpoints following design system
   const isMobile = useMediaQuery('(max-width: 640px)'); // sm breakpoint
-  const isTablet = useMediaQuery('(max-width: 768px)'); // md breakpoint
-  const isLargeTablet = useMediaQuery('(max-width: 1024px)'); // lg breakpoint
+  // const isTablet = useMediaQuery('(max-width: 768px)'); // md breakpoint
+  // const isLargeTablet = useMediaQuery('(max-width: 1024px)'); // lg breakpoint
   const isTouchDevice = useMediaQuery('(hover: none) and (pointer: coarse)');
-  const isSmallScreen = useMediaQuery('(max-width: 480px)'); // xs breakpoint for very small screens
+  // const isSmallScreen = useMediaQuery('(max-width: 480px)'); // xs breakpoint for very small screens
 
   const { createOverride, isLoading, error, reset } =
-    useManualAttendanceOverride({
-      onSuccess: (data) => {
-        handleSuccess();
-        onSuccess?.();
-      },
-      onError: (err) => {
-        setShowConfirmation(false);
-        onError?.(err);
-      },
-    });
+    useManualAttendanceOverride();
 
   // Real-time validation using ZOD schema
   // Requirements: 1.3, 3.3, 3.4 - ZOD schema validation with real-time feedback
@@ -104,7 +95,7 @@ export const ManualOverrideDialog = ({
         setIsValidating(false);
         return false;
       }
-    } catch (error) {
+    } catch {
       setValidationErrors(['Validation error occurred']);
       setIsValidating(false);
       return false;
@@ -205,6 +196,7 @@ export const ManualOverrideDialog = ({
         studentId: student.id,
         justificationNote: justification.trim(),
       });
+      handleSuccess();
     } catch (err) {
       console.error('Override submission failed:', err);
       setShowConfirmation(false);

@@ -24,10 +24,13 @@ export const getCurrentUser = async ({
   if (!user) return null;
   let userImage: string = '';
   if (user.isOnboarded) {
-    userImage =
-      user.role === 'student'
-        ? ((await ctx.storage.getUrl(user.student_passport_photo_id!)) ?? '')
-        : ((await ctx.storage.getUrl(user.lecturerPassportImage!)) ?? '');
+    if (user.role === 'student' && user.student_passport_photo_id) {
+      userImage =
+        (await ctx.storage.getUrl(user.student_passport_photo_id)) ?? '';
+      // : ((await ctx.storage.getUrl(user.lecturerPassportImage)) ?? '');
+    } else if (user.role === 'lecturer' && user.lecturerPassportImage) {
+      userImage = (await ctx.storage.getUrl(user.lecturerPassportImage)) ?? '';
+    }
   }
   return {
     ...user,

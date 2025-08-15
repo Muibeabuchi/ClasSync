@@ -1,278 +1,151 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import {
-  CheckCircle,
-  AlertCircle,
-  Loader2,
-  Eye,
-  Camera,
-  Settings,
-} from 'lucide-react';
 import { useFaceVerification } from '@/hooks/useFaceVerification';
-// import { useCamera } from '@/hooks/useCamera';
-// import { toast } from 'sonner';
+import { useCamera } from '@/hooks/useCamera';
+import { toast } from 'sonner';
 
 export const FaceVerificationTest: React.FC = () => {
-  const [testResults, setTestResults] = useState<{
-    modelsLoaded: boolean;
-    cameraAccess: boolean;
-    faceDetection: boolean;
-    descriptorExtraction: boolean;
-  }>({
-    modelsLoaded: false,
-    cameraAccess: false,
-    faceDetection: false,
-    descriptorExtraction: false,
-  });
+  const [currentDescriptor, setCurrentDescriptor] =
+    useState<Float32Array | null>(null);
 
-  const [isRunningTests, setIsRunningTests] = useState(false);
-  const [testLogs, setTestLogs] = useState<string[]>([]);
+  const { modelsLoaded, loadModels, detectFaceFromVideo, faceApiService } =
+    useFaceVerification();
 
   const {
-    isLoading: faceLoading,
-    modelsLoaded,
-    error: faceError,
-    loadModels,
-    detectFaceFromVideo,
-  } = useFaceVerification();
+    isActive: cameraActive,
+    videoRef,
+    startCamera,
+    stopCamera,
+    getVideoElement,
+  } = useCamera();
 
-  // const {
-  //   isActive: cameraActive,
-  //   error: cameraError,
-  //   videoRef,
-  //   startCamera,
-  //   stopCamera,
-  //   getVideoElement,
-  // } = useCamera();
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        await loadModels();
+        await startCamera('user');
+      } catch (error) {
+        console.error('Initialization failed:', error);
+        toast.error('Failed to initialize face verification test');
+      }
+    };
 
-  const addLog = (message: string) => {
-    console.log(`[FaceVerificationTest] ${message}`);
-    setTestLogs((prev) => [
-      ...prev,
-      `${new Date().toLocaleTimeString()}: ${message}`,
-    ]);
-  };
+    initialize();
 
-  const runTests = async () => {
-    setIsRunningTests(true);
-    setTestLogs([]);
-    addLog('Starting face verification system tests...');
+    return () => {
+      stopCamera();
+    };
+  }, [loadModels, startCamera, stopCamera]);
+
+  const captureCurrentFace = async () => {
+    const videoElement = getVideoElement();
+    if (!videoElement) {
+      toast.error('Camera not ready');
+      return;
+    }
 
     try {
-      // Test 1: Model Loading
-      addLog('Test 1: Loading face-api.js models...');
-      await loadModels();
-
-      if (modelsLoaded) {
-        setTestResults((prev) => ({ ...prev, modelsLoaded: true }));
-        addLog('✅ Models loaded successfully');
+      const result = await detectFaceFromVideo(videoElement, true);
+      if (result.success && result.descriptor) {
+        setCurrentDescriptor(result.descriptor);
+        toast.success('Face captured!', {
+          description: `Confidence: ${Math.round((result.confidence || 0) * 100)}% - Descriptor length: ${result.descriptor.length}`,
+        });
       } else {
-        addLog('❌ Models failed to load');
+        toast.error('No face detected');
       }
-
-      // Test 2: Camera Access
-      addLog('Test 2: Testing camera access...');
-      try {
-        await startCamera('user');
-        if (cameraActive) {
-          setTestResults((prev) => ({ ...prev, cameraAccess: true }));
-          addLog('✅ Camera access granted');
-        } else {
-          addLog('❌ Camera access failed');
-        }
-      } catch (error) {
-        addLog(
-          `❌ Camera error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        );
-      }
-
-      // Test 3: Face Detection (if camera is active)
-      if (cameraActive && modelsLoaded) {
-        addLog('Test 3: Testing face detection...');
-
-        // Wait a bit for camera to stabilize
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        const videoElement = getVideoElement();
-        if (videoElement) {
-          try {
-            const result = await detectFaceFromVideo(videoElement, false);
-
-            if (result.success) {
-              setTestResults((prev) => ({ ...prev, faceDetection: true }));
-              addLog('✅ Face detection working');
-
-              // Test 4: Descriptor Extraction
-              if (result.descriptor) {
-                setTestResults((prev) => ({
-                  ...prev,
-                  descriptorExtraction: true,
-                }));
-                addLog(
-                  `✅ Face descriptor extracted (length: ${result.descriptor.length})`,
-                );
-              } else {
-                addLog('❌ Face descriptor extraction failed');
-              }
-            } else {
-              addLog(
-                `❌ Face detection failed: ${result.error || 'No face detected'}`,
-              );
-            }
-          } catch (error) {
-            addLog(
-              `❌ Face detection error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-            );
-          }
-        } else {
-          addLog('❌ Video element not available');
-        }
-      }
-
-      addLog('Tests completed!');
     } catch (error) {
-      addLog(
-        `❌ Test suite error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-    } finally {
-      setIsRunningTests(false);
+      console.error('Failed to capture face:', error);
+      toast.error('Failed to capture face');
     }
   };
 
-  const resetTests = () => {
-    setTestResults({
-      modelsLoaded: false,
-      cameraAccess: false,
-      faceDetection: false,
-      descriptorExtraction: false,
-    });
-    setTestLogs([]);
-    stopCamera();
-  };
-
-  const getStatusIcon = (status: boolean) => {
-    return status ? (
-      <CheckCircle className="h-4 w-4 text-green-600" />
-    ) : (
-      <AlertCircle className="h-4 w-4 text-red-600" />
-    );
+  const resetTest = () => {
+    setCurrentDescriptor(null);
+    toast.info('Test reset');
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Settings className="h-5 w-5" />
-            <span>Face Verification System Test</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Test Controls */}
-          <div className="flex space-x-2">
-            <Button
-              onClick={runTests}
-              disabled={isRunningTests}
-              className="flex items-center space-x-2"
-            >
-              {isRunningTests ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Eye className="h-4 w-4" />
-              )}
-              <span>{isRunningTests ? 'Running Tests...' : 'Run Tests'}</span>
-            </Button>
-            <Button
-              onClick={resetTests}
-              variant="outline"
-              disabled={isRunningTests}
-            >
-              Reset
-            </Button>
-          </div>
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle>Face Verification Test</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {!modelsLoaded && (
+          <Alert>
+            <AlertDescription>
+              Loading face recognition models...
+            </AlertDescription>
+          </Alert>
+        )}
 
-          {/* Test Results */}
-          <div className="space-y-3">
-            <h4 className="font-medium">Test Results:</h4>
+        {modelsLoaded && (
+          <>
+            <div className="space-y-4">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full max-w-md mx-auto rounded-lg bg-black"
+              />
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="flex items-center space-x-2 p-3 border rounded">
-                {getStatusIcon(testResults.modelsLoaded)}
-                <span className="text-sm">Models Loaded</span>
-              </div>
+              <div className="flex flex-wrap gap-2 justify-center">
+                <Button
+                  onClick={captureCurrentFace}
+                  disabled={!cameraActive}
+                  variant={currentDescriptor ? 'secondary' : 'default'}
+                >
+                  {currentDescriptor ? '✓ Face Captured' : 'Capture Face'}
+                </Button>
 
-              <div className="flex items-center space-x-2 p-3 border rounded">
-                {getStatusIcon(testResults.cameraAccess)}
-                <span className="text-sm">Camera Access</span>
-              </div>
-
-              <div className="flex items-center space-x-2 p-3 border rounded">
-                {getStatusIcon(testResults.faceDetection)}
-                <span className="text-sm">Face Detection</span>
-              </div>
-
-              <div className="flex items-center space-x-2 p-3 border rounded">
-                {getStatusIcon(testResults.descriptorExtraction)}
-                <span className="text-sm">Descriptor Extraction</span>
+                <Button onClick={resetTest} variant="destructive" size="sm">
+                  Reset
+                </Button>
               </div>
             </div>
-          </div>
 
-          {/* Camera Preview */}
-          {cameraActive && (
-            <div className="space-y-2">
-              <h4 className="font-medium">Camera Preview:</h4>
-              <div className="flex justify-center">
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-64 h-48 rounded-lg bg-black border"
-                />
-              </div>
-              <Badge variant="secondary" className="mx-auto block w-fit">
-                <Camera className="h-3 w-3 mr-1" />
-                Camera Active
-              </Badge>
-            </div>
-          )}
-
-          {/* Error Display */}
-          {(faceError || cameraError) && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{faceError || cameraError}</AlertDescription>
-            </Alert>
-          )}
-
-          <Separator />
-
-          {/* Test Logs */}
-          <div className="space-y-2">
-            <h4 className="font-medium">Test Logs:</h4>
-            <div className="bg-muted p-3 rounded-lg max-h-64 overflow-y-auto">
-              {testLogs.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No logs yet. Run tests to see output.
-                </p>
-              ) : (
-                <div className="space-y-1">
-                  {testLogs.map((log, index) => (
-                    <div key={index} className="text-xs font-mono">
-                      {log}
+            {currentDescriptor && (
+              <Alert className="border-green-200 bg-green-50">
+                <AlertDescription>
+                  <div className="space-y-2">
+                    <div className="font-semibold">
+                      ✅ Face Descriptor Captured
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="text-sm">
+                      <strong>Descriptor Length:</strong>{' '}
+                      {currentDescriptor.length}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-2">
+                      Face descriptor ready for server-side verification
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p>
+                <strong>Instructions:</strong>
+              </p>
+              <ol className="list-decimal list-inside space-y-1">
+                <li>Position your face clearly in the camera frame</li>
+                <li>Click "Capture Face&quot; to extract face descriptor</li>
+                <li>
+                  The descriptor will be used for server-side verification
+                </li>
+                <li>Try with different lighting and angles for testing</li>
+              </ol>
+              <p className="mt-2">
+                <strong>Note:</strong> Face verification now happens entirely on
+                the server for security
+              </p>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 };

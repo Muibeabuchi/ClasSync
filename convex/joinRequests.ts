@@ -398,19 +398,14 @@ export const deleteJoinRequest = StudentMutationMiddleware({
   },
 });
 
-export const batchAcceptJoinRequests = lecturerMutation({
+export const batchAcceptJoinRequests = courseMutation({
   args: {
     courseId: v.id('courses'),
     requestIds: v.array(v.id('joinRequests')),
   },
   handler: async (ctx, args) => {
     const lecturerId = ctx.user._id;
-
-    // Verify lecturer owns the course
-    const course = await ctx.db.get(args.courseId);
-    if (!course || course.lecturerId !== lecturerId) {
-      throw new ConvexError('Unauthorized: Course not found or access denied');
-    }
+    const course = ctx.course;
 
     // Get all class lists attached to this course
     const courseClassListIds = course.classListIds || [];
@@ -529,7 +524,7 @@ export const batchAcceptJoinRequests = lecturerMutation({
         // Check if this class list student is already assigned to someone else
         const existingAssignment = existingAttendees.find(
           (attendee) =>
-            attendee.classListStudentId === matchedClassListStudent._id,
+            attendee.classListStudentId === matchedClassListStudent?._id,
         );
 
         if (!existingAssignment) {

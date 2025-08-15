@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Face Detection Test - SSDMobileNet</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .status {
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+      .status.loading {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .status.success {
+        background-color: #d4edda;
+        color: #155724;
+      }
+      .status.error {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .test-section {
+        margin: 20px 0;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      #imagePreview {
+        max-width: 300px;
+        max-height: 300px;
+        border: 1px solid #ddd;
+        margin: 10px 0;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin: 5px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+      }
+      .model-info {
+        background-color: #e9ecef;
+        padding: 10px;
+        border-radius: 4px;
+        margin: 10px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🎯 Face Detection Test - SSDMobileNet</h1>
+      <p>
+        This page tests the upgraded face detection system using SSDMobileNetV1
+        models.
+      </p>
+
+      <div id="loadingStatus" class="status loading">
+        🔄 Loading face detection models...
+      </div>
+
+      <div class="model-info">
+        <h3>📊 Model Status</h3>
+        <div id="modelStatus">Checking models...</div>
+      </div>
+
+      <div class="test-section">
+        <h3>📷 Test Face Detection</h3>
+        <input type="file" id="imageInput" accept="image/*" />
+        <br />
+        <img id="imagePreview" style="display: none" />
+        <br />
+        <button id="testButton" disabled>Test Face Detection</button>
+        <div id="testResults"></div>
+      </div>
+
+      <div class="test-section">
+        <h3>📋 Test Results</h3>
+        <div id="detectionResults"></div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <script>
+      let modelsLoaded = false;
+      let ssdMobilenetLoaded = false;
+      let tinyFaceDetectorLoaded = false;
+
+      async function loadModels() {
+        const loadingStatus = document.getElementById('loadingStatus');
+        const modelStatus = document.getElementById('modelStatus');
+
+        try {
+          loadingStatus.textContent = '🔄 Loading SSDMobileNetV1...';
+
+          // Try to load SSDMobileNet first
+          try {
+            await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
+            ssdMobilenetLoaded = true;
+            console.log('✅ SSDMobileNetV1 loaded successfully');
+          } catch (error) {
+            console.warn(
+              '⚠️ SSDMobileNetV1 failed to load, trying TinyFaceDetector:',
+              error,
+            );
+            await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+            tinyFaceDetectorLoaded = true;
+            console.log('✅ TinyFaceDetector loaded as fallback');
+          }
+
+          loadingStatus.textContent = '🔄 Loading face landmark models...';
+
+          // Try to load 68-point landmarks, fallback to tiny
+          try {
+            await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+            console.log('✅ FaceLandmark68Net loaded');
+          } catch (error) {
+            console.warn(
+              '⚠️ FaceLandmark68Net failed, loading tiny version:',
+              error,
+            );
+            await faceapi.nets.faceLandmark68TinyNet.loadFromUri('/models');
+            console.log('✅ FaceLandmark68TinyNet loaded as fallback');
+          }
+
+          loadingStatus.textContent = '🔄 Loading face recognition model...';
+          await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+
+          modelsLoaded = true;
+          loadingStatus.className = 'status success';
+          loadingStatus.textContent = '✅ All models loaded successfully!';
+
+          // Update model status
+          modelStatus.innerHTML = `
+                    <strong>Primary Detector:</strong> ${ssdMobilenetLoaded ? 'SSDMobileNetV1 (High Accuracy)' : 'TinyFaceDetector (Fallback)'}<br>
+                    <strong>Landmarks:</strong> ${faceapi.nets.faceLandmark68Net.isLoaded ? '68-Point (High Accuracy)' : '68-Point Tiny (Fallback)'}<br>
+                    <strong>Recognition:</strong> ${faceapi.nets.faceRecognitionNet.isLoaded ? 'Loaded ✅' : 'Failed ❌'}<br>
+                    <strong>Total Size:</strong> ~${ssdMobilenetLoaded ? '5.4' : '0.2'} MB
+                `;
+
+          document.getElementById('testButton').disabled = false;
+        } catch (error) {
+          console.error('❌ Failed to load models:', error);
+          loadingStatus.className = 'status error';
+          loadingStatus.textContent =
+            '❌ Failed to load face detection models: ' + error.message;
+
+          modelStatus.innerHTML =
+            '<span style="color: red;">Model loading failed. Please check console for details.</span>';
+        }
+      }
+
+      function getFaceDetector() {
+        if (ssdMobilenetLoaded) {
+          return new faceapi.SsdMobilenetv1Options({
+            minConfidence: 0.6,
+            maxResults: 100,
+          });
+        } else if (tinyFaceDetectorLoaded) {
+          return new faceapi.TinyFaceDetectorOptions({
+            inputSize: 416,
+            scoreThreshold: 0.5,
+          });
+        } else {
+          throw new Error('No face detection model loaded');
+        }
+      }
+
+      async function testFaceDetection() {
+        const imageElement = document.getElementById('imagePreview');
+        const resultsDiv = document.getElementById('detectionResults');
+        const testButton = document.getElementById('testButton');
+
+        if (!modelsLoaded || !imageElement.src) {
+          alert('Please load an image first');
+          return;
+        }
+
+        testButton.disabled = true;
+        resultsDiv.innerHTML =
+          '<div class="status loading">🔄 Analyzing image...</div>';
+
+        try {
+          const detector = getFaceDetector();
+          const startTime = performance.now();
+
+          // Detect all faces
+          const detections = await faceapi.detectAllFaces(
+            imageElement,
+            detector,
+          );
+          const detectionTime = performance.now() - startTime;
+
+          // Analyze first face if found
+          let analysisResults = '';
+          if (detections.length > 0) {
+            const firstFace = detections[0];
+            const box = firstFace.box;
+
+            // Try to get descriptor for the first face
+            try {
+              const faceWithDescriptor = await faceapi
+                .detectSingleFace(imageElement, detector)
+                .withFaceLandmarks(
+                  faceapi.nets.faceLandmark68Net.isLoaded ? false : true,
+                )
+                .withFaceDescriptor();
+
+              if (faceWithDescriptor) {
+                analysisResults = `
+                                <h4>🎯 Face Analysis</h4>
+                                <strong>Size:</strong> ${Math.round(box.width)} × ${Math.round(box.height)} pixels<br>
+                                <strong>Confidence:</strong> ${Math.round(firstFace.score * 100)}%<br>
+                                <strong>Descriptor Length:</strong> ${faceWithDescriptor.descriptor.length}<br>
+                                <strong>Quality:</strong> ${box.width >= 100 && box.height >= 100 ? '✅ Good' : '⚠️ Too Small'}<br>
+                                <strong>Confidence Level:</strong> ${firstFace.score >= 0.6 ? '✅ High' : '⚠️ Low'}
+                            `;
+              }
+            } catch (error) {
+              analysisResults = `<p style="color: orange;">⚠️ Could not extract face descriptor: ${error.message}</p>`;
+            }
+          }
+
+          resultsDiv.innerHTML = `
+                    <div class="status success">
+                        <h4>📊 Detection Results</h4>
+                        <strong>Model Used:</strong> ${ssdMobilenetLoaded ? 'SSDMobileNetV1' : 'TinyFaceDetector'}<br>
+                        <strong>Faces Detected:</strong> ${detections.length}<br>
+                        <strong>Processing Time:</strong> ${Math.round(detectionTime)}ms<br>
+                        <strong>Status:</strong> ${
+                          detections.length === 1
+                            ? '✅ Perfect (1 face)'
+                            : detections.length === 0
+                              ? '❌ No faces detected'
+                              : `⚠️ Multiple faces (${detections.length})`
+                        }
+                        ${analysisResults}
+                    </div>
+                `;
+        } catch (error) {
+          console.error('Face detection error:', error);
+          resultsDiv.innerHTML = `
+                    <div class="status error">
+                        <h4>❌ Detection Failed</h4>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Please try a different image or check the console for more details.</p>
+                    </div>
+                `;
+        } finally {
+          testButton.disabled = false;
+        }
+      }
+
+      // Event listeners
+      document
+        .getElementById('imageInput')
+        .addEventListener('change', function (e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              const imagePreview = document.getElementById('imagePreview');
+              imagePreview.src = e.target.result;
+              imagePreview.style.display = 'block';
+
+              // Clear previous results
+              document.getElementById('detectionResults').innerHTML = '';
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+
+      document
+        .getElementById('testButton')
+        .addEventListener('click', testFaceDetection);
+
+      // Load models on page load
+      loadModels();
+    </script>
+  </body>
+</html>
