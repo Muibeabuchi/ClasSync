@@ -60,7 +60,7 @@ const AttendanceSessionModal = ({
 }: AttendanceSessionModalProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [attendanceCode, setAttendanceCode] = useState('');
-  const [locationRadius, setLocationRadius] = useState(50);
+  const [locationRadius, setLocationRadius] = useState(49);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
   const [gpsError, setGpsError] = useState<string | null>(null);
   const [verificationMethod, setVerificationMethod] = useState<
@@ -240,7 +240,7 @@ const AttendanceSessionModal = ({
               GPS Not Available
             </p>
             <p className="text-xs text-red-600">
-              Your device doesn&apos;t support location services
+              Your device doesn't support location services
             </p>
           </div>
         </div>
@@ -309,6 +309,28 @@ const AttendanceSessionModal = ({
       icon: Code,
       label: 'GPS + Code',
       description: 'Manual entry',
+      color: 'orange',
+    },
+  ] as const;
+
+  // Location radius options
+  const radiusOptions = [
+    {
+      value: 49,
+      label: 'Close Range',
+      description: 'Within 49m',
+      color: 'green',
+    },
+    {
+      value: 99,
+      label: 'Medium Range',
+      description: 'Within 99m',
+      color: 'blue',
+    },
+    {
+      value: 300,
+      label: 'Wide Range',
+      description: 'Within 300m',
       color: 'orange',
     },
   ] as const;
@@ -393,26 +415,68 @@ const AttendanceSessionModal = ({
           </RadioGroup>
         </div>
 
-        {/* Location Radius - Compact */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Radius
-            </Label>
-            <Badge variant="outline" className="text-xs">
-              {locationRadius}m
-            </Badge>
-          </div>
-          <Input
-            type="range"
-            min="5"
-            max="300"
-            value={locationRadius}
-            onChange={(e) => setLocationRadius(Number(e.target.value))}
-            className="w-full h-2"
-            disabled={!gpsStatus.isReady}
-          />
+        {/* Location Radius - Radio Buttons */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Location Range
+          </Label>
+          <RadioGroup
+            value={locationRadius.toString()}
+            onValueChange={(value) => setLocationRadius(Number(value))}
+            className="grid grid-cols-3 gap-2"
+          >
+            {radiusOptions.map((option) => {
+              const isSelected = locationRadius === option.value;
+              return (
+                <div key={option.value} className="relative">
+                  <RadioGroupItem
+                    value={option.value.toString()}
+                    id={`radius-${option.value}`}
+                    className="peer sr-only"
+                    disabled={!gpsStatus.isReady}
+                  />
+                  <Label
+                    htmlFor={`radius-${option.value}`}
+                    className={`
+                      flex flex-col items-center gap-2 p-3 rounded-lg border-2 cursor-pointer
+                      transition-all duration-200 hover:bg-muted/50
+                      ${
+                        isSelected
+                          ? 'border-primary bg-primary/5 shadow-sm'
+                          : 'border-border'
+                      }
+                      ${!gpsStatus.isReady ? 'opacity-50 cursor-not-allowed' : ''}
+                    `}
+                  >
+                    <div
+                      className={`
+                      w-8 h-8 rounded-full flex items-center justify-center
+                      ${option.color === 'green' ? 'bg-green-100' : ''}
+                      ${option.color === 'blue' ? 'bg-blue-100' : ''}
+                      ${option.color === 'orange' ? 'bg-orange-100' : ''}
+                    `}
+                    >
+                      <MapPin
+                        className={`
+                        h-4 w-4
+                        ${option.color === 'green' ? 'text-green-600' : ''}
+                        ${option.color === 'blue' ? 'text-blue-600' : ''}
+                        ${option.color === 'orange' ? 'text-orange-600' : ''}
+                      `}
+                      />
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xs font-medium">{option.label}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {option.description}
+                      </div>
+                    </div>
+                  </Label>
+                </div>
+              );
+            })}
+          </RadioGroup>
         </div>
 
         {/* Conditional Content */}
