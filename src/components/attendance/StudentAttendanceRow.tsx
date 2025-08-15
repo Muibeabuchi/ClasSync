@@ -623,15 +623,19 @@ export const StudentAttendanceRow = ({
         className={cn(
           // Mobile-first responsive layout
           'flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4',
-          // Borders and styling
-          'p-3 sm:p-4 border rounded-lg transition-colors',
+          // Modern card styling with subtle borders
+          'p-4 sm:p-5 border rounded-xl transition-all duration-200',
           // Touch-friendly spacing for mobile
-          isTouchDevice && 'p-4',
-          // Status-based styling
-          attendanceInfo.isManualOverride && 'bg-amber-50 border-amber-200',
+          isTouchDevice && 'p-5',
+          // Native app feel with subtle shadows
+          'bg-card shadow-sm hover:shadow-md',
+          // Status-based border styling using theme colors
+          attendanceInfo.isManualOverride && 'border-l-4 border-l-warning',
           attendanceInfo.isPresent &&
             !attendanceInfo.isManualOverride &&
-            'bg-green-50 border-green-200',
+            'border-l-4 border-l-success',
+          // Interactive states
+          'hover:bg-accent/5 active:scale-[0.99]',
         )}
         role="listitem"
         aria-label={ARIA_LABELS.OVERRIDE_STATUS_DESCRIPTION(

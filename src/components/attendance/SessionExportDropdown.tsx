@@ -152,8 +152,6 @@ export const SessionExportDropdown = ({
       exportData,
       isLoading,
       error,
-      attendanceSessionId,
-      courseId,
       courseName,
       courseCode,
       sessionDate,
@@ -170,11 +168,11 @@ export const SessionExportDropdown = ({
   const getExportIcon = (format: ExportFormat) => {
     switch (format) {
       case 'pdf':
-        return <FileText className="h-4 w-4 mr-2 text-red-600" />;
+        return <FileText className="h-4 w-4 mr-2 text-destructive" />;
       case 'csv':
-        return <File className="h-4 w-4 mr-2 text-green-600" />;
+        return <File className="h-4 w-4 mr-2 text-success" />;
       case 'excel':
-        return <FileSpreadsheet className="h-4 w-4 mr-2 text-blue-600" />;
+        return <FileSpreadsheet className="h-4 w-4 mr-2 text-primary" />;
     }
   };
 

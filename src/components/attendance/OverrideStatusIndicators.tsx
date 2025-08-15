@@ -107,27 +107,27 @@ export const OverrideStatusIcon = ({
       case 'manual-override':
         return {
           icon: Edit3,
-          bgColor: 'bg-amber-100',
-          borderColor: 'border-amber-200',
-          iconColor: 'text-amber-700',
+          bgColor: 'bg-warning/10',
+          borderColor: 'border-warning/20',
+          iconColor: 'text-warning-foreground',
           label: 'Manual Override',
           description: 'Marked present by lecturer override',
         };
       case 'present':
         return {
           icon: CheckCircle2,
-          bgColor: 'bg-green-100',
-          borderColor: 'border-green-200',
-          iconColor: 'text-green-700',
+          bgColor: 'bg-success/10',
+          borderColor: 'border-success/20',
+          iconColor: 'text-success-foreground',
           label: 'Present',
           description: 'Checked in automatically',
         };
       case 'late':
         return {
           icon: Clock,
-          bgColor: 'bg-orange-100',
-          borderColor: 'border-orange-200',
-          iconColor: 'text-orange-700',
+          bgColor: 'bg-warning/10',
+          borderColor: 'border-warning/20',
+          iconColor: 'text-warning-foreground',
           label: 'Late',
           description: 'Checked in after session started',
         };
@@ -135,9 +135,9 @@ export const OverrideStatusIcon = ({
       default:
         return {
           icon: User,
-          bgColor: 'bg-red-100',
-          borderColor: 'border-red-200',
-          iconColor: 'text-red-700',
+          bgColor: 'bg-destructive/10',
+          borderColor: 'border-destructive/20',
+          iconColor: 'text-destructive-foreground',
           label: 'Absent',
           description: 'Did not check in to session',
         };
@@ -262,28 +262,29 @@ export const OverrideStatusBadge = ({
           label: 'Manual Override',
           icon: Edit3,
           className:
-            'text-amber-600 border-amber-200 bg-amber-50 hover:bg-amber-100',
+            'text-warning-foreground border-warning/20 bg-warning/10 hover:bg-warning/15',
         };
       case 'present':
         return {
           label: 'Present',
           icon: CheckCircle2,
           className:
-            'text-green-600 border-green-200 bg-green-50 hover:bg-green-100',
+            'text-success-foreground border-success/20 bg-success/10 hover:bg-success/15',
         };
       case 'late':
         return {
           label: 'Late',
           icon: Clock,
           className:
-            'text-orange-600 border-orange-200 bg-orange-50 hover:bg-orange-100',
+            'text-warning-foreground border-warning/20 bg-warning/10 hover:bg-warning/15',
         };
       case 'absent':
       default:
         return {
           label: 'Absent',
           icon: User,
-          className: 'text-red-600 border-red-200 bg-red-50 hover:bg-red-100',
+          className:
+            'text-destructive-foreground border-destructive/20 bg-destructive/10 hover:bg-destructive/15',
         };
     }
   };
@@ -374,23 +375,23 @@ export const OverrideIndicatorDot = ({
     switch (status) {
       case 'manual-override':
         return {
-          color: 'bg-amber-500',
+          color: 'bg-warning',
           label: 'Manual Override',
         };
       case 'present':
         return {
-          color: 'bg-green-500',
+          color: 'bg-success',
           label: 'Present',
         };
       case 'late':
         return {
-          color: 'bg-orange-500',
+          color: 'bg-warning',
           label: 'Late',
         };
       case 'absent':
       default:
         return {
-          color: 'bg-red-500',
+          color: 'bg-destructive',
           label: 'Absent',
         };
     }
@@ -453,8 +454,8 @@ export const OverrideSummaryIndicator = ({
     <div className={cn('flex items-center gap-2', className)}>
       {/* Attendance Rate Indicator */}
       <div className="flex items-center gap-1">
-        <UserCheck className="h-4 w-4 text-green-600" />
-        <span className="text-sm font-medium text-green-600">
+        <UserCheck className="h-4 w-4 text-success" />
+        <span className="text-sm font-medium text-success-foreground">
           {Math.round(attendanceRate)}%
         </span>
       </div>
@@ -462,8 +463,8 @@ export const OverrideSummaryIndicator = ({
       {/* Override Count Indicator */}
       {manualOverrides > 0 && (
         <div className="flex items-center gap-1">
-          <Edit3 className="h-4 w-4 text-amber-600" />
-          <span className="text-sm font-medium text-amber-600">
+          <Edit3 className="h-4 w-4 text-warning" />
+          <span className="text-sm font-medium text-warning-foreground">
             {manualOverrides}
           </span>
         </div>
@@ -472,8 +473,8 @@ export const OverrideSummaryIndicator = ({
       {/* Absent Count Indicator */}
       {absentStudents > 0 && (
         <div className="flex items-center gap-1">
-          <UserX className="h-4 w-4 text-red-600" />
-          <span className="text-sm font-medium text-red-600">
+          <UserX className="h-4 w-4 text-destructive" />
+          <span className="text-sm font-medium text-destructive-foreground">
             {absentStudents}
           </span>
         </div>

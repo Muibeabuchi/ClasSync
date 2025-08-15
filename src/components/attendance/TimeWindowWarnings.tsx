@@ -96,7 +96,7 @@ export const TimeWindowStatusBadge = ({
             showCountdown && actualRemainingMs > 0
               ? `${formatTimeRemaining(actualRemainingMs)} left`
               : 'Override Available',
-          className: 'text-blue-600 border-blue-200 bg-blue-50',
+          className: 'text-primary border-primary/20 bg-primary/10',
         };
       case 'expiring-soon':
         return {
@@ -106,21 +106,21 @@ export const TimeWindowStatusBadge = ({
             showCountdown && actualRemainingMs > 0
               ? `${formatTimeRemaining(actualRemainingMs)} left`
               : 'Expiring Soon',
-          className: 'text-orange-600 border-orange-200 bg-orange-50',
+          className: 'text-warning border-warning/20 bg-warning/10',
         };
       case 'expired':
         return {
           variant: 'secondary' as const,
           icon: XCircle,
           label: 'Override Expired',
-          className: 'text-red-600 border-red-200 bg-red-50',
+          className: 'text-destructive border-destructive/20 bg-destructive/10',
         };
       case 'session-active':
         return {
           variant: 'secondary' as const,
           icon: Timer,
           label: 'Session Active',
-          className: 'text-gray-600 border-gray-200 bg-gray-50',
+          className: 'text-muted-foreground border-border bg-muted/50',
         };
       case 'unavailable':
       default:
@@ -128,7 +128,7 @@ export const TimeWindowStatusBadge = ({
           variant: 'secondary' as const,
           icon: XCircle,
           label: 'Unavailable',
-          className: 'text-gray-600 border-gray-200 bg-gray-50',
+          className: 'text-muted-foreground border-border bg-muted/50',
         };
     }
   };
@@ -382,10 +382,10 @@ export const TimeWindowWarningAlert = ({
                 // Thicker progress bar on mobile for better visibility
                 isMobile && 'h-3',
                 isTouchDevice && 'h-3',
-                config.progressPercentage < 25 && 'bg-red-100',
+                config.progressPercentage < 25 && 'bg-destructive/10',
                 config.progressPercentage < 50 &&
                   config.progressPercentage >= 25 &&
-                  'bg-orange-100',
+                  'bg-warning/10',
               )}
             />
           </div>
@@ -476,10 +476,10 @@ export const CountdownTimer = ({
   };
 
   const getTimerColor = () => {
-    if (remainingMs <= 0) return 'text-red-600';
-    if (progressPercentage < 25) return 'text-red-600';
-    if (progressPercentage < 50) return 'text-orange-600';
-    return 'text-blue-600';
+    if (remainingMs <= 0) return 'text-destructive';
+    if (progressPercentage < 25) return 'text-destructive';
+    if (progressPercentage < 50) return 'text-warning';
+    return 'text-primary';
   };
 
   return (
@@ -575,15 +575,15 @@ export const OverrideWindowStatusCard = ({
   const getStatusIcon = () => {
     switch (status) {
       case 'active':
-        return <CheckCircle2 className="h-5 w-5 text-green-600" />;
+        return <CheckCircle2 className="h-5 w-5 text-success" />;
       case 'expiring-soon':
-        return <AlertTriangle className="h-5 w-5 text-orange-600" />;
+        return <AlertTriangle className="h-5 w-5 text-warning" />;
       case 'expired':
-        return <XCircle className="h-5 w-5 text-red-600" />;
+        return <XCircle className="h-5 w-5 text-destructive" />;
       case 'session-active':
-        return <Timer className="h-5 w-5 text-blue-600" />;
+        return <Timer className="h-5 w-5 text-primary" />;
       default:
-        return <Info className="h-5 w-5 text-gray-600" />;
+        return <Info className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
