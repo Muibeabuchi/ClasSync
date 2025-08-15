@@ -1,0 +1,6 @@
+import{c as a,a as n,m as i,n as c,an as r,bc as o,bd as u,a1 as l}from"./index-D6Q4c7Ck.js";/**
+ * @license lucide-react v0.523.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */const q=[["path",{d:"m15.5 7.5 2.3 2.3a1 1 0 0 0 1.4 0l2.1-2.1a1 1 0 0 0 0-1.4L19 4",key:"g0fldk"}],["path",{d:"m21 2-9.6 9.6",key:"1j0ho8"}],["circle",{cx:"7.5",cy:"15.5",r:"5.5",key:"yqb3hr"}]],p=a("key",q),d=()=>{const e=n.c(1);let t;return e[0]===Symbol.for("react.memo_cache_sentinel")?(t=i(c.joinRequests.getAllJoinRequestsForLecturer,{}),e[0]=t):t=e[0],r(t)},y=()=>{const e=n.c(2),t=o(c.joinRequests.createJoinRequest);let s;return e[0]!==t?(s={mutationFn:t},e[0]=t,e[1]=s):s=e[1],u(s)},j=()=>{const e=n.c(2),t=o(c.joinRequests.linkStudentToAttendanceEntry);let s;return e[0]!==t?(s={mutationFn:t},e[0]=t,e[1]=s):s=e[1],u(s)},f=()=>{const e=n.c(2),t=o(c.joinRequests.rejectJoinRequest);let s;return e[0]!==t?(s={mutationFn:t,onSuccess:R},e[0]=t,e[1]=s):s=e[1],u(s)},h=()=>{const e=n.c(2),t=o(c.joinRequests.batchAcceptJoinRequests);let s;return e[0]!==t?(s={mutationFn:t},e[0]=t,e[1]=s):s=e[1],u(s)};function R(){l.success("Request rejected",{description:"The join request has been rejected successfully"})}export{p as K,j as a,f as b,d as c,y as d,h as u};
