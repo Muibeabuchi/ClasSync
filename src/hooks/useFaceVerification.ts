@@ -346,7 +346,7 @@ export const useFaceVerification = () => {
     [storeFaceDescriptor], // Remove the dependency to fix the warning
   );
 
-  // Enhanced face verification for attendance with SSDMobileNet and landmarks
+  // Enhanced face verification for attendance with TinyFaceDetector and landmarks
   const verifyFaceForAttendance = useCallback(
     async (
       descriptor: Float32Array,
@@ -380,13 +380,16 @@ export const useFaceVerification = () => {
           console.log('Face verification successful:', {
             matchScore: result.faceMatchScore,
             verificationStatus: result.verificationStatus,
-            model: 'SSDMobileNet',
+            model: 'TinyFaceDetector',
+            distance: result.distance,
+            threshold: result.threshold,
           });
         } else {
           console.log('Face verification failed:', {
             error: result.error,
             matchScore: result.faceMatchScore,
             threshold: result.threshold,
+            distance: result.distance,
           });
         }
 
@@ -401,67 +404,7 @@ export const useFaceVerification = () => {
         setIsLoading(false);
       }
     },
-    [], // Remove the dependency to fix the warning
-  );
-
-  // Enhanced attendance verification with quality assessment
-  const verifyAttendanceWithQuality = useCallback(
-    async (
-      videoElement: HTMLVideoElement,
-      storedDescriptorArray: number[],
-    ): Promise<{
-      success: boolean;
-      matchScore: number;
-      confidence: number;
-      qualityScore: number;
-      feedback: string[];
-      error?: string;
-    }> => {
-      if (!modelsLoaded) {
-        return {
-          success: false,
-          matchScore: 0,
-          confidence: 0,
-          qualityScore: 0,
-          feedback: ['Face detection models not loaded'],
-          error: 'Models not loaded',
-        };
-      }
-
-      try {
-        const storedDescriptor = faceApiService.arrayToDescriptor(
-          storedDescriptorArray,
-        );
-        const result = await faceApiService.verifyAttendanceFace(
-          videoElement,
-          storedDescriptor,
-        );
-
-        console.log('Enhanced attendance verification result:', {
-          success: result.success,
-          matchScore: result.matchScore.toFixed(3),
-          confidence: result.confidence.toFixed(3),
-          qualityScore: result.qualityScore.toFixed(3),
-          feedback: result.feedback,
-          model: faceApiService.getModelInfo().primaryDetector,
-        });
-
-        return result;
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'Verification failed';
-        console.error('Enhanced attendance verification error:', err);
-        return {
-          success: false,
-          matchScore: 0,
-          confidence: 0,
-          qualityScore: 0,
-          feedback: ['Technical error during verification'],
-          error: errorMessage,
-        };
-      }
-    },
-    [modelsLoaded],
+    [verifyFaceMutation], // Add the dependency back
   );
 
   // Toggle face verification on/off
@@ -496,23 +439,8 @@ export const useFaceVerification = () => {
     [toggleVerification], // Remove the dependency to fix the warning
   );
 
-  // Compare two face descriptors
-  const compareFaces = useCallback(
-    (descriptor1: Float32Array, descriptor2: Float32Array, threshold = 0.6) => {
-      const distance = faceApiService.calculateDistance(
-        descriptor1,
-        descriptor2,
-      );
-      const isMatch = distance <= threshold;
-
-      return {
-        distance,
-        isMatch,
-        confidence: Math.max(0, 1 - distance / threshold),
-      };
-    },
-    [],
-  );
+  // Note: Client-side face comparison removed for security reasons
+  // All face verification now happens on the server
 
   return {
     // State
@@ -527,9 +455,7 @@ export const useFaceVerification = () => {
     detectFaceFromImage,
     saveFaceDescriptor,
     verifyFaceForAttendance,
-    verifyAttendanceWithQuality, // New enhanced method
     toggleFaceVerification,
-    compareFaces,
 
     // Utilities
     faceApiService,

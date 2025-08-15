@@ -139,6 +139,9 @@ export const getFaceVerificationStatus = query({
   },
 });
 
+// Note: Client-side face descriptor fetching removed for security reasons
+// All face verification now happens on the server
+
 // Verify face during attendance check-in
 export const verifyFaceForAttendance = mutation({
   args: {
@@ -191,14 +194,16 @@ export const verifyFaceForAttendance = mutation({
     }
     const euclideanDistance = Math.sqrt(sumSquaredDifferences);
 
-    // Enhanced face match threshold for SSDMobileNet (≤ 0.5 = match)
-    // SSDMobileNet provides more accurate descriptors, allowing for slightly higher threshold
-    const FACE_MATCH_THRESHOLD = 0.5;
+    // Face match threshold set to 0.6 as requested
+    const FACE_MATCH_THRESHOLD = 0.6;
     const isMatch = euclideanDistance <= FACE_MATCH_THRESHOLD;
 
     // Calculate confidence score (0-1, higher is more confident)
-    const confidence = Math.max(0, 1 - euclideanDistance / 1.0);
-    const faceMatchScore = 1 - euclideanDistance; // Convert distance to score
+    const confidence = Math.max(
+      0,
+      1 - euclideanDistance / FACE_MATCH_THRESHOLD,
+    );
+    const faceMatchScore = Math.max(0, 1 - euclideanDistance); // Convert distance to score (0-1)
 
     // Log verification attempt
     await ctx.db.insert('faceVerificationLogs', {

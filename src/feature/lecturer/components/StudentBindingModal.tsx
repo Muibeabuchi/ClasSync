@@ -353,7 +353,7 @@ const StudentRequestCard = ({
             <h4 className="font-medium text-foreground text-sm md:text-base truncate leading-tight">
               {request.student.fullName}
             </h4>
-            <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+            <div className="text-xl font-bold  text-primary  flex items-center gap-1 mt-0.5">
               {(request.student.registrationNumber || request.uniqueCode) && (
                 <>
                   <span className="text-muted-foreground text-xs">
@@ -446,21 +446,39 @@ const ClassListSelection = ({
   isBinding?: boolean;
 }) => {
   const [filterTerm, setFilterTerm] = useState('');
-  const filteredValues =
+
+  // Filter class lists to only show those with students matching the filter term
+  const filteredClassLists =
     classListsWithStudents?.filter((classList) => {
-      // Filter by student name or registration number within the classList
-      return classList.classListStudents.some(
-        (student) =>
-          student.student.studentName
-            .toLowerCase()
-            .includes(filterTerm.toLowerCase()) ||
-          student.student.studentRegistrationNumber
-            .toLowerCase()
-            .includes(filterTerm.toLowerCase()),
-      );
+      if (!filterTerm.trim()) return true; // Show all if no filter
+
+      // Check if any student in this class list matches the filter
+      return classList.classListStudents.some((student) => {
+        const regNumber =
+          student.student.studentRegistrationNumber?.toLowerCase() || '';
+        const name = student.student.studentName?.toLowerCase() || '';
+        const searchTerm = filterTerm.toLowerCase().trim();
+
+        return regNumber.includes(searchTerm) || name.includes(searchTerm);
+      });
     }) || [];
 
-  console.log({ filteredValues });
+  // Further filter students within each class list
+  const getFilteredStudents = (
+    classList: GetLecturerClassListWithStudentsReturnType[number],
+  ) => {
+    if (!filterTerm.trim()) return classList.classListStudents;
+
+    return classList.classListStudents.filter((student) => {
+      const regNumber =
+        student.student.studentRegistrationNumber?.toLowerCase() || '';
+      const name = student.student.studentName?.toLowerCase() || '';
+      const searchTerm = filterTerm.toLowerCase().trim();
+
+      return regNumber.includes(searchTerm) || name.includes(searchTerm);
+    });
+  };
+
   return (
     <>
       <div className="space-y-4 pb-5">
@@ -473,75 +491,100 @@ const ClassListSelection = ({
           placeholder="Search by Registration/Unique number or Name"
           disabled={isBinding}
         />
-        <RadioGroup
-          value={`${selectedClassListId}-${selectedStudentId}`}
-          onValueChange={(value) => {
-            const [classListId, classListStudentId] = value.split('-');
-            onStudentSelect(
-              classListStudentId as Id<'classListStudents'>,
-              classListId as Id<'classLists'>,
-            );
-          }}
-        >
-          {filteredValues?.map((classList) => (
-            <Card key={classList._id} className=" border-border/50">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm md:text-base flex items-center gap-2 min-w-0">
-                    <span className="text-base">📚</span>
-                    <span className="truncate">{classList.classListName}</span>
-                  </CardTitle>
-                  {/* <Badge variant="secondary" className="text-xs flex-shrink-0">
-                {classList.classListStudents.length} available
-              </Badge> */}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {classList.classListStudents.map((student) => (
-                  <div
-                    key={student._id}
-                    className="flex items-center space-x-3 p-2 md:p-3 rounded-lg border border-border/30 hover:bg-accent/50 transition-colors"
-                  >
-                    <RadioGroupItem
-                      value={`${classList._id}-${student._id}`}
-                      id={`${classList._id}-${student._id}`}
-                      className="flex-shrink-0"
-                    />
-                    <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
-                      <AvatarFallback className="text-xs">
-                        {student.student.studentName
-                          .split(' ')
-                          .map((n) => n[0])
-                          .join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <Label
-                      htmlFor={`${classList._id}-${student._id}`}
-                      className="flex-1 cursor-pointer min-w-0"
-                    >
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium text-xs md:text-sm truncate">
-                            {student.student.studentName}
-                          </p>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {student.student.studentRegistrationNumber}
-                          </p>
-                        </div>
-                        <Badge
-                          variant="outline"
-                          className="text-xs flex-shrink-0"
+
+        {filteredClassLists.length === 0 && filterTerm.trim() ? (
+          <Card className="border-muted-foreground/20 bg-muted/5">
+            <CardContent className="pt-6">
+              <div className="text-center space-y-2">
+                <AlertCircle className="h-6 w-6 text-muted-foreground mx-auto" />
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  No students found matching "{filterTerm}"
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <RadioGroup
+            value={`${selectedClassListId}-${selectedStudentId}`}
+            onValueChange={(value) => {
+              const [classListId, classListStudentId] = value.split('-');
+              onStudentSelect(
+                classListStudentId as Id<'classListStudents'>,
+                classListId as Id<'classLists'>,
+              );
+            }}
+          >
+            {filteredClassLists.map((classList) => {
+              const filteredStudents = getFilteredStudents(classList);
+
+              if (filteredStudents.length === 0) return null;
+              return (
+                <Card key={classList._id} className=" border-border/50">
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-sm md:text-base flex items-center gap-2 min-w-0">
+                        <span className="text-base">📚</span>
+                        <span className="truncate">
+                          {classList.classListName}
+                        </span>
+                      </CardTitle>
+                      <Badge
+                        variant="secondary"
+                        className="text-xs flex-shrink-0"
+                      >
+                        {filteredStudents.length}{' '}
+                        {filteredStudents.length === 1 ? 'match' : 'matches'}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {filteredStudents.map((student) => (
+                      <div
+                        key={student._id}
+                        className="flex items-center space-x-3 p-2 md:p-3 rounded-lg border border-border/30 hover:bg-accent/50 transition-colors"
+                      >
+                        <RadioGroupItem
+                          value={`${classList._id}-${student._id}`}
+                          id={`${classList._id}-${student._id}`}
+                          className="flex-shrink-0"
+                        />
+                        <Avatar className="h-6 w-6 md:h-8 md:w-8 flex-shrink-0">
+                          <AvatarFallback className="text-xs">
+                            {student.student.studentName
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <Label
+                          htmlFor={`${classList._id}-${student._id}`}
+                          className="flex-1 cursor-pointer min-w-0"
                         >
-                          {student.student.studentGender}
-                        </Badge>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <p className="font-medium text-xs md:text-sm truncate">
+                                {student.student.studentName}
+                              </p>
+                              <p className="text-xs text-muted-foreground truncate">
+                                {student.student.studentRegistrationNumber}
+                              </p>
+                            </div>
+                            <Badge
+                              variant="outline"
+                              className="text-xs flex-shrink-0"
+                            >
+                              {student.student.studentGender}
+                            </Badge>
+                          </div>
+                        </Label>
                       </div>
-                    </Label>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </RadioGroup>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </RadioGroup>
+        )}
       </div>
     </>
   );
@@ -587,7 +630,6 @@ export const StudentBindingModalSkeleton = ({
           </div>
         </CardContent>
       </Card>
-
       <Separator />
 
       {/* ClassList Selection Skeleton */}

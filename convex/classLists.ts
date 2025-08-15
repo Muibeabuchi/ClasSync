@@ -25,6 +25,8 @@ export const createClassList = lecturerMutation({
     // Validate unique registration numbers
     const regNumbers = args.students.map((s) => s.registrationNumber);
     const uniqueRegNumbers = new Set(regNumbers);
+    console.log({ regNumbers });
+    console.log({ uniqueRegNumbers });
     if (regNumbers.length !== uniqueRegNumbers.size) {
       throw new Error('Duplicate registration numbers found');
     }

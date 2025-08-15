@@ -39,7 +39,10 @@ export class FaceApiService {
         console.log('FaceLandmark68TinyNet loaded as fallback');
       }
 
-      // Note: Face recognition model removed - using only face detection and landmarks
+      // Load face recognition model for secure face verification
+      console.log('Loading FaceRecognitionNet...');
+      await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+      console.log('FaceRecognitionNet loaded successfully');
 
       // Add a small delay to ensure models are fully initialized
       await new Promise((resolve) => setTimeout(resolve, 200));
@@ -57,13 +60,19 @@ export class FaceApiService {
         throw new Error('No face landmark model could be loaded');
       }
 
-      // Note: Face recognition model not needed for TinyFace detection only
+      // Verify face recognition model is loaded (CRITICAL for security)
+      if (!faceapi.nets.faceRecognitionNet.isLoaded) {
+        throw new Error(
+          'Face recognition model failed to load - secure verification not available',
+        );
+      }
 
       this.modelsLoaded = true;
       console.log('Face-api.js models loaded successfully', {
         tinyFaceDetector: this.tinyFaceDetectorLoaded,
         faceLandmark68: faceapi.nets.faceLandmark68Net.isLoaded,
         faceLandmark68Tiny: faceapi.nets.faceLandmark68TinyNet.isLoaded,
+        faceRecognition: faceapi.nets.faceRecognitionNet.isLoaded, // This is critical!
       });
       return true;
     } catch (error) {
@@ -143,10 +152,11 @@ export class FaceApiService {
         }
       }
 
-      // Detect single face with landmarks only (no descriptor for TinyFace)
+      // Detect single face with landmarks AND face descriptor for secure verification
       const detection = await faceapi
         .detectSingleFace(input, detector)
-        .withFaceLandmarks(useTinyLandmarks);
+        .withFaceLandmarks(useTinyLandmarks)
+        .withFaceDescriptor();
 
       if (!detection) {
         console.log('No face detected in input');
@@ -155,7 +165,7 @@ export class FaceApiService {
 
       // Validate detection quality
       const box = detection.detection.box;
-      const minFaceSize = useHighAccuracy ? 100 : 80; // Higher minimum for SSDMobileNet
+      const minFaceSize = useHighAccuracy ? 100 : 80;
 
       if (box.width < minFaceSize || box.height < minFaceSize) {
         console.log(
@@ -166,7 +176,7 @@ export class FaceApiService {
 
       // Quality checks for TinyFaceDetector
       const confidence = detection.detection.score;
-      const minConfidence = useHighAccuracy ? 0.3 : 0.4; // Optimized for TinyFaceDetector
+      const minConfidence = useHighAccuracy ? 0.3 : 0.4;
 
       if (confidence < minConfidence) {
         console.log(
@@ -182,8 +192,8 @@ export class FaceApiService {
         detection.detection.score.toFixed(3),
       );
 
-      // For TinyFace, we'll create a simple descriptor from landmarks
-      return this.createSimpleDescriptor(detection.landmarks);
+      // Return the secure face descriptor from the neural network
+      return detection.descriptor;
     } catch (error) {
       console.error('Face detection failed:', error);
       throw error;
@@ -216,8 +226,8 @@ export class FaceApiService {
   ): boolean {
     const distance = this.calculateDistance(descriptor1, descriptor2);
 
-    // Optimized threshold for TinyFaceDetector
-    const defaultThreshold = 0.6; // Good balance for TinyFaceDetector
+    // Updated threshold to match backend (0.4) - stricter security
+    const defaultThreshold = 0.4;
     const finalThreshold = threshold ?? defaultThreshold;
 
     console.log(
@@ -250,26 +260,7 @@ export class FaceApiService {
     return new Float32Array(array);
   }
 
-  // Create a simple descriptor from landmarks for TinyFace detector
-  private createSimpleDescriptor(landmarks: any): Float32Array {
-    if (!landmarks || !landmarks.positions) {
-      // Return a default descriptor if no landmarks
-      return new Float32Array(128).fill(0);
-    }
-
-    const positions = landmarks.positions;
-    const descriptor = new Float32Array(128);
-
-    // Create a simple descriptor based on landmark positions
-    // This is a simplified approach for TinyFace detector
-    for (let i = 0; i < Math.min(positions.length, 64); i++) {
-      const point = positions[i];
-      descriptor[i * 2] = point.x / 640; // Normalize x coordinate
-      descriptor[i * 2 + 1] = point.y / 480; // Normalize y coordinate
-    }
-
-    return descriptor;
-  }
+  // REMOVED: createSimpleDescriptor method - now using secure neural network descriptors
 
   // Detect multiple faces in an image (for validation) - simplified version
   async detectAllFaces(
@@ -375,10 +366,11 @@ export class FaceApiService {
         }
       }
 
-      // Detect face with landmarks only (no face descriptor for TinyFace)
+      // Detect face with landmarks AND secure face descriptor
       const result = await faceapi
         .detectSingleFace(input, detector)
-        .withFaceLandmarks(useTinyLandmarks);
+        .withFaceLandmarks(useTinyLandmarks)
+        .withFaceDescriptor();
 
       if (!result) {
         console.log('No face detected with landmarks');
@@ -390,9 +382,7 @@ export class FaceApiService {
         };
       }
 
-      const { detection, landmarks } = result;
-      // Create descriptor from landmarks for TinyFace
-      const descriptor = this.createSimpleDescriptor(landmarks);
+      const { detection, landmarks, descriptor } = result;
       const box = detection.box;
 
       // Calculate landmark quality score

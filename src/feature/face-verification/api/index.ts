@@ -7,6 +7,9 @@ import type { Id } from 'convex/_generated/dataModel';
 export const useGetFaceVerificationStatus = () =>
   useQuery(convexQuery(api.faceVerification.getFaceVerificationStatus, {}));
 
+// Note: Client-side face descriptor fetching removed for security reasons
+// All face verification now happens on the server
+
 // Store face descriptor during onboarding
 export const useStoreFaceDescriptor = () =>
   useMutation({
