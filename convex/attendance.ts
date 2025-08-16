@@ -82,14 +82,21 @@ export const startAttendanceSession = courseMutation({
     const startTime = Date.now();
     const endedAt = startTime + AttendanceSessionDuration;
 
+    // Hardcoded GPS coordinates and radius for testing
+    const hardcodedLocation = {
+      lat: 5.38866,
+      long: 6.991175,
+    };
+    const hardcodedRadius = 1000; // 1km in meters
+
     const sessionId = await ctx.db.insert('attendanceSessions', {
       courseId: args.courseId,
       lecturerId,
       attendanceCode: args.requireCode,
-      location: args.gpsCoordinates,
+      location: hardcodedLocation, // Use hardcoded location instead of args.gpsCoordinates
       status: 'active', // Start immediately as active (no prep period)
       endedAt,
-      radius: args.radiusMeters,
+      radius: hardcodedRadius, // Use hardcoded radius instead of args.radiusMeters
       verificationMethod: args.verificationMethod,
     });
 
