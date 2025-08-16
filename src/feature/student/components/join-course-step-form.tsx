@@ -28,8 +28,6 @@ import { useRequestToJoinCourseClassList } from '@/feature/joinRequest/api';
 import { useQuery } from '@tanstack/react-query';
 import { convexQuery, useConvexMutation } from '@convex-dev/react-query';
 import { useGetCurrentUser } from '@/feature/student/api/student-profile';
-import { faceDetectionValidator } from '@/utils/faceDetectionValidation';
-import type { FaceValidationResult } from '@/utils/faceDetectionValidation';
 import { cn } from '@/lib/utils';
 
 interface JoinCourseStepFormProps {
@@ -51,9 +49,6 @@ export const JoinCourseStepForm = ({
   const [editableRegNumber, setEditableRegNumber] = useState('');
   const [courseImage, setCourseImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-  const [validationResult, setValidationResult] =
-    useState<FaceValidationResult | null>(null);
-  const [isValidatingImage, setIsValidatingImage] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [tempImageUrl, setTempImageUrl] = useState<string | null>(null);
 
@@ -109,7 +104,7 @@ export const JoinCourseStepForm = ({
   const canProceedFromIdentification = hasRegistrationNumber
     ? editableRegNumber.trim().length > 0
     : uniqueCode.trim().length > 0;
-  const canProceedFromPhoto = courseImage && validationResult?.isValid;
+  const canProceedFromPhoto = courseImage !== null;
   const canSubmitRequest = canProceedFromPhoto;
 
   // Handle course search
@@ -125,52 +120,6 @@ export const JoinCourseStepForm = ({
     e.preventDefault();
     handleSearch();
   };
-
-  // Handle image selection and automatic validation
-  const handleImageSelection = useCallback(async (file: File) => {
-    // Basic validation
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
-      return;
-    }
-
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      toast.error(
-        'Image file is too large. Please select an image smaller than 5MB',
-      );
-      return;
-    }
-
-    // Set image and create preview
-    setCourseImage(file);
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreviewUrl(previewUrl);
-    setIsValidatingImage(true);
-    setValidationResult(null);
-
-    try {
-      // Automatically validate the image
-      const result = await faceDetectionValidator.validateImageFile(file);
-      setValidationResult(result);
-
-      if (result.isValid) {
-        toast.success('Photo validated successfully! Face detected.');
-      } else {
-        toast.error(result.error || 'Photo validation failed');
-      }
-    } catch (error) {
-      console.error('Face validation error:', error);
-      setValidationResult({
-        isValid: false,
-        error:
-          'Failed to validate photo. Please try again with a different image.',
-      });
-      toast.error('Failed to validate photo. Please try again.');
-    } finally {
-      setIsValidatingImage(false);
-    }
-  }, []);
 
   // Handle file input change
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,34 +142,12 @@ export const JoinCourseStepForm = ({
       setTempImageUrl(null);
     }
 
-    // Set the cropped image and validate it
+    // Set the cropped image
     setCourseImage(croppedFile);
     const previewUrl = URL.createObjectURL(croppedFile);
     setImagePreviewUrl(previewUrl);
-    setIsValidatingImage(true);
-    setValidationResult(null);
 
-    try {
-      // Validate the cropped image
-      const result =
-        await faceDetectionValidator.validateImageFile(croppedFile);
-      setValidationResult(result);
-
-      if (result.isValid) {
-        toast.success('Photo cropped and validated successfully!');
-      } else {
-        toast.error(result.error || 'Photo validation failed');
-      }
-    } catch (error) {
-      console.error('Face validation error:', error);
-      setValidationResult({
-        isValid: false,
-        error: 'Failed to validate cropped photo. Please try again.',
-      });
-      toast.error('Failed to validate cropped photo. Please try again.');
-    } finally {
-      setIsValidatingImage(false);
-    }
+    toast.success('Photo cropped successfully!');
   };
 
   // Handle crop cancel
@@ -235,7 +162,6 @@ export const JoinCourseStepForm = ({
   // Remove image
   const handleRemoveImage = () => {
     setCourseImage(null);
-    setValidationResult(null);
     if (imagePreviewUrl) {
       URL.revokeObjectURL(imagePreviewUrl);
       setImagePreviewUrl(null);
@@ -289,7 +215,6 @@ export const JoinCourseStepForm = ({
       setSearchQuery('');
       setUniqueCode('');
       setCourseImage(null);
-      setValidationResult(null);
       setCurrentStep('search');
       if (imagePreviewUrl) {
         URL.revokeObjectURL(imagePreviewUrl);
@@ -630,8 +555,7 @@ export const JoinCourseStepForm = ({
                         Choose Photo
                       </Button>
                       <p className="text-xs text-muted-foreground">
-                        Supports JPG, PNG • Max 5MB • Must contain exactly one
-                        face
+                        Supports JPG, PNG • Max 5MB
                       </p>
                     </div>
                   </div>
@@ -650,7 +574,7 @@ export const JoinCourseStepForm = ({
                     <div className="relative">
                       <img
                         src={imagePreviewUrl || ''}
-                        alt="Selected photo"
+                        alt="Selected "
                         className="w-full h-48 object-cover rounded-lg border"
                       />
                       <Button
@@ -683,54 +607,12 @@ export const JoinCourseStepForm = ({
                         variant="outline"
                         size="sm"
                         onClick={() => setShowCropper(true)}
-                        disabled={isValidatingImage}
                       >
                         <Camera className="h-4 w-4 mr-2" />
                         Crop & Adjust
                       </Button>
                     </div>
                   </div>
-
-                  {/* Validation Status */}
-                  {isValidatingImage && (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                      <span className="ml-2 text-sm text-muted-foreground">
-                        Validating photo...
-                      </span>
-                    </div>
-                  )}
-
-                  {validationResult && !isValidatingImage && (
-                    <div className="space-y-2">
-                      <Badge
-                        variant={
-                          validationResult.isValid ? 'default' : 'destructive'
-                        }
-                        className="w-full justify-center py-2"
-                      >
-                        {validationResult.isValid ? (
-                          <>
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Photo validated - Face detected!
-                          </>
-                        ) : (
-                          <>
-                            <AlertTriangle className="h-3 w-3 mr-1" />
-                            Photo validation failed
-                          </>
-                        )}
-                      </Badge>
-                      {validationResult.error && (
-                        <Alert variant="destructive">
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertDescription className="text-sm">
-                            {validationResult.error}
-                          </AlertDescription>
-                        </Alert>
-                      )}
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -820,7 +702,7 @@ export const JoinCourseStepForm = ({
                       <div className="relative">
                         <img
                           src={imagePreviewUrl}
-                          alt="Your uploaded photo"
+                          alt="Uploaded"
                           className="w-full h-32 object-cover rounded-lg border"
                         />
                       </div>
@@ -836,12 +718,6 @@ export const JoinCourseStepForm = ({
                             {(courseImage.size / 1024 / 1024).toFixed(2)} MB
                           </p>
                         </div>
-                        {validationResult?.isValid && (
-                          <Badge variant="default" className="ml-auto">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Validated
-                          </Badge>
-                        )}
                       </div>
                     </div>
                   </div>

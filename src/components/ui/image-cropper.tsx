@@ -5,19 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import {
-  RotateCcw,
-  RotateCw,
-  ZoomIn,
-  ZoomOut,
-  Check,
-  X,
-  AlertTriangle,
-  User,
-} from 'lucide-react';
+import { RotateCcw, RotateCw, ZoomIn, ZoomOut, Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { faceDetectionValidator } from '@/utils/faceDetectionValidation';
-import { type FaceValidationResult } from '@/utils/faceDetectionValidation';
+
 import { Label } from './label';
 
 interface ImageCropperProps {
@@ -89,9 +79,6 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
-  const [isValidating, setIsValidating] = useState(false);
-  const [validationResult, setValidationResult] =
-    useState<FaceValidationResult | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const onCropCompleteCallback = useCallback(
@@ -100,32 +87,6 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
     },
     [],
   );
-
-  const validateCroppedImage = async () => {
-    if (!croppedAreaPixels) return;
-
-    setIsValidating(true);
-    setValidationResult(null);
-
-    try {
-      const croppedImage = await getCroppedImg(
-        image,
-        croppedAreaPixels,
-        'temp-validation.jpg',
-      );
-      const result =
-        await faceDetectionValidator.validateImageFile(croppedImage);
-      setValidationResult(result);
-    } catch (error) {
-      console.error('Validation error:', error);
-      setValidationResult({
-        isValid: false,
-        error: 'Failed to validate cropped image. Please try again.',
-      });
-    } finally {
-      setIsValidating(false);
-    }
-  };
 
   const handleCropConfirm = async () => {
     if (!croppedAreaPixels) return;
@@ -229,59 +190,6 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
         </div>
       </div>
 
-      {/* Face Validation */}
-      <Card className="border-dashed">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <User className="h-4 w-4" />
-              <span className="text-sm font-medium">Face Detection</span>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={validateCroppedImage}
-              disabled={isValidating || !croppedAreaPixels}
-            >
-              {isValidating ? 'Validating...' : 'Validate'}
-            </Button>
-          </div>
-
-          {validationResult && (
-            <div className="space-y-2">
-              <Badge
-                variant={validationResult.isValid ? 'default' : 'destructive'}
-                className="w-full justify-center"
-              >
-                {validationResult.isValid ? (
-                  <>
-                    <Check className="h-3 w-3 mr-1" />
-                    Valid - 1 face detected
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle className="h-3 w-3 mr-1" />
-                    Invalid
-                  </>
-                )}
-              </Badge>
-              {validationResult.error && (
-                <p className="text-xs text-muted-foreground text-center">
-                  {validationResult.error}
-                </p>
-              )}
-            </div>
-          )}
-
-          {!validationResult && (
-            <p className="text-xs text-muted-foreground text-center">
-              Click &quot;Validate&quot; to check if your cropped image contains
-              exactly one face
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Action Buttons */}
       <div className="flex gap-3">
         <Button
@@ -295,12 +203,7 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
         </Button>
         <Button
           onClick={handleCropConfirm}
-          disabled={
-            !croppedAreaPixels ||
-            !validationResult?.isValid ||
-            isProcessing ||
-            isValidating
-          }
+          disabled={!croppedAreaPixels || isProcessing}
           className="flex-1"
         >
           {isProcessing ? (
@@ -319,10 +222,12 @@ export const ImageCropper: React.FC<ImageCropperProps> = ({
         <CardContent className="p-4">
           <h4 className="text-sm font-medium mb-2">Instructions:</h4>
           <ul className="text-xs text-muted-foreground space-y-1">
-            <li>• Adjust the crop area to frame your face clearly</li>
+            <li>• Adjust the crop area to frame your photo as desired</li>
             <li>• Use zoom and rotation controls to get the best angle</li>
-            <li>• Validate to ensure exactly one face is detected</li>
-            <li>• Your face should be well-lit and clearly visible</li>
+            <li>• Make sure your photo is well-lit and clearly visible</li>
+            <li>
+              • Click "Confirm Crop" when you&apos;re satisfied with the result
+            </li>
           </ul>
         </CardContent>
       </Card>
